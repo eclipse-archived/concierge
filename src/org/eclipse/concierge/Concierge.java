@@ -87,7 +87,6 @@ import org.osgi.framework.hooks.service.ListenerHook.ListenerInfo;
 import org.osgi.framework.hooks.weaving.WeavingException;
 import org.osgi.framework.hooks.weaving.WeavingHook;
 import org.osgi.framework.launch.Framework;
-import org.osgi.framework.namespace.BundleNamespace;
 import org.osgi.framework.namespace.HostNamespace;
 import org.osgi.framework.namespace.IdentityNamespace;
 import org.osgi.framework.namespace.PackageNamespace;
@@ -288,16 +287,16 @@ public final class Concierge extends AbstractBundle implements Framework,
 	/**
 	 * bundle listeners.
 	 */
-	private List<BundleListener> bundleListeners = new ArrayList<BundleListener>(
+	private final List<BundleListener> bundleListeners = new ArrayList<BundleListener>(
 			1);
 
 	/**
 	 * synchronous bundle listeners.
 	 */
-	private List<SynchronousBundleListener> syncBundleListeners = new ArrayList<SynchronousBundleListener>(
+	private final List<SynchronousBundleListener> syncBundleListeners = new ArrayList<SynchronousBundleListener>(
 			1);
 
-	private MultiMap<BundleContext, BundleListener> bundleListenerMap = new MultiMap<BundleContext, BundleListener>();
+	private final MultiMap<BundleContext, BundleListener> bundleListenerMap = new MultiMap<BundleContext, BundleListener>();
 
 	/**
 	 * service listeners.
@@ -308,13 +307,13 @@ public final class Concierge extends AbstractBundle implements Framework,
 	/**
 	 * Map of unattached fragments in the system. HostName => List of fragments
 	 */
-	private MultiMap<String, Revision> fragmentIndex = new MultiMap<String, Revision>(
+	private final MultiMap<String, Revision> fragmentIndex = new MultiMap<String, Revision>(
 			1);
 
 	/**
 	 * framework listeners.
 	 */
-	private List<FrameworkListener> frameworkListeners = new ArrayList<FrameworkListener>(
+	private final List<FrameworkListener> frameworkListeners = new ArrayList<FrameworkListener>(
 			1);
 
 	CapabilityRegistry capabilityRegistry = new CapabilityRegistry();
@@ -336,7 +335,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 	/**
 	 * restart ?
 	 */
-	private boolean restart = false;
+	private final boolean restart = false;
 
 	// system bundle
 
@@ -400,7 +399,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 	private final BundleStartLevel systemBundleStartLevel = new SystemBundleStartLevel();
 
-	private ResolverImpl resolver = new ResolverImpl();
+	private final ResolverImpl resolver = new ResolverImpl();
 
 	/**
 	 * start method.
@@ -576,9 +575,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 			private static final long serialVersionUID = -3319768973242656809L;
 
-			public String getProperty(String key) {
+			public String getProperty(final String key) {
 				final Object launchO = get(key);
-				final String launchS = (launchO instanceof String) ? (String) launchO
+				final String launchS = launchO instanceof String ? (String) launchO
 						: null;
 				if (launchS != null) {
 					return launchS;
@@ -590,7 +589,12 @@ public final class Concierge extends AbstractBundle implements Framework,
 		};
 
 		if (passedProperties != null) {
-			properties.putAll(passedProperties);
+			for (final Map.Entry<String, String> entry : passedProperties
+					.entrySet()) {
+				if (entry.getValue() != null) {
+					properties.put(entry.getKey(), entry.getValue());
+				}
+			}
 		}
 
 		// apply constants
@@ -645,7 +649,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 				.getProperty(Constants.FRAMEWORK_BEGINNING_STARTLEVEL);
 		try {
 			BEGINNING_STARTLEVEL = Integer.parseInt(bsl);
-		} catch (NumberFormatException nfe) {
+		} catch (final NumberFormatException nfe) {
 			nfe.printStackTrace();
 			System.err
 					.println("FALLING BACK TO DEFAULT BEGINNING STARTLEVEL (=1)");
@@ -739,7 +743,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 * @param message
 	 * @throws BundleException
 	 */
-	private void warning(String message) throws RuntimeException {
+	private void warning(final String message) throws RuntimeException {
 		if (getProperty("org.eclipse.concierge.strictStartup", false)) {
 			throw new RuntimeException(message);
 		}
@@ -775,7 +779,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 				+ File.separatorChar + PROFILE + File.separatorChar;
 
 		// clean the storage if requested
-		File storage = new File(STORAGE_LOCATION);
+		final File storage = new File(STORAGE_LOCATION);
 		if (Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT.equals(properties
 				.getProperty(Constants.FRAMEWORK_STORAGE_CLEAN))) {
 
@@ -818,10 +822,10 @@ public final class Concierge extends AbstractBundle implements Framework,
 				sanitizeVersion(properties
 						.getProperty(Constants.FRAMEWORK_OS_VERSION)));
 		language = new Locale(
-				(String) properties.getProperty(Constants.FRAMEWORK_LANGUAGE),
-				"").getLanguage();
-		final String cpu = ((String) properties
-				.getProperty(Constants.FRAMEWORK_PROCESSOR)).intern();
+				properties.getProperty(Constants.FRAMEWORK_LANGUAGE), "")
+				.getLanguage();
+		final String cpu = properties
+				.getProperty(Constants.FRAMEWORK_PROCESSOR).intern();
 		if (os.toLowerCase().startsWith("win")) {
 			osname = "Windows";
 		} else {
@@ -937,7 +941,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 	private String sanitizeVersion(final String verStr) {
 		int dot = 0;
-		int len = verStr.length();
+		final int len = verStr.length();
 		final char[] chars = verStr.toCharArray();
 		for (int c = 0; c < len; c++) {
 			if (chars[c] == '.' && dot < 2) {
@@ -997,11 +1001,11 @@ public final class Concierge extends AbstractBundle implements Framework,
 					+ PROFILE + ") startlevel=" + BEGINNING_STARTLEVEL);
 			System.out.println("-------------------"
 					+ "--------------------------------------");
-			long time = System.currentTimeMillis();
+			final long time = System.currentTimeMillis();
 
 			// set startlevel and start all bundles that are marked to be
 			// started up to the intended startlevel
-			setLevel((Bundle[]) bundles.toArray(new Bundle[bundles.size()]),
+			setLevel(bundles.toArray(new Bundle[bundles.size()]),
 					BEGINNING_STARTLEVEL, false);
 
 			// save the metadata
@@ -1019,7 +1023,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 			System.out.println("---------------------------"
 					+ "------------------------------");
 			System.out.flush();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			notifyFrameworkListeners(FrameworkEvent.ERROR, this,
 					new BundleException("Exception during framework start",
 							BundleException.STATECHANGE_ERROR, e));
@@ -1054,7 +1058,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 			out.writeInt(startlevel);
 			out.writeLong(nextBundleID);
 			out.close();
-		} catch (IOException ioe) {
+		} catch (final IOException ioe) {
 			ioe.printStackTrace();
 		}
 	}
@@ -1078,7 +1082,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 * @category Framework
 	 * @category SystemBundle
 	 */
-	public void start(int options) throws BundleException {
+	public void start(final int options) throws BundleException {
 		start();
 	}
 
@@ -1118,8 +1122,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 		}
 
 		try {
-			setLevel((Bundle[]) bundles.toArray(new Bundle[bundles.size()]), 0,
-					true);
+			setLevel(bundles.toArray(new Bundle[bundles.size()]), 0, true);
 			state = Bundle.RESOLVED;
 			// release all resources
 			bundles.clear();
@@ -1179,7 +1182,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 * @category Framework
 	 * @category SystemBundle
 	 */
-	public void update(InputStream in) throws BundleException {
+	public void update(final InputStream in) throws BundleException {
 		try {
 			in.close();
 		} catch (final IOException ioe) {
@@ -1216,8 +1219,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 * @category Framework
 	 * @category SystemBundle
 	 */
-	public Enumeration<URL> findEntries(String path, String filePattern,
-			boolean recurse) {
+	public Enumeration<URL> findEntries(final String path,
+			final String filePattern, final boolean recurse) {
 		return null;
 	}
 
@@ -1237,7 +1240,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 * @category SystemBundle
 	 */
 	@SuppressWarnings("unchecked")
-	public <A> A adapt(Class<A> type) {
+	public <A> A adapt(final Class<A> type) {
 		if (type == BundleStartLevel.class) {
 			return (A) systemBundleStartLevel;
 		}
@@ -1291,7 +1294,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 * @see org.osgi.framework.Bundle#getHeaders(java.lang.String)
 	 * @category SystemBundle
 	 */
-	public Dictionary<String, String> getHeaders(String locale) {
+	public Dictionary<String, String> getHeaders(final String locale) {
 		return headers;
 	}
 
@@ -1413,8 +1416,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 		new Thread() {
 			public void run() {
-				setLevel(
-						(Bundle[]) bundles.toArray(new Bundle[bundles.size()]),
+				setLevel(bundles.toArray(new Bundle[bundles.size()]),
 						targetLevel, false);
 				notifyFrameworkListeners(FrameworkEvent.STARTLEVEL_CHANGED,
 						Concierge.this, null);
@@ -1472,8 +1474,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 		for (int i = 0; i < bundleArray.length; i++) {
 			final AbstractBundle bundle = (AbstractBundle) bundleArray[i];
 			if (bundle == Concierge.this || bundle.state == Bundle.UNINSTALLED
-					|| (up && bundle.autostart == AUTOSTART_STOPPED)
-					|| (!up && bundle.state == Bundle.RESOLVED)) {
+					|| up && bundle.autostart == AUTOSTART_STOPPED || !up
+					&& bundle.state == Bundle.RESOLVED) {
 				continue;
 			}
 			final int offset;
@@ -1513,13 +1515,13 @@ public final class Concierge extends AbstractBundle implements Framework,
 						// transient is implicit
 						toProcess[toProcess.length - j - 1].stopBundle();
 					}
-				} catch (BundleException be) {
+				} catch (final BundleException be) {
 					be.getNestedException().printStackTrace();
 					be.printStackTrace();
 					notifyFrameworkListeners(FrameworkEvent.ERROR,
 							up ? toProcess[j] : toProcess[toProcess.length - j
 									- 1], be);
-				} catch (Throwable t) {
+				} catch (final Throwable t) {
 					t.printStackTrace();
 					notifyFrameworkListeners(FrameworkEvent.ERROR,
 							up ? toProcess[j] : toProcess[toProcess.length - j
@@ -1601,8 +1603,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 					// build the initial set of bundles
 					if (bundleCollection == null) {
-						initial = (Bundle[]) bundles.toArray(new Bundle[bundles
-								.size()]);
+						initial = bundles.toArray(new Bundle[bundles.size()]);
 					} else {
 						initial = bundleCollection
 								.toArray(new Bundle[bundleCollection.size()]);
@@ -1726,12 +1727,12 @@ public final class Concierge extends AbstractBundle implements Framework,
 					}
 
 					// restart all bundles regarding their startlevels
-					AbstractBundle[] restartArray = (AbstractBundle[]) restartList
+					final AbstractBundle[] restartArray = restartList
 							.toArray(new AbstractBundle[restartList.size()]);
 					for (int i = 0; i < restartArray.length; i++) {
 						try {
 							restartArray[i].start();
-						} catch (Exception e) {
+						} catch (final Exception e) {
 							notifyListeners(FrameworkEvent.ERROR,
 									restartArray[i], e);
 						}
@@ -1865,7 +1866,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 			final String candidatePackage = (String) cap.getAttributes().get(
 					PackageNamespace.PACKAGE_NAMESPACE);
 
-			assert (candidatePackage != null);
+			assert candidatePackage != null;
 
 			if (multiple
 					&& RFC1960Filter.stringCompare(pkg.toCharArray(), 0,
@@ -1891,9 +1892,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 	}
 
-	private void filterCandidates(ArrayList<ResolverHook> hooks,
+	private void filterCandidates(final ArrayList<ResolverHook> hooks,
 			final BundleRequirement requirement,
-			Collection<Capability> candidates) {
+			final Collection<Capability> candidates) {
 		// sort candidates by providing resources
 		final MultiMap<BundleRevision, BundleCapability> mmap = new MultiMap<BundleRevision, BundleCapability>();
 
@@ -2008,8 +2009,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 				@Override
 				public int insertHostedCapability(
-						List<Capability> capabilities,
-						HostedCapability hostedCapability) {
+						final List<Capability> capabilities,
+						final HostedCapability hostedCapability) {
 					publishCapabilities(Collections
 							.singletonList(hostedCapability));
 
@@ -2283,8 +2284,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 						.getWirings();
 
 				for (final Resource resource : mandatory) {
-					if (resource == null)
+					if (resource == null) {
 						continue;
+					}
 
 					try {
 						if (resource instanceof Revision
@@ -2293,7 +2295,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 							unresolvedResources.add(resource);
 							continue;
 						}
-					} catch (BundleException e) {
+					} catch (final BundleException e) {
 						e.printStackTrace();
 					}
 					final Collection<Requirement> unres = resolveResource(
@@ -2347,7 +2349,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 				for (final ResolverHook hook : hooks) {
 					hook.filterSingletonCollisions(identity, collisions);
 				}
-			} catch (Throwable t) {
+			} catch (final Throwable t) {
 				t.printStackTrace();
 				throw new RuntimeException(t.getMessage());
 			}
@@ -2386,7 +2388,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 				}
 
 				// find candidates for the requirement
-				Collection<Capability> candidates = context
+				final Collection<Capability> candidates = context
 						.findProviders(requirement);
 
 				// filter through the resolver hooks if there are any
@@ -2430,12 +2432,13 @@ public final class Concierge extends AbstractBundle implements Framework,
 						// try to recursively resolve the provider
 						try {
 							if (inResolution.contains(capability.getResource())
-									|| ((!(capability.getResource() instanceof Revision) || ((Revision) capability
+									|| (!(capability.getResource() instanceof Revision) || ((Revision) capability
 											.getResource())
-											.resolveMetadata(false)) && resolveResource(
-											context, capability.getResource(),
+											.resolveMetadata(false))
+									&& resolveResource(context,
+											capability.getResource(),
 											existingWirings, solution,
-											inResolution).isEmpty())) {
+											inResolution).isEmpty()) {
 
 								final Wire wire = Resources.createWire(
 										capability, requirement);
@@ -2550,7 +2553,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 							}
 
 						};
-					} catch (NumberFormatException nfe) {
+					} catch (final NumberFormatException nfe) {
 						throw new IOException("Malformed host " + u.getHost());
 					}
 				}
@@ -2658,7 +2661,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 							bundles.add(bundle);
 							bundleID_bundles.put(new Long(bundle.bundleId),
 									bundle);
-						} catch (Exception e) {
+						} catch (final Exception e) {
 							e.printStackTrace();
 						}
 					}
@@ -2666,7 +2669,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 			}
 			return targetStartlevel;
 
-		} catch (IOException ioe) {
+		} catch (final IOException ioe) {
 			ioe.printStackTrace();
 		}
 
@@ -2909,7 +2912,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 	void checkForCollision(final int operation, final Bundle contextOwner,
 			final BundleRevision revision) throws BundleException {
-		assert (context != null);
+		assert context != null;
 
 		if (revision == null) {
 			throw new IllegalArgumentException("revision==null");
@@ -3026,13 +3029,13 @@ public final class Concierge extends AbstractBundle implements Framework,
 		}
 
 		final ServiceEvent event = new ServiceEvent(state, reference);
-		final ServiceEvent endmatchEvent = (state == ServiceEvent.MODIFIED) ? new ServiceEvent(
+		final ServiceEvent endmatchEvent = state == ServiceEvent.MODIFIED ? new ServiceEvent(
 				ServiceEvent.MODIFIED_ENDMATCH, reference) : null;
 
 		final ServiceListenerEntry[] entries;
 
 		if (serviceEventListenerHooks.isEmpty() && serviceEventHooks.isEmpty()) {
-			entries = (ServiceListenerEntry[]) serviceListeners
+			entries = serviceListeners
 					.toArray(new ServiceListenerEntry[serviceListeners.size()]);
 		} else {
 			// prepare the data structures
@@ -3092,8 +3095,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 					list.add(entry);
 				}
 			}
-			entries = (ServiceListenerEntry[]) list
-					.toArray(new ServiceListenerEntry[list.size()]);
+			entries = list.toArray(new ServiceListenerEntry[list.size()]);
 		}
 
 		final ServiceReferenceImpl<?> ref = (ServiceReferenceImpl<?>) reference;
@@ -3190,7 +3192,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 					: BUNDLE_LOCATION + File.separatorChar + location;
 			return installNewBundle(context, location2, new URL(location2)
 					.openConnection().getInputStream());
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new BundleException(
 					"Cannot retrieve bundle from " + location,
 					BundleException.READ_ERROR, e);
@@ -3419,7 +3421,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 		 */
 		private ServiceListenerEntry getRegisteredServiceListener(
 				final ServiceListener listener) {
-			final ServiceListenerEntry[] listeners = (ServiceListenerEntry[]) bundle.registeredServiceListeners
+			final ServiceListenerEntry[] listeners = bundle.registeredServiceListeners
 					.toArray(new ServiceListenerEntry[bundle.registeredServiceListeners
 							.size()]);
 			for (int i = 0; i < listeners.length; i++) {
@@ -3443,7 +3445,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 			checkValid();
 			try {
 				addServiceListener(listener, null);
-			} catch (InvalidSyntaxException e) {
+			} catch (final InvalidSyntaxException e) {
 				// does not happen
 			}
 		}
@@ -3538,14 +3540,14 @@ public final class Concierge extends AbstractBundle implements Framework,
 			if (bundle == Concierge.this) {
 				path = Concierge.this.STORAGE_LOCATION;
 			} else {
-				path = ((AbstractBundle) bundle).storageLocation;
+				path = bundle.storageLocation;
 			}
 
 			try {
 				final File file = new File(path + "/data", filename);
 				file.getParentFile().mkdirs();
 				return file;
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				e.printStackTrace();
 				return null;
 			}
@@ -3588,7 +3590,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 								clazzes[i], ServicePermission.GET));
 						return ((ServiceReferenceImpl<S>) reference)
 								.getService(bundle);
-					} catch (SecurityException se) {
+					} catch (final SecurityException se) {
 						continue;
 					}
 				}
@@ -3642,7 +3644,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 		 * 
 		 */
 		public ServiceReference<?>[] getServiceReferences(final String clazz,
-				String filter) throws InvalidSyntaxException {
+				final String filter) throws InvalidSyntaxException {
 			return getServiceReferences(clazz, filter, false);
 		}
 
@@ -3683,7 +3685,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 				for (final Iterator<ServiceReferenceImpl<FindHook>> iter = serviceFindHooks
 						.iterator(); iter.hasNext();) {
 					final ServiceReferenceImpl<FindHook> hookRef = iter.next();
-					final FindHook hook = (FindHook) getService(hookRef);
+					final FindHook hook = getService(hookRef);
 					try {
 						hook.find(this, clazz, filter, all, c);
 					} catch (final Throwable t) {
@@ -3729,19 +3731,19 @@ public final class Concierge extends AbstractBundle implements Framework,
 				return null;
 			}
 
-			final ServiceReference<?>[] candidates = (ServiceReference[]) list
+			final ServiceReference<?>[] candidates = list
 					.toArray(new ServiceReference[list.size()]);
 
 			for (int i = 0; i < candidates.length; i++) {
-				Integer rankProp = (Integer) candidates[i]
+				final Integer rankProp = (Integer) candidates[i]
 						.getProperty(Constants.SERVICE_RANKING);
 
-				int ranking = rankProp != null ? rankProp.intValue() : 0;
-				long serviceID = ((Long) candidates[i]
+				final int ranking = rankProp != null ? rankProp.intValue() : 0;
+				final long serviceID = ((Long) candidates[i]
 						.getProperty(Constants.SERVICE_ID)).longValue();
 
-				if (ranking > maxRanking
-						|| (ranking == maxRanking && serviceID < lastServiceID)) {
+				if (ranking > maxRanking || ranking == maxRanking
+						&& serviceID < lastServiceID) {
 					winner = candidates[i];
 					maxRanking = ranking;
 					lastServiceID = serviceID;
@@ -3887,7 +3889,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 			}
 
 			// special case: ListenerHook
-			if (add && ((Object) hookList) == ((Object) serviceListenerHooks)) {
+			if (add && (Object) hookList == (Object) serviceListenerHooks) {
 				@SuppressWarnings("unchecked")
 				final ServiceReferenceImpl<ListenerHook> hookRef = (ServiceReferenceImpl<ListenerHook>) sref;
 				if (serviceListeners != null) {
@@ -3960,7 +3962,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 			if (bundle == Concierge.this) {
 				return;
 			}
-			final AbstractBundle b = (AbstractBundle) bundle;
+			final AbstractBundle b = bundle;
 
 			frameworkListeners.remove(listener);
 			b.registeredFrameworkListeners.remove(listener);
@@ -4012,15 +4014,15 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 		// FIXME: should be the other way around...
 		@SuppressWarnings("unchecked")
-		public <S> ServiceRegistration<S> registerService(Class<S> clazz,
-				S service, Dictionary<String, ?> properties) {
+		public <S> ServiceRegistration<S> registerService(final Class<S> clazz,
+				final S service, final Dictionary<String, ?> properties) {
 			return (ServiceRegistration<S>) registerService(clazz.getName(),
 					service, properties);
 		}
 
 		// FIXME: should be the other way around...
 		@SuppressWarnings("unchecked")
-		public <S> ServiceReference<S> getServiceReference(Class<S> clazz) {
+		public <S> ServiceReference<S> getServiceReference(final Class<S> clazz) {
 			return (ServiceReference<S>) getServiceReference(clazz == null ? null
 					: clazz.getName());
 		}
@@ -4028,7 +4030,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 		// FIXME: should be the other way around...
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		public <S> Collection<ServiceReference<S>> getServiceReferences(
-				Class<S> clazz, String filter) throws InvalidSyntaxException {
+				final Class<S> clazz, final String filter)
+				throws InvalidSyntaxException {
 			return (Collection) Arrays.asList(getServiceReferences(
 					clazz.getName(), filter));
 		}
@@ -4144,10 +4147,10 @@ public final class Concierge extends AbstractBundle implements Framework,
 	static class CapabilityRegistry {
 
 		// namespace -> list of capability
-		private MultiMap<String, Capability> capabilities = new MultiMap<String, Capability>();
+		private final MultiMap<String, Capability> capabilities = new MultiMap<String, Capability>();
 
 		// namespace -> value (of canonical attribute) -> list of capability
-		private HashMap<String, MultiMap<String, Capability>> defaultAttributeIndex = new HashMap<String, MultiMap<String, Capability>>();
+		private final HashMap<String, MultiMap<String, Capability>> defaultAttributeIndex = new HashMap<String, MultiMap<String, Capability>>();
 
 		void add(final Capability cap) {
 			final String namespace = cap.getNamespace();
@@ -4179,7 +4182,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 			final Object defaultAttribute = cap.getAttributes().get(namespace);
 
-			MultiMap<String, Capability> attributeIndex = defaultAttributeIndex
+			final MultiMap<String, Capability> attributeIndex = defaultAttributeIndex
 					.get(namespace);
 			if (attributeIndex == null) {
 				return false;
@@ -4214,7 +4217,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 					: new ArrayList<Capability>(result);
 		}
 
-		public List<Capability> getByKey(final String namespace, String value) {
+		public List<Capability> getByKey(final String namespace,
+				final String value) {
 			final MultiMap<String, Capability> caps = defaultAttributeIndex
 					.get(namespace);
 			if (caps == null) {

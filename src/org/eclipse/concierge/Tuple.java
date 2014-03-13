@@ -38,8 +38,8 @@ public class Tuple<T1, T2> {
 	public static class ParseResult extends
 			Tuple<HashMap<String, String>, HashMap<String, Object>> {
 
-		public ParseResult(HashMap<String, String> directives,
-				HashMap<String, Object> attributes) {
+		public ParseResult(final HashMap<String, String> directives,
+				final HashMap<String, Object> attributes) {
 			super(directives, attributes);
 		}
 

@@ -45,7 +45,8 @@ import org.osgi.service.resolver.HostedCapability;
 public class Resources {
 
 	static Wire createWire(final Capability cap, final Requirement req) {
-		return (cap instanceof BundleCapability && req instanceof BundleRequirement) ? new ConciergeBundleWire(
+		return cap instanceof BundleCapability
+				&& req instanceof BundleRequirement ? new ConciergeBundleWire(
 				(BundleCapability) cap, (BundleRequirement) req)
 				: new ConciergeWire(cap, req);
 	}
@@ -68,24 +69,24 @@ public class Resources {
 			final Tuple<HashMap<String, String>, HashMap<String, Object>> tuple = Utils
 					.parseLiterals(literals, 1);
 
-			this.directives = (tuple.getFormer() == null ? Collections
+			this.directives = tuple.getFormer() == null ? Collections
 					.<String, String> emptyMap() : Collections
-					.unmodifiableMap(tuple.getFormer()));
-			this.attributes = (tuple.getLatter() == null ? Collections
+					.unmodifiableMap(tuple.getFormer());
+			this.attributes = tuple.getLatter() == null ? Collections
 					.<String, Object> emptyMap() : Collections
-					.unmodifiableMap(tuple.getLatter()));
+					.unmodifiableMap(tuple.getLatter());
 		}
 
 		public GenericReqCap(final String namespace,
 				final Map<String, String> directives,
 				final Map<String, Object> attributes) {
 			this.namespace = namespace;
-			this.directives = (directives == null || directives.isEmpty() ? Collections
+			this.directives = directives == null || directives.isEmpty() ? Collections
 					.<String, String> emptyMap() : Collections
-					.unmodifiableMap(directives));
-			this.attributes = (attributes == null || attributes.isEmpty() ? Collections
+					.unmodifiableMap(directives);
+			this.attributes = attributes == null || attributes.isEmpty() ? Collections
 					.<String, Object> emptyMap() : Collections
-					.unmodifiableMap(attributes));
+					.unmodifiableMap(attributes);
 		}
 
 		public final String getNamespace() {
@@ -351,7 +352,8 @@ public class Resources {
 	static class ConciergeWire extends
 			AbstractWireImpl<Capability, Requirement> implements Wire {
 
-		protected ConciergeWire(Capability capability, Requirement requirement) {
+		protected ConciergeWire(final Capability capability,
+				final Requirement requirement) {
 			super(capability, requirement);
 		}
 
@@ -372,8 +374,8 @@ public class Resources {
 		ConciergeBundleWiring providerWiring;
 		ConciergeBundleWiring requirerWiring;
 
-		protected ConciergeBundleWire(BundleCapability capability,
-				BundleRequirement requirement) {
+		protected ConciergeBundleWire(final BundleCapability capability,
+				final BundleRequirement requirement) {
 			super(capability, requirement);
 		}
 
@@ -421,14 +423,12 @@ public class Resources {
 		private void addWire(final Wire wire) {
 			if (wire.getProvider() == resource) {
 				final Capability cap = wire.getCapability();
-				capabilities.insertUnique(cap.getNamespace(),
-						(BundleCapability) cap);
-				providedWires.insert(cap.getNamespace(), (BundleWire) wire);
+				capabilities.insertUnique(cap.getNamespace(), cap);
+				providedWires.insert(cap.getNamespace(), wire);
 			} else {
 				final Requirement req = wire.getRequirement();
-				requirements.insertUnique(req.getNamespace(),
-						(BundleRequirement) req);
-				requiredWires.insert(req.getNamespace(), (BundleWire) wire);
+				requirements.insertUnique(req.getNamespace(), req);
+				requiredWires.insert(req.getNamespace(), wire);
 			}
 		}
 
@@ -466,28 +466,29 @@ public class Resources {
 		private final MultiMap<String, BundleRequirement> requirements = new MultiMap<String, BundleRequirement>();
 
 		private final Comparator<BundleWire> provComp = new Comparator<BundleWire>() {
-			public int compare(BundleWire w1, BundleWire w2) {
+			public int compare(final BundleWire w1, final BundleWire w2) {
 				final BundleCapability cap1 = w1.getCapability();
 				final BundleCapability cap2 = w2.getCapability();
 
-				assert(cap1.getNamespace().equals(cap2.getNamespace()));
-				
-				final List<Capability> caps = revision.getCapabilities(cap1.getNamespace());
+				assert cap1.getNamespace().equals(cap2.getNamespace());
+
+				final List<Capability> caps = revision.getCapabilities(cap1
+						.getNamespace());
 				return caps.indexOf(cap1) - caps.indexOf(cap2);
 			}
 		};
 
 		private final Comparator<BundleWire> reqComp = new Comparator<BundleWire>() {
-			public int compare(BundleWire w1, BundleWire w2) {
+			public int compare(final BundleWire w1, final BundleWire w2) {
 				final BundleRequirement req1 = w1.getRequirement();
 				final BundleRequirement req2 = w2.getRequirement();
 
-				assert(req1.getNamespace().equals(req2.getNamespace()));
-				
-				final List<Requirement> reqs = revision.getRequirements(req1.getNamespace());
-				
-				return reqs.indexOf(req1)
-						- reqs.indexOf(req2);
+				assert req1.getNamespace().equals(req2.getNamespace());
+
+				final List<Requirement> reqs = revision.getRequirements(req1
+						.getNamespace());
+
+				return reqs.indexOf(req1) - reqs.indexOf(req2);
 			}
 		};
 
@@ -539,7 +540,7 @@ public class Resources {
 						|| PackageNamespace.RESOLUTION_DYNAMIC
 								.equals(req
 										.getDirectives()
-										.get(PackageNamespace.REQUIREMENT_RESOLUTION_DIRECTIVE))) {
+										.get(Namespace.REQUIREMENT_RESOLUTION_DIRECTIVE))) {
 					if (!optional || reqCache.contains(req)) {
 						requirements.insert(req.getNamespace(), req);
 					}
@@ -670,8 +671,8 @@ public class Resources {
 		 * @see org.osgi.framework.wiring.BundleWiring#findEntries(java.lang.String,
 		 *      java.lang.String, int)
 		 */
-		public List<URL> findEntries(String path, String filePattern,
-				int options) {
+		public List<URL> findEntries(final String path,
+				final String filePattern, final int options) {
 			if (!isInUse()) {
 				return null;
 			}
@@ -693,8 +694,8 @@ public class Resources {
 		 * @see org.osgi.framework.wiring.BundleWiring#listResources(java.lang.String,
 		 *      java.lang.String, int)
 		 */
-		public Collection<String> listResources(String path,
-				String filePattern, int options) {
+		public Collection<String> listResources(final String path,
+				final String filePattern, final int options) {
 			if (!isCurrent()) {
 				return null;
 			}
@@ -702,22 +703,22 @@ public class Resources {
 			throw new RuntimeException("not yet implemented");
 		}
 
-		public List<Capability> getResourceCapabilities(String namespace) {
+		public List<Capability> getResourceCapabilities(final String namespace) {
 			final List<BundleCapability> bcaps = getCapabilities(namespace);
 			return bcaps == null ? null : new ArrayList<Capability>(bcaps);
 		}
 
-		public List<Requirement> getResourceRequirements(String namespace) {
+		public List<Requirement> getResourceRequirements(final String namespace) {
 			final List<BundleRequirement> breqs = getRequirements(namespace);
 			return breqs == null ? null : new ArrayList<Requirement>(breqs);
 		}
 
-		public List<Wire> getProvidedResourceWires(String namespace) {
+		public List<Wire> getProvidedResourceWires(final String namespace) {
 			final List<BundleWire> bwires = getProvidedWires(namespace);
 			return bwires == null ? null : new ArrayList<Wire>(bwires);
 		}
 
-		public List<Wire> getRequiredResourceWires(String namespace) {
+		public List<Wire> getRequiredResourceWires(final String namespace) {
 			final List<BundleWire> bwires = getRequiredWires(namespace);
 			return bwires == null ? null : new ArrayList<Wire>(bwires);
 		}

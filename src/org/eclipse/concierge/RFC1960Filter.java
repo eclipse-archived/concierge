@@ -102,7 +102,7 @@ final class RFC1960Filter implements Filter {
 			return true;
 		}
 
-		public boolean matches(Map<String, ?> map) {
+		public boolean matches(final Map<String, ?> map) {
 			return true;
 		}
 	};
@@ -112,12 +112,12 @@ final class RFC1960Filter implements Filter {
 	/**
 	 * the operands.
 	 */
-	private List<Filter> operands = new ArrayList<Filter>(1);
+	private final List<Filter> operands = new ArrayList<Filter>(1);
 
 	/**
 	 * the operator.
 	 */
-	private int operator;
+	private final int operator;
 
 	/**
 	 * create a new filter instance.
@@ -207,11 +207,13 @@ final class RFC1960Filter implements Filter {
 					continue;
 				case ')':
 					if (last == -1) {
-						RFC1960Filter filter = (RFC1960Filter) stack.pop();
+						final RFC1960Filter filter = (RFC1960Filter) stack
+								.pop();
 						if (stack.isEmpty()) {
 							return filter;
 						}
-						RFC1960Filter parent = (RFC1960Filter) stack.peek();
+						final RFC1960Filter parent = (RFC1960Filter) stack
+								.peek();
 						if (parent.operator == NOT_OPERATOR
 								&& !parent.operands.isEmpty()) {
 							throw new InvalidSyntaxException(
@@ -252,7 +254,8 @@ final class RFC1960Filter implements Filter {
 						}
 
 						// get the parent from stack
-						RFC1960Filter parent = ((RFC1960Filter) stack.peek());
+						final RFC1960Filter parent = (RFC1960Filter) stack
+								.peek();
 
 						String value = filterString.substring(++oper, i);
 						if (value.equals("*") && comparator == EQUALS) {
@@ -319,8 +322,8 @@ final class RFC1960Filter implements Filter {
 				}
 			}
 
-			return (RFC1960Filter) stack.pop();
-		} catch (EmptyStackException e) {
+			return stack.pop();
+		} catch (final EmptyStackException e) {
 			throw new InvalidSyntaxException(
 					"Filter expression not well-formed.", filterString);
 		}
@@ -338,11 +341,11 @@ final class RFC1960Filter implements Filter {
 	public boolean match(final ServiceReference<?> reference) {
 		try {
 			return match(((ServiceReferenceImpl<?>) reference).properties);
-		} catch (ClassCastException ce) {
+		} catch (final ClassCastException ce) {
 			// so this was not instance of ServiceReferenceImpl. Someone
 			// must have created an own implementation.
 			final Dictionary<String, Object> dict = new Hashtable<String, Object>();
-			String[] keys = reference.getPropertyKeys();
+			final String[] keys = reference.getPropertyKeys();
 			for (int i = 0; i < keys.length; i++) {
 				dict.put(keys[i], reference.getProperty(keys[i]));
 			}
@@ -361,8 +364,8 @@ final class RFC1960Filter implements Filter {
 	 */
 	public boolean match(final Dictionary<String, ?> values) {
 		if (operator == AND_OPERATOR) {
-			final Filter[] operandArray = (Filter[]) operands
-					.toArray(new Filter[operands.size()]);
+			final Filter[] operandArray = operands.toArray(new Filter[operands
+					.size()]);
 			for (int i = 0; i < operandArray.length; i++) {
 				if (!operandArray[i].match(values)) {
 					return false;
@@ -370,8 +373,8 @@ final class RFC1960Filter implements Filter {
 			}
 			return true;
 		} else if (operator == OR_OPERATOR) {
-			final Filter[] operandArray = (Filter[]) operands
-					.toArray(new Filter[operands.size()]);
+			final Filter[] operandArray = operands.toArray(new Filter[operands
+					.size()]);
 			for (int i = 0; i < operandArray.length; i++) {
 				if (operandArray[i].match(values)) {
 					return true;
@@ -379,12 +382,12 @@ final class RFC1960Filter implements Filter {
 			}
 			return false;
 		} else if (operator == NOT_OPERATOR) {
-			return !(((Filter) operands.get(0)).match(values));
+			return !operands.get(0).match(values);
 		}
 		throw new IllegalStateException("PARSER ERROR");
 	}
 
-	public boolean matches(Map<String, ?> map) {
+	public boolean matches(final Map<String, ?> map) {
 		return match(new Hashtable<String, Object>(map));
 	}
 
@@ -400,8 +403,8 @@ final class RFC1960Filter implements Filter {
 	 */
 	public boolean matchCase(final Dictionary<String, ?> values) {
 		if (operator == AND_OPERATOR) {
-			final Filter[] operandArray = (Filter[]) operands
-					.toArray(new Filter[operands.size()]);
+			final Filter[] operandArray = operands.toArray(new Filter[operands
+					.size()]);
 			for (int i = 0; i < operandArray.length; i++) {
 				if (!operandArray[i].matchCase(values)) {
 					return false;
@@ -409,8 +412,8 @@ final class RFC1960Filter implements Filter {
 			}
 			return true;
 		} else if (operator == OR_OPERATOR) {
-			final Filter[] operandArray = (Filter[]) operands
-					.toArray(new Filter[operands.size()]);
+			final Filter[] operandArray = operands.toArray(new Filter[operands
+					.size()]);
 			for (int i = 0; i < operandArray.length; i++) {
 				if (operandArray[i].matchCase(values)) {
 					return true;
@@ -418,7 +421,7 @@ final class RFC1960Filter implements Filter {
 			}
 			return false;
 		} else if (operator == NOT_OPERATOR) {
-			return !(((Filter) operands.get(0)).matchCase(values));
+			return !operands.get(0).matchCase(values);
 		}
 		throw new IllegalStateException("PARSER ERROR");
 	}
@@ -435,7 +438,7 @@ final class RFC1960Filter implements Filter {
 		}
 		final StringBuffer buffer = new StringBuffer(
 				operator == AND_OPERATOR ? "(&" : "(|");
-		Filter[] operandArray = (Filter[]) operands.toArray(new Filter[operands
+		final Filter[] operandArray = operands.toArray(new Filter[operands
 				.size()]);
 		for (int i = 0; i < operandArray.length; i++) {
 			buffer.append(operandArray[i]);
@@ -456,14 +459,14 @@ final class RFC1960Filter implements Filter {
 	 */
 	public boolean equals(final Object obj) {
 		if (obj instanceof RFC1960Filter) {
-			RFC1960Filter filter = (RFC1960Filter) obj;
+			final RFC1960Filter filter = (RFC1960Filter) obj;
 
 			if (operands.size() != filter.operands.size()) {
 				return false;
 			}
-			final Filter[] operandArray = (Filter[]) operands
-					.toArray(new Filter[operands.size()]);
-			final Filter[] operandArray2 = (Filter[]) filter.operands
+			final Filter[] operandArray = operands.toArray(new Filter[operands
+					.size()]);
+			final Filter[] operandArray2 = filter.operands
 					.toArray(new Filter[operands.size()]);
 			for (int i = 0; i < operandArray.length; i++) {
 				if (!operandArray[i].equals(operandArray2[i])) {
@@ -596,12 +599,12 @@ final class RFC1960Filter implements Filter {
 		public boolean match(final ServiceReference<?> reference) {
 			try {
 				return match(((ServiceReferenceImpl<?>) reference).properties);
-			} catch (ClassCastException e) {
+			} catch (final ClassCastException e) {
 				// so this was not instance of ServiceReferenceImpl. Someone
 				// must
 				// have created an own implementation.
 				final Dictionary<String, Object> dict = new Hashtable<String, Object>();
-				String[] keys = reference.getPropertyKeys();
+				final String[] keys = reference.getPropertyKeys();
 				for (int i = 0; i < keys.length; i++) {
 					dict.put(keys[i], reference.getProperty(keys[i]));
 				}
@@ -634,9 +637,9 @@ final class RFC1960Filter implements Filter {
 
 			if (temp == null) {
 				// bad luck, try case insensitive matching of all keys
-				for (Enumeration<String> keys = map.keys(); keys
+				for (final Enumeration<String> keys = map.keys(); keys
 						.hasMoreElements();) {
-					String key = keys.nextElement();
+					final String key = keys.nextElement();
 					if (key.equalsIgnoreCase(id)) {
 						temp = map.get(key);
 						break;
@@ -677,8 +680,9 @@ final class RFC1960Filter implements Filter {
 					}
 					return false;
 				} else if (attr instanceof Boolean) {
-					return ((comparator == EQUALS || comparator == APPROX) && ((Boolean) attr)
-							.equals(Boolean.valueOf(value.trim())));
+					return (comparator == EQUALS || comparator == APPROX)
+							&& ((Boolean) attr).equals(Boolean.valueOf(value
+									.trim()));
 				} else if (attr instanceof Character) {
 					final String trimmed = value.trim();
 					return trimmed.length() == 1 ? compareTyped(new Character(
@@ -711,12 +715,12 @@ final class RFC1960Filter implements Filter {
 				} else {
 					return compareReflective(value, comparator, attr);
 				}
-			} catch (Throwable t) {
+			} catch (final Throwable t) {
 				return false;
 			}
 		}
 
-		public boolean matches(Map<String, ?> map) {
+		public boolean matches(final Map<String, ?> map) {
 			return match(new Hashtable<String, Object>(map));
 		}
 
@@ -768,8 +772,8 @@ final class RFC1960Filter implements Filter {
 					}
 					return false;
 				} else if (attr instanceof Boolean) {
-					return ((comparator == EQUALS || comparator == APPROX) && ((Boolean) attr)
-							.equals(Boolean.valueOf(value)));
+					return (comparator == EQUALS || comparator == APPROX)
+							&& ((Boolean) attr).equals(Boolean.valueOf(value));
 				} else if (attr instanceof Character) {
 					return value.length() == 1 ? compareTyped(new Character(
 							value.charAt(0)), comparator, (Character) attr)
@@ -798,7 +802,7 @@ final class RFC1960Filter implements Filter {
 				} else {
 					return compareReflective(value, comparator, attr);
 				}
-			} catch (Throwable t) {
+			} catch (final Throwable t) {
 				return false;
 			}
 		}
@@ -941,7 +945,7 @@ final class RFC1960Filter implements Filter {
 				try {
 					return compareTyped(Byte.decode(value), comparator,
 							(Byte) attr);
-				} catch (Throwable t) {
+				} catch (final Throwable t) {
 				}
 			}
 			// all other are less frequent and are handled as
@@ -1073,7 +1077,7 @@ final class RFC1960Filter implements Filter {
 				} else {
 					return typedVal.equals(attr);
 				}
-			} catch (Exception didNotWork) {
+			} catch (final Exception didNotWork) {
 				return false;
 			}
 		}
@@ -1112,8 +1116,8 @@ final class RFC1960Filter implements Filter {
 		public boolean equals(final Object obj) {
 			if (obj instanceof RFC1960SimpleFilter) {
 				final RFC1960SimpleFilter filter = (RFC1960SimpleFilter) obj;
-				return (comparator == filter.comparator)
-						&& id.equals(filter.id) && (value.equals(filter.value));
+				return comparator == filter.comparator && id.equals(filter.id)
+						&& value.equals(filter.value);
 			}
 			return false;
 		}
@@ -1131,7 +1135,7 @@ final class RFC1960Filter implements Filter {
 	}
 
 	// FIXME: remove
-	public static void main(String[] args) throws Exception {
+	public static void main(final String[] args) throws Exception {
 		final Filter foo = RFC1960Filter.fromString("(version>=1.0)");
 		System.out.println(foo);
 		final Filter filter = RFC1960Filter.fromString("(space= )");
@@ -1142,7 +1146,7 @@ final class RFC1960Filter implements Filter {
 		// @formatter:off
 		//Filter filter2 = RFC1960Filter.fromString("(|(version<=1.0)(|(&(osgi.wiring=pkg.foo)(version=1.0))(osgi.wiring=pkg.bar)))");
 		// Filter filter2 = RFC1960Filter.fromString("(|(&(osgi.wiring=pkg.foo)(version=1.0))(osgi.wiring=pkg.bar))");
-		Filter filter2 = RFC1960Filter.fromString("(osgi.wiring=pkg.bar)");
+		final Filter filter2 = RFC1960Filter.fromString("(osgi.wiring=pkg.bar)");
 		// Filter filter2 = RFC1960Filter.fromString("(&(osgi.wiring=pkg.foo)(version=1.0))");
 		// Filter filter2 = RFC1960Filter.fromString("(|(&(osgi.wiring=pkg.foo)(version=pkg.foo))(osgi.wiring=1.0))");
 		// Filter filter2 = RFC1960Filter.fromString("(&(osgi.wiring=pkg.foo)(osgi.wiring=pkg.foo))");
@@ -1238,7 +1242,7 @@ final class RFC1960Filter implements Filter {
 			final boolean inNegation, final Set<String> values) {
 		int newState = state;
 		if (filter instanceof RFC1960Filter) {
-			final RFC1960Filter f = ((RFC1960Filter) filter);
+			final RFC1960Filter f = (RFC1960Filter) filter;
 			final int operator = f.operator;
 			if (f.operands.size() == 1) {
 				return prefilter(namespace, f.operands.get(0), capabilities,
@@ -1264,7 +1268,7 @@ final class RFC1960Filter implements Filter {
 			}
 			return newState == 3 ? NECESSARY : newState;
 		} else if (filter instanceof RFC1960SimpleFilter) {
-			final RFC1960SimpleFilter f = ((RFC1960SimpleFilter) filter);
+			final RFC1960SimpleFilter f = (RFC1960SimpleFilter) filter;
 			if (namespace.equals(f.id)) {
 				if (f.comparator == EQUALS) {
 					values.add(f.value);

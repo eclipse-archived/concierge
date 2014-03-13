@@ -164,7 +164,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 
 		if (framework.SECURITY_ENABLED) {
 			try {
-				PermissionCollection permissions = new Permissions();
+				final PermissionCollection permissions = new Permissions();
 				permissions.add(new FilePermission(framework.STORAGE_LOCATION
 						+ bundleId, "read,write,execute,delete"));
 				domain = new ProtectionDomain(new CodeSource(new URL("file:"
@@ -204,7 +204,8 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 			throws IOException {
 		this.framework = framework;
 		// this.content = new JarBundle(new JarFile(file));
-		DataInputStream in = new DataInputStream(new FileInputStream(metadata));
+		final DataInputStream in = new DataInputStream(new FileInputStream(
+				metadata));
 		this.bundleId = in.readLong();
 		this.location = in.readUTF();
 
@@ -258,9 +259,9 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 						+ CONTENT_DIRECTORY_NAME + revisionNumber;
 
 				// we have embedded jars, decompress the bundle
-				for (Enumeration<JarEntry> entries = jar.entries(); entries
+				for (final Enumeration<JarEntry> entries = jar.entries(); entries
 						.hasMoreElements();) {
-					JarEntry entry = entries.nextElement();
+					final JarEntry entry = entries.nextElement();
 					if (entry.isDirectory()) {
 						continue;
 					}
@@ -277,7 +278,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 				return new JarBundleRevision(revisionNumber, jar, manifest,
 						classpathStrings);
 			}
-		} catch (IOException ioe) {
+		} catch (final IOException ioe) {
 			ioe.printStackTrace();
 			Concierge.deleteDirectory(new File(storageLocation));
 			throw new BundleException("Not a valid bundle: " + location
@@ -327,7 +328,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 	 * @see org.osgi.framework.Bundle#start(int)
 	 * @category Bundle
 	 */
-	public void start(int options) throws BundleException {
+	public void start(final int options) throws BundleException {
 		if (framework.SECURITY_ENABLED) {
 			// TODO: check AdminPermission(this, EXECUTE)
 		}
@@ -422,7 +423,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 	}
 
 	private void activate0() throws BundleException {
-		assert (state != INSTALLED && state != UNINSTALLED);
+		assert state != INSTALLED && state != UNINSTALLED;
 
 		// step6
 		state = STARTING;
@@ -495,7 +496,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 	 * @see org.osgi.framework.Bundle#stop(int)
 	 * @category Bundle
 	 */
-	public void stop(int options) throws BundleException {
+	public void stop(final int options) throws BundleException {
 		if (framework.SECURITY_ENABLED) {
 			// TODO: check AdminPermission(this, EXECUTE);
 		}
@@ -637,7 +638,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 					currentRevision.getSymbolicName(), this);
 			currentRevision.cleanup(true);
 			currentRevision = null;
-						
+
 			framework.location_bundles.remove(location);
 		}
 
@@ -664,7 +665,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 		try {
 			update(new URL(updateLocation == null ? location : updateLocation)
 					.openConnection().getInputStream());
-		} catch (IOException ioe) {
+		} catch (final IOException ioe) {
 			throw new BundleException("Could not update " + toString()
 					+ " from " + updateLocation, BundleException.READ_ERROR,
 					ioe);
@@ -884,11 +885,10 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 
 		if (framework.SECURITY_ENABLED) {
 			// permissions for the interfaces have to be checked
-			return checkPermissions((ServiceReferenceImpl[]) result
+			return checkPermissions(result
 					.toArray(new ServiceReferenceImpl[result.size()]));
 		} else {
-			return (ServiceReference[]) result
-					.toArray(new ServiceReference[result.size()]);
+			return result.toArray(new ServiceReference[result.size()]);
 		}
 	}
 
@@ -1008,7 +1008,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 		if (state == INSTALLED) {
 			try {
 				currentRevision.resolve(false);
-			} catch (BundleException e) {
+			} catch (final BundleException e) {
 				// TODO: to log
 				e.printStackTrace();
 			}
@@ -1074,7 +1074,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 				return currentRevision.createURL("/", null);
 			}
 			return currentRevision.lookupFile(null, path);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			e.printStackTrace();
 			return null;
 		}
@@ -1090,7 +1090,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 		if (state == Bundle.INSTALLED) {
 			try {
 				currentRevision.resolve(false);
-			} catch (BundleException ex) {
+			} catch (final BundleException ex) {
 				// ignore and search only in this bundles jar file
 			}
 		}
@@ -1107,7 +1107,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 	 * @category Bundle
 	 */
 	public Map<X509Certificate, List<X509Certificate>> getSignerCertificates(
-			int signersType) {
+			final int signersType) {
 		throw new UnsupportedOperationException("Not yet implemented.");
 	}
 
@@ -1150,7 +1150,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 		String frag;
 		try {
 			frag = url.toURI().getFragment();
-		} catch (URISyntaxException e) {
+		} catch (final URISyntaxException e) {
 			e.printStackTrace();
 			frag = null;
 		}
@@ -1203,7 +1203,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 	 * @see org.osgi.framework.startlevel.BundleStartLevel#setStartLevel(int)
 	 * @category BundleStartLevel
 	 */
-	public void setStartLevel(int targetStartLevel) {
+	public void setStartLevel(final int targetStartLevel) {
 		checkBundleNotUninstalled();
 
 		if (targetStartLevel <= 0) {
@@ -1232,13 +1232,13 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 					}
 				};
 			}.start();
-		} else if (targetStartLevel > oldStartlevel
-				&& (state != Bundle.RESOLVED && state != Bundle.INSTALLED)) {
+		} else if (targetStartLevel > oldStartlevel && state != Bundle.RESOLVED
+				&& state != Bundle.INSTALLED) {
 			new Thread() {
 				public void run() {
 					try {
 						stopBundle();
-					} catch (BundleException be) {
+					} catch (final BundleException be) {
 						framework.notifyFrameworkListeners(
 								FrameworkEvent.ERROR, BundleImpl.this, be);
 					}
@@ -1297,7 +1297,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 			if (urls != null) {
 				while (urls.hasMoreElements()) {
 					try {
-						final URL url = (URL) urls.nextElement();
+						final URL url = urls.nextElement();
 						final InputStream stream = url.openStream();
 						props.load(stream);
 						return props;
@@ -1340,7 +1340,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 		private ConciergeBundleWiring wiring;
 		private HashMap<String, BundleWire> packageImportWires;
 		private List<BundleWire> requireBundleWires;
-		private HashSet<String> exportIndex;
+		private final HashSet<String> exportIndex;
 
 		protected Revision(final int revId, final Manifest manifest,
 				final String[] classpathStrings) throws BundleException {
@@ -1392,7 +1392,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 							&& PackageNamespace.RESOLUTION_DYNAMIC
 									.equals(req
 											.getDirectives()
-											.get(PackageNamespace.REQUIREMENT_RESOLUTION_DIRECTIVE))) {
+											.get(Namespace.REQUIREMENT_RESOLUTION_DIRECTIVE))) {
 						dynamicImports.add(req);
 					}
 				}
@@ -1416,7 +1416,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 							&& PackageNamespace.RESOLUTION_DYNAMIC
 									.equals(req
 											.getDirectives()
-											.get(PackageNamespace.REQUIREMENT_RESOLUTION_DIRECTIVE))) {
+											.get(Namespace.REQUIREMENT_RESOLUTION_DIRECTIVE))) {
 						dynamicImports.add(req);
 					}
 				}
@@ -1658,10 +1658,10 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 		 */
 		public int getTypes() {
 			return identity == null ? 0
-					: (IdentityNamespace.TYPE_FRAGMENT.equals(identity
+					: IdentityNamespace.TYPE_FRAGMENT.equals(identity
 							.getAttributes()
 							.get(IdentityNamespace.CAPABILITY_TYPE_ATTRIBUTE)) ? BundleRevision.TYPE_FRAGMENT
-							: 0);
+							: 0;
 		}
 
 		/**
@@ -1700,7 +1700,9 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 			if (!framework.resolve(
 					Collections.<BundleRevision> singletonList(this), critical)) {
 				if (critical) {
-					throw new BundleException("Could not resolve " + toString(), BundleException.RESOLVE_ERROR);
+					throw new BundleException(
+							"Could not resolve " + toString(),
+							BundleException.RESOLVE_ERROR);
 				}
 				return false;
 			}
@@ -1858,7 +1860,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 							final String value = token.substring(a + 1).trim();
 							if (criterium == Constants.BUNDLE_NATIVECODE_OSNAME) {
 								if (framework.osname.startsWith("Windows")) {
-									n |= (value.toLowerCase().startsWith("win"));
+									n |= value.toLowerCase().startsWith("win");
 								} else {
 									n |= value
 											.equalsIgnoreCase(framework.osname);
@@ -1875,23 +1877,24 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 							} else if (criterium == Constants.BUNDLE_NATIVECODE_PROCESSOR) {
 								// if (framework.processor.equals("x86")) {
 								if (framework.processor.equals("x86")
-										|| (framework.osname
-												.startsWith("Windows") && (framework.processor
+										|| framework.osname
+												.startsWith("Windows")
+										&& (framework.processor
 												.equals("x86-64") || framework.processor
-												.equals("amd64")))) {
-									p |= (value.equals("x86")
+												.equals("amd64"))) {
+									p |= value.equals("x86")
 											|| value.equals("pentium")
 											|| value.equals("i386")
 											|| value.equals("i486")
-											|| value.equals("i586") || value
-											.equals("i686"));
+											|| value.equals("i586")
+											|| value.equals("i686");
 								} else if (framework.processor.equals("x86-64")) {
-									p |= (value.equals("amd64")
+									p |= value.equals("amd64")
 											|| value.equals("em64t")
-											|| value.equals("x86_64") || value
-											.equals("x86-64"));
+											|| value.equals("x86_64")
+											|| value.equals("x86-64");
 								} else if (framework.processor.equals("ppc")) {
-									p |= (value.equals("ppc"));
+									p |= value.equals("ppc");
 								} else {
 									p |= value
 											.equalsIgnoreCase(framework.processor);
@@ -1904,7 +1907,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 											.match(Concierge
 													.props2Dict(framework.properties));
 									no_s = false;
-								} catch (InvalidSyntaxException e) {
+								} catch (final InvalidSyntaxException e) {
 									e.printStackTrace();
 								}
 							}
@@ -1914,8 +1917,8 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 					}
 					if (!libs.isEmpty() && (no_p || p) && (no_n || n)
 							&& (no_v || v) && (no_l || l) && (no_s || s)) {
-						final String[] libraries = (String[]) libs
-								.toArray(new String[libs.size()]);
+						final String[] libraries = libs.toArray(new String[libs
+								.size()]);
 						for (int c = 0; c < libraries.length; c++) {
 							nativeLibraries
 									.put((pos = libraries[c].lastIndexOf("/")) > -1 ? libraries[c]
@@ -1929,7 +1932,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 					libs.clear();
 				}
 			}
-			return (hasMatch || hasOptional);
+			return hasMatch || hasOptional;
 		}
 
 		/**
@@ -1991,9 +1994,9 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 		Tuple<String, String> getFragmentHost() {
 			final BundleRequirement fragReqs = requirements.get(
 					HostNamespace.HOST_NAMESPACE).get(0);
-			final String fragmentHost = (String) fragReqs.getDirectives().get(
+			final String fragmentHost = fragReqs.getDirectives().get(
 					HostNamespace.HOST_NAMESPACE);
-			final String versionRange = (String) fragReqs.getDirectives().get(
+			final String versionRange = fragReqs.getDirectives().get(
 					Constants.BUNDLE_VERSION_ATTRIBUTE);
 
 			return new Tuple<String, String>(fragmentHost, versionRange);
@@ -2096,8 +2099,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 					temp.addAll(Arrays.asList(nativeCodeStrings));
 				}
 				temp.addAll(Arrays.asList(fragment.nativeCodeStrings));
-				newNativeStrings = (String[]) temp.toArray(new String[temp
-						.size()]);
+				newNativeStrings = temp.toArray(new String[temp.size()]);
 			}
 
 			// commit the changes
@@ -2153,8 +2155,8 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 				}
 			}
 			if (newClasspaths.size() > 0) {
-				classpath = (String[]) newClasspaths
-						.toArray(new String[newClasspaths.size()]);
+				classpath = newClasspaths.toArray(new String[newClasspaths
+						.size()]);
 			}
 
 			// add native code
@@ -2347,7 +2349,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 					return (URL) findResource0(
 							packageOf(pseudoClassname(strippedName)),
 							strippedName, false, false);
-				} catch (ClassNotFoundException e) {
+				} catch (final ClassNotFoundException e) {
 					// does not happen
 					e.printStackTrace();
 					return null;
@@ -2552,7 +2554,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 						final BundleRequirement dynImport = iter.next();
 
 						// TODO: think of something better
-						final String dynImportPackage = (String) dynImport
+						final String dynImportPackage = dynImport
 								.getDirectives().get(
 										PackageNamespace.PACKAGE_NAMESPACE);
 
@@ -2564,17 +2566,16 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 							continue;
 						}
 
-						final boolean wildcard = PackageNamespace.CARDINALITY_MULTIPLE
+						final boolean wildcard = Namespace.CARDINALITY_MULTIPLE
 								.equals(dynImport
 										.getDirectives()
-										.get(PackageNamespace.REQUIREMENT_CARDINALITY_DIRECTIVE));
+										.get(Namespace.REQUIREMENT_CARDINALITY_DIRECTIVE));
 						final List<BundleCapability> matches = framework
 								.resolveDynamic(Revision.this, pkg,
 										dynImportPackage, dynImport, wildcard);
 
 						if (matches != null) {
-							final BundleCapability bundleCap = (BundleCapability) matches
-									.get(0);
+							final BundleCapability bundleCap = matches.get(0);
 
 							final BundleWire wire = new ConciergeBundleWire(
 									bundleCap, dynImport);
@@ -2668,7 +2669,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 				}
 
 				try {
-					File libfile = new File(storageLocation + "lib", lib);
+					final File libfile = new File(storageLocation + "lib", lib);
 					/*
 					 * If a native library already exists by that name the newer
 					 * library in the bundle will not be stored on disc
@@ -2679,7 +2680,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 					Utils.storeFile(libfile, url.openStream());
 					// }
 					return libfile.getAbsolutePath();
-				} catch (IOException ioe) {
+				} catch (final IOException ioe) {
 					ioe.printStackTrace();
 				}
 				return null;
@@ -2711,7 +2712,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 							final ByteArrayOutputStream out = new ByteArrayOutputStream();
 							final BufferedInputStream bis = new BufferedInputStream(
 									input);
-							byte[] chunk = new byte[Concierge.CLASSLOADER_BUFFER_SIZE];
+							final byte[] chunk = new byte[Concierge.CLASSLOADER_BUFFER_SIZE];
 							while ((len = bis.read(chunk, 0,
 									Concierge.CLASSLOADER_BUFFER_SIZE)) > 0) {
 								out.write(chunk, 0, len);
@@ -2767,7 +2768,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 									final ByteArrayOutputStream out = new ByteArrayOutputStream();
 									final BufferedInputStream bis = new BufferedInputStream(
 											input);
-									byte[] chunk = new byte[Concierge.CLASSLOADER_BUFFER_SIZE];
+									final byte[] chunk = new byte[Concierge.CLASSLOADER_BUFFER_SIZE];
 									while ((len = bis.read(chunk, 0,
 											Concierge.CLASSLOADER_BUFFER_SIZE)) > 0) {
 										out.write(chunk, 0, len);
@@ -2777,10 +2778,10 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 											out.toByteArray(), 0, out.size(),
 											((AbstractBundle) fragment
 													.getBundle()).domain);
-								} catch (IOException ioe) {
+								} catch (final IOException ioe) {
 									ioe.printStackTrace();
 									return null;
-								} catch (LinkageError le) {
+								} catch (final LinkageError le) {
 									System.err.println("ERROR in " + toString()
 											+ ":");
 									throw le;
@@ -2788,7 +2789,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 							}
 						}
 					}
-				} catch (IOException e) {
+				} catch (final IOException e) {
 					e.printStackTrace();
 				}
 				return null;
@@ -2844,7 +2845,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 							}
 						}
 					}
-				} catch (IOException ioe) {
+				} catch (final IOException ioe) {
 					ioe.printStackTrace();
 				}
 				return results.isEmpty() ? resources : results;
@@ -2934,14 +2935,14 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 					private static final long serialVersionUID = 975783807443126126L;
 
 					@Override
-					public boolean add(String dynImport) {
+					public boolean add(final String dynImport) {
 						checkDynamicImport(dynImport);
 
 						return super.add(dynImport);
 					}
 
 					@Override
-					public boolean addAll(Collection<? extends String> c) {
+					public boolean addAll(final Collection<? extends String> c) {
 						for (final String dynImport : c) {
 							checkDynamicImport(dynImport);
 						}
@@ -2969,7 +2970,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 											PackageNamespace.PACKAGE_NAMESPACE,
 											literals[0], tuple.getLatter()));
 							dirs.put(
-									PackageNamespace.REQUIREMENT_RESOLUTION_DIRECTIVE,
+									Namespace.REQUIREMENT_RESOLUTION_DIRECTIVE,
 									PackageNamespace.RESOLUTION_DYNAMIC);
 
 							// TODO: think of something better...
@@ -2997,7 +2998,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 				return bytes;
 			}
 
-			public void setBytes(byte[] newBytes) {
+			public void setBytes(final byte[] newBytes) {
 				if (newBytes == null) {
 					throw new NullPointerException("newBytes");
 				}
@@ -3036,7 +3037,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 				this.clazz = clazz;
 			}
 
-			void setProtectionDomain(ProtectionDomain protectionDomain) {
+			void setProtectionDomain(final ProtectionDomain protectionDomain) {
 				this.domain = protectionDomain;
 			}
 
@@ -3056,7 +3057,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 			return hostedCapabilities;
 		}
 
-		public int compareTo(Revision other) {
+		public int compareTo(final Revision other) {
 			final int ids = (int) (bundleId - other.getBundle().getBundleId());
 			return ids != 0 ? ids : revId - other.revId;
 		}
@@ -3070,11 +3071,11 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 		// lazily initialized
 		private WeakHashMap<String, Dictionary<String, String>> headerCache;
 
-		private HashMap<String, String> index = new HashMap<String, String>();
+		private final HashMap<String, String> index = new HashMap<String, String>();
 
 		private boolean hasLocalizedValues;
 
-		public HeaderDictionary(int size) {
+		public HeaderDictionary(final int size) {
 			super(size);
 		}
 
@@ -3089,8 +3090,8 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 			final HeaderDictionary localized = (HeaderDictionary) clone();
 			final Enumeration<String> keys = localized.keys();
 			while (keys.hasMoreElements()) {
-				final String key = (String) keys.nextElement();
-				final String value = (String) localized.get(key);
+				final String key = keys.nextElement();
+				final String value = localized.get(key);
 				if (value != null && value.charAt(0) == '%') {
 					final String rawValue = value.substring(1).trim();
 					final String localizedValue = props == null ? null
@@ -3104,12 +3105,12 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 
 		@Override
 		public String put(final String key, final String value) {
-			if (((String) value).charAt(0) == '%') {
+			if (value.charAt(0) == '%') {
 				hasLocalizedValues = true;
 			}
 
 			index.put(key.toLowerCase(), key);
-			return super.put(((String) key), value);
+			return super.put(key, value);
 		}
 
 		@Override
@@ -3142,8 +3143,8 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 			return (URL) findFile(classpath, filename, false);
 		}
 
-		public InputStream retrieveFile(final String classpath, String filename)
-				throws IOException {
+		public InputStream retrieveFile(final String classpath,
+				final String filename) throws IOException {
 			return (InputStream) findFile(classpath, filename, true);
 		}
 
@@ -3183,18 +3184,19 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 		}
 
 		protected Vector<URL> searchFiles(final String path,
-				final String filePattern, boolean recurse, final boolean paths) {
+				final String filePattern, final boolean recurse,
+				final boolean paths) {
 			final Vector<URL> results = new Vector<URL>();
-			String pathString = (path.length() > 0 && path.charAt(0) == '/' ? path
-					.substring(1) : path);
-			pathString = (path.length() == 0
+			String pathString = path.length() > 0 && path.charAt(0) == '/' ? path
+					.substring(1) : path;
+			pathString = path.length() == 0
 					|| path.charAt(path.length() - 1) == '/' ? pathString
-					: pathString + "/");
+					: pathString + "/";
 
 			final Enumeration<JarEntry> enums = jarFile.entries();
 			while (enums.hasMoreElements()) {
-				JarEntry ze = enums.nextElement();
-				String name = ze.getName().replace('\\', '/');
+				final JarEntry ze = enums.nextElement();
+				final String name = ze.getName().replace('\\', '/');
 
 				if (name.startsWith(pathString)) {
 					String rest = name.substring(pathString.length(),
@@ -3235,9 +3237,8 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 										basename.toCharArray(), 0) == 0) {
 							// InputStream inputStream;
 							// System.out.println("ZE ZE ZE "+"found MATCH: "+name);
-							String nameStr = name
-									+ ((isDir && !(name.endsWith("/"))) ? "/"
-											: "");
+							final String nameStr = name
+									+ (isDir && !name.endsWith("/") ? "/" : "");
 							try {
 								if (paths) {
 									results.add(createURL(nameStr, null));
@@ -3245,7 +3246,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 									// inputStream = jarFile.getInputStream(ze);
 									results.add(createURL(nameStr, null));
 								}
-							} catch (IOException ex) {
+							} catch (final IOException ex) {
 								// do nothing, URL will not be added to
 								// results
 							}
@@ -3302,7 +3303,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 					} else {
 						return null;
 					}
-				} catch (FileNotFoundException ex) {
+				} catch (final FileNotFoundException ex) {
 					return null;
 				}
 			} else {
@@ -3344,13 +3345,14 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 		}
 
 		public Vector<URL> searchFiles(final String path,
-				final String filePattern, boolean recurse, final boolean paths) {
+				final String filePattern, final boolean recurse,
+				final boolean paths) {
 			final Vector<URL> result = new Vector<URL>();
-			String pathString = (path.charAt(0) == '/' ? path.substring(1)
-					: path);
+			String pathString = path.charAt(0) == '/' ? path.substring(1)
+					: path;
 
-			pathString = (path.charAt(path.length() - 1) == '/' ? pathString
-					: pathString + "/");
+			pathString = path.charAt(path.length() - 1) == '/' ? pathString
+					: pathString + "/";
 
 			testFiles(new File(storageLocation, pathString), result, recurse,
 					filePattern);
@@ -3360,7 +3362,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 		private void testFiles(final File directory, final Vector<URL> results,
 				final boolean recurse, final String filePattern) {
 			if (directory.isDirectory()) {
-				File[] files = directory.listFiles();
+				final File[] files = directory.listFiles();
 				for (int i = 0; i < files.length; i++) {
 					final File toTest = files[i];
 					if (toTest.isDirectory()) {
@@ -3427,7 +3429,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 
 	// FIXME: to Util??
 	private static String stripTrailing(final String filename) {
-		return (filename.startsWith("/") || filename.startsWith("\\")) ? filename
+		return filename.startsWith("/") || filename.startsWith("\\") ? filename
 				.substring(1) : filename;
 	}
 

@@ -111,7 +111,7 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 		this.properties = new Hashtable<String, Object>(props == null ? 2
 				: props.size() + 2);
 		if (props != null) {
-			for (Enumeration<String> keys = props.keys(); keys
+			for (final Enumeration<String> keys = props.keys(); keys
 					.hasMoreElements();) {
 				final String key = keys.nextElement();
 				properties.put(key, props.get(key));
@@ -140,7 +140,7 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 							+ service.getClass().getName()
 							+ " does not implement the interface " + clazzes[i]);
 				}
-			} catch (ClassNotFoundException e) {
+			} catch (final ClassNotFoundException e) {
 				throw new IllegalArgumentException("Interface " + clazzes[i]
 						+ " implemented by service "
 						+ service.getClass().getName() + " cannot be located: "
@@ -198,9 +198,9 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 		}
 
 		// bad luck, try case insensitive matching of the keys
-		for (Enumeration<String> keys = properties.keys(); keys
+		for (final Enumeration<String> keys = properties.keys(); keys
 				.hasMoreElements();) {
-			String k = (String) keys.nextElement();
+			final String k = keys.nextElement();
 			if (k.equalsIgnoreCase(key)) {
 				result = properties.get(k);
 				break;
@@ -313,7 +313,7 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 
 	private void decrementCounter(final Bundle theBundle) {
 		Integer counter = useCounters.get(theBundle);
-		int newValue = counter.intValue() - 1;
+		final int newValue = counter.intValue() - 1;
 		if (newValue == 0) {
 			counter = null;
 		} else {
@@ -389,13 +389,14 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 			throw new IllegalArgumentException(
 					"ServiceReference was not created by the same framework instance");
 		}
-		ServiceReferenceImpl<?> other = (ServiceReferenceImpl<?>) reference;
-		int comparedServiceIds = ((Long) properties.get(Constants.SERVICE_ID))
-				.compareTo((Long) other.properties.get(Constants.SERVICE_ID));
+		final ServiceReferenceImpl<?> other = (ServiceReferenceImpl<?>) reference;
+		final int comparedServiceIds = ((Long) properties
+				.get(Constants.SERVICE_ID)).compareTo((Long) other.properties
+				.get(Constants.SERVICE_ID));
 		if (comparedServiceIds == 0) {
 			return 0;
 		}
-		int res = ((Integer) properties.get(Constants.SERVICE_RANKING))
+		final int res = ((Integer) properties.get(Constants.SERVICE_RANKING))
 				.compareTo((Integer) other.properties
 						.get(Constants.SERVICE_RANKING));
 		if (res < 0) {
@@ -433,7 +434,8 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 		final BundleImpl ourBundle = (BundleImpl) bundle;
 
 		try {
-			return otherBundle.loadClass(className) == ourBundle.loadClass(className);
+			return otherBundle.loadClass(className) == ourBundle
+					.loadClass(className);
 		} catch (final ClassNotFoundException e) {
 			return true;
 		}
@@ -486,9 +488,9 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 
 			final HashMap<String, String> cases = new HashMap<String, String>(
 					properties.size());
-			for (Enumeration<String> keys = properties.keys(); keys
+			for (final Enumeration<String> keys = properties.keys(); keys
 					.hasMoreElements();) {
-				final String key = (String) keys.nextElement();
+				final String key = keys.nextElement();
 				final String lower = key.toLowerCase();
 				if (cases.containsKey(lower)) {
 					throw new IllegalArgumentException(
@@ -496,11 +498,11 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 				}
 				cases.put(lower, key);
 			}
-			for (Enumeration<String> keys = newProps.keys(); keys
+			for (final Enumeration<String> keys = newProps.keys(); keys
 					.hasMoreElements();) {
 				final String key = keys.nextElement();
 				final Object value = newProps.get(key);
-				final String lower = ((String) key).toLowerCase();
+				final String lower = key.toLowerCase();
 
 				if (!forbidden.contains(lower)) {
 					final Object existing = cases.get(lower);

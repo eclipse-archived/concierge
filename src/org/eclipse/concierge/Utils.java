@@ -227,7 +227,7 @@ public final class Utils {
 			file.getParentFile().mkdirs();
 			final FileOutputStream fos = new FileOutputStream(file);
 
-			byte[] buffer = new byte[Concierge.CLASSLOADER_BUFFER_SIZE];
+			final byte[] buffer = new byte[Concierge.CLASSLOADER_BUFFER_SIZE];
 			int read;
 			while ((read = input.read(buffer, 0,
 					Concierge.CLASSLOADER_BUFFER_SIZE)) > -1) {
@@ -235,7 +235,7 @@ public final class Utils {
 			}
 			input.close();
 			fos.close();
-		} catch (IOException ioe) {
+		} catch (final IOException ioe) {
 			ioe.printStackTrace();
 		}
 	}
@@ -246,8 +246,8 @@ public final class Utils {
 		final int start = quoted1.charAt(0) == '"' ? 1 : 0;
 		final int end = quoted1.charAt(quoted1.length() - 1) == '"' ? len - 1
 				: len;
-		return (start == 0 && end == len) ? quoted : quoted1.substring(start,
-				end);
+		return start == 0 && end == len ? quoted : quoted1
+				.substring(start, end);
 	}
 
 	static String[] splitString(final String values, final String delimiter)
@@ -262,7 +262,7 @@ public final class Utils {
 		int tokenStart = 0;
 		int nextDelimiter;
 		while ((nextDelimiter = values.indexOf(delimiter, pointer)) > -1) {
-			int openingQuote = values.indexOf("\"", quotePointer);
+			final int openingQuote = values.indexOf("\"", quotePointer);
 			int closingQuote = values.indexOf("\"", openingQuote + 1);
 			if (openingQuote > closingQuote) {
 				throw new IllegalArgumentException(
@@ -284,7 +284,7 @@ public final class Utils {
 			tokenStart = pointer;
 		}
 		tokens.add(values.substring(tokenStart).trim());
-		return (String[]) tokens.toArray(new String[tokens.size()]);
+		return tokens.toArray(new String[tokens.size()]);
 	}
 
 	/**
@@ -297,10 +297,10 @@ public final class Utils {
 	 *            String, that describes the version range
 	 * @return true, if version in range
 	 */
-	static boolean isVersionInRange(Version version, String str) {
+	static boolean isVersionInRange(final Version version, String str) {
 		// parse range
 		if (str == null || str.length() < 1) {
-			return (version.compareTo(Version.emptyVersion) > -1);
+			return version.compareTo(Version.emptyVersion) > -1;
 		}
 
 		// remove "
@@ -368,7 +368,7 @@ public final class Utils {
 			this.comp = null;
 		}
 
-		public MultiMap(MultiMap<K, ? extends V> existing) {
+		public MultiMap(final MultiMap<K, ? extends V> existing) {
 			this();
 			insertMap(existing);
 		}
@@ -495,14 +495,14 @@ public final class Utils {
 		public Set<K> keySet() {
 			return new KeySet();
 		}
-		
+
 		public String toString() {
 			return "MultiMap " + map.toString();
 		}
 
 		private final class KeySet extends AbstractSet<K> {
 
-			private Set<K> keySet;
+			private final Set<K> keySet;
 
 			protected KeySet() {
 				keySet = map.keySet();
@@ -534,11 +534,11 @@ public final class Utils {
 				return map.size();
 			}
 
-			public boolean contains(Object key) {
+			public boolean contains(final Object key) {
 				return containsKey(key);
 			}
 
-			public boolean remove(Object key) {
+			public boolean remove(final Object key) {
 				final boolean result = MultiMap.this.remove(key) != null;
 
 				if (result) {
@@ -562,19 +562,19 @@ public final class Utils {
 			return map.isEmpty();
 		}
 
-		public boolean containsKey(Object key) {
+		public boolean containsKey(final Object key) {
 			return map.containsKey(key);
 		}
 
-		public boolean containsValue(Object value) {
+		public boolean containsValue(final Object value) {
 			return allValues.contains(value);
 		}
 
-		public List<V> put(K key, List<V> value) {
+		public List<V> put(final K key, final List<V> value) {
 			throw new UnsupportedOperationException("put");
 		}
 
-		public void putAll(Map<? extends K, ? extends List<V>> m) {
+		public void putAll(final Map<? extends K, ? extends List<V>> m) {
 			throw new UnsupportedOperationException("putAll");
 		}
 
@@ -612,7 +612,7 @@ public final class Utils {
 			if (version != null
 					&& attributes.containsKey(SPECIFICATION_VERSION)) {
 				if (!new Version(Utils.unQuote((String) attributes
-						.get(SPECIFICATION_VERSION))).equals((Version) version)) {
+						.get(SPECIFICATION_VERSION))).equals(version)) {
 					throw new BundleException(
 							"both version and specification-version are given for the import "
 									+ req);
@@ -637,8 +637,8 @@ public final class Utils {
 			final String key = attribute.getKey();
 			final Object value = attribute.getValue();
 
-			if ((Constants.VERSION_ATTRIBUTE.equals(key) || Constants.BUNDLE_VERSION_ATTRIBUTE
-					.equals(key))) {
+			if (Constants.VERSION_ATTRIBUTE.equals(key)
+					|| Constants.BUNDLE_VERSION_ATTRIBUTE.equals(key)) {
 				if (value instanceof String) {
 					final VersionRange range = new VersionRange(
 							Utils.unQuote((String) value));
@@ -695,14 +695,14 @@ public final class Utils {
 		private boolean sealed;
 
 		@Override
-		public V put(K key, V value) {
+		public V put(final K key, final V value) {
 			if (sealed) {
 				throw new UnsupportedOperationException("put");
 			}
 			return super.put(key, value);
 		}
 
-		public void putAll(Map<? extends K, ? extends V> m) {
+		public void putAll(final Map<? extends K, ? extends V> m) {
 			throw new UnsupportedOperationException("putAll");
 		}
 
@@ -720,7 +720,7 @@ public final class Utils {
 		 */
 		private static final long serialVersionUID = -2126964539821583131L;
 
-		private ArrayList<E> removed = new ArrayList<E>();
+		private final ArrayList<E> removed = new ArrayList<E>();
 
 		public RemoveOnlyList(final Collection<? extends E> result) {
 			super(result);
@@ -776,7 +776,7 @@ public final class Utils {
 
 	// FIXME: remove!
 
-	public static void main(String... args) {
+	public static void main(final String... args) {
 
 		final String[] res = "foo,\"bar\",\"foo,bar\",test\\\",test"
 				.split(SPLIT_AT_COMMA);

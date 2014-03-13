@@ -131,7 +131,7 @@ public abstract class AbstractBundle implements Bundle, BundleRevisions {
 	 */
 	public final String getLocation() {
 		if (isSecurityEnabled()) {
-			// TODO: check  AdminPermission(this,METADATA)
+			// TODO: check AdminPermission(this,METADATA)
 		}
 		return location;
 	}
@@ -163,7 +163,7 @@ public abstract class AbstractBundle implements Bundle, BundleRevisions {
 			return checkPermissions(registeredServices
 					.toArray(new ServiceReferenceImpl[registeredServices.size()]));
 		} else {
-			return (ServiceReference[]) registeredServices
+			return registeredServices
 					.toArray(new ServiceReference[registeredServices.size()]);
 		}
 	}
@@ -210,13 +210,13 @@ public abstract class AbstractBundle implements Bundle, BundleRevisions {
 			// TODO: check AdminPermission(this,CONTEXT)
 		}
 		if (state == STARTING || state == ACTIVE || state == STOPPING) {
-			return (BundleContext) context;
+			return context;
 		}
 		return null;
 	}
 
 	@SuppressWarnings("unchecked")
-	public <A> A adapt(Class<A> type) {
+	public <A> A adapt(final Class<A> type) {
 		// BundleRevisions
 		// BundleStartLevel
 		if (type.isInstance(this)) {
@@ -249,7 +249,7 @@ public abstract class AbstractBundle implements Bundle, BundleRevisions {
 	 * @see java.lang.Comparable#compareTo(java.lang.Object)
 	 * @category Bundle
 	 */
-	public int compareTo(Bundle o) {
+	public int compareTo(final Bundle o) {
 		return (int) (o.getBundleId() - bundleId);
 	}
 
@@ -272,7 +272,7 @@ public abstract class AbstractBundle implements Bundle, BundleRevisions {
 	public Bundle getBundle() {
 		return this;
 	}
-	
+
 	/**
 	 * @see org.osgi.framework.Bundle#getDataFile(java.lang.String)
 	 * @category Bundle
@@ -284,7 +284,7 @@ public abstract class AbstractBundle implements Bundle, BundleRevisions {
 	protected abstract boolean isSecurityEnabled();
 
 	protected final void updateLastModified() {
-		long newMod = System.currentTimeMillis();
+		final long newMod = System.currentTimeMillis();
 		// ensure strict monotonicity on system with a slow clock
 		lastModified = newMod > lastModified ? newMod : ++lastModified;
 	}
@@ -298,12 +298,12 @@ public abstract class AbstractBundle implements Bundle, BundleRevisions {
 	 * @return the permitted references.
 	 */
 	protected static final ServiceReference<?>[] checkPermissions(
-			ServiceReferenceImpl<?>[] refs) {
-		List<ServiceReferenceImpl<?>[]> results = new ArrayList<ServiceReferenceImpl<?>[]>(
+			final ServiceReferenceImpl<?>[] refs) {
+		final List<ServiceReferenceImpl<?>[]> results = new ArrayList<ServiceReferenceImpl<?>[]>(
 				refs.length);
 		final AccessControlContext controller = AccessController.getContext();
 		for (int i = 0; i < refs.length; i++) {
-			String[] interfaces = (String[]) refs[i].properties
+			final String[] interfaces = (String[]) refs[i].properties
 					.get(Constants.OBJECTCLASS);
 			for (int j = 0; j < interfaces.length; j++) {
 				try {
@@ -311,7 +311,7 @@ public abstract class AbstractBundle implements Bundle, BundleRevisions {
 							interfaces[j], ServicePermission.GET));
 					results.add(refs);
 					break;
-				} catch (SecurityException se) {
+				} catch (final SecurityException se) {
 					// does not have the permission, try with the next interface
 				}
 			}
