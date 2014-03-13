@@ -1678,7 +1678,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 					// perform a cleanup for all bundles
 					// CLEANUP
 					final List<Bundle> restartList = new ArrayList<Bundle>(1);
-					final List<Bundle> resolveList = new ArrayList<Bundle>(1);
 
 					for (int i = 0; i < refreshArray.length; i++) {
 						final BundleImpl bu = (BundleImpl) refreshArray[i];
@@ -1686,7 +1685,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 							if (bu.state == ACTIVE) {
 								bu.stop();
 								restartList.add(bu);
-								resolveList.add(bu);
 							}
 							if (bu.state == RESOLVED) {
 								bu.state = INSTALLED;
@@ -1710,19 +1708,22 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 					// resolve, if possible
 					// FIXME: should be bulk operation
-					for (final Bundle bu0 : resolveList) {
+
+					for (final Iterator<Bundle> resolveIter = restartList
+							.iterator(); resolveIter.hasNext();) {
+						final BundleImpl bu = (BundleImpl) resolveIter.next();
 						try {
-							final BundleImpl bu = (BundleImpl) bu0;
 							if (bu.state == Bundle.INSTALLED) {
 								System.err.println("UPDATE RESOLVING " + bu);
 								final boolean success = bu.currentRevision
 										.resolve(false);
 								if (!success) {
-									restartList.remove(bu);
+									resolveIter.remove();
 								}
 							}
 						} catch (final Exception e) {
-							notifyListeners(FrameworkEvent.ERROR, bu0, e);
+							resolveIter.remove();
+							notifyListeners(FrameworkEvent.ERROR, bu, e);
 						}
 					}
 
@@ -1796,27 +1797,31 @@ public final class Concierge extends AbstractBundle implements Framework,
 	private boolean inResolve;
 
 	private ArrayList<ResolverHook> getResolverHooks(
-			final Collection<BundleRevision> bundles) {
+			final Collection<BundleRevision> bundles) throws Throwable {
 		new ArrayList<ResolverHook>();
 		final ArrayList<ResolverHook> hooks = new ArrayList<ResolverHook>();
 		@SuppressWarnings("unchecked")
 		final ServiceReferenceImpl<ResolverHookFactory>[] factories = resolverHookFactories
 				.toArray(new ServiceReferenceImpl[resolverHookFactories.size()]);
-		for (int i = 0; i < factories.length; i++) {
-			final ServiceReferenceImpl<ResolverHookFactory> sref = factories[i];
-			final ResolverHookFactory factory = sref.getService(Concierge.this);
-			if (factory != null) {
-				try {
+		try {
+			for (int i = 0; i < factories.length; i++) {
+				final ServiceReferenceImpl<ResolverHookFactory> sref = factories[i];
+				final ResolverHookFactory factory = sref
+						.getService(Concierge.this);
+				if (factory != null) {
 					final ResolverHook hook = factory.begin(Collections
 							.unmodifiableCollection(bundles));
 					if (hook != null) {
 						hooks.add(hook);
 					}
-				} catch (final Throwable t) {
-					// TODO: log?
+					sref.ungetService(Concierge.this);
 				}
-				sref.ungetService(Concierge.this);
 			}
+		} catch (final Throwable t) {
+			for (ResolverHook hook : hooks) {
+				hook.end();
+			}
+			throw t;
 		}
 		return hooks;
 	}
@@ -1826,69 +1831,76 @@ public final class Concierge extends AbstractBundle implements Framework,
 			final BundleRequirement dynImport, final boolean multiple) {
 		Collection<Capability> candidates = null;
 
-		final ArrayList<ResolverHook> hooks = getResolverHooks(Arrays
-				.asList(trigger));
+		try {
+			final ArrayList<ResolverHook> hooks = getResolverHooks(Arrays
+					.asList(trigger));
 
-		final String filterStr = dynImport.getDirectives().get(
-				Namespace.REQUIREMENT_FILTER_DIRECTIVE);
+			final String filterStr = dynImport.getDirectives().get(
+					Namespace.REQUIREMENT_FILTER_DIRECTIVE);
 
-		if (multiple) {
-			// we have a wildcard, this means scanning
-			candidates = capabilityRegistry
-					.getAll(PackageNamespace.PACKAGE_NAMESPACE);
-		} else {
-			// we don't have a wildcard, use the index
-			if (filterStr == null) {
-				candidates = capabilityRegistry.getByValue(
-						PackageNamespace.PACKAGE_NAMESPACE, dynImportPackage);
+			if (multiple) {
+				// we have a wildcard, this means scanning
+				candidates = capabilityRegistry
+						.getAll(PackageNamespace.PACKAGE_NAMESPACE);
 			} else {
-				try {
-					candidates = RFC1960Filter.filterWithIndex(dynImport,
-							filterStr, capabilityRegistry);
-				} catch (final InvalidSyntaxException e) {
-					e.printStackTrace();
+				// we don't have a wildcard, use the index
+				if (filterStr == null) {
+					candidates = capabilityRegistry.getByValue(
+							PackageNamespace.PACKAGE_NAMESPACE,
+							dynImportPackage);
+				} else {
+					try {
+						candidates = RFC1960Filter.filterWithIndex(dynImport,
+								filterStr, capabilityRegistry);
+					} catch (final InvalidSyntaxException e) {
+						e.printStackTrace();
+					}
 				}
 			}
-		}
 
-		if (candidates == null || candidates.isEmpty()) {
+			if (candidates == null || candidates.isEmpty()) {
+				for (final ResolverHook hook : hooks) {
+					hook.end();
+				}
+				return null;
+			}
+
+			filterCandidates(hooks, dynImport, candidates);
+
+			final ArrayList<BundleCapability> matches = new ArrayList<BundleCapability>();
+
+			for (final Capability cap : candidates) {
+				final String candidatePackage = (String) cap.getAttributes()
+						.get(PackageNamespace.PACKAGE_NAMESPACE);
+
+				assert candidatePackage != null;
+
+				if (multiple
+						&& RFC1960Filter.stringCompare(pkg.toCharArray(), 0,
+								candidatePackage.toCharArray(), 0) != 0) {
+					continue;
+				}
+
+				if (cap instanceof BundleCapability
+						&& Concierge.matches0(
+								PackageNamespace.PACKAGE_NAMESPACE, dynImport,
+								cap, filterStr)) {
+					// we have a match
+					matches.add((BundleCapability) cap);
+				}
+
+			}
+
 			for (final ResolverHook hook : hooks) {
 				hook.end();
 			}
+
+			Collections.sort(matches, Utils.EXPORT_ORDER);
+			return matches;
+		} catch (final Throwable t) {
+			// TODO: handle
 			return null;
 		}
-
-		filterCandidates(hooks, dynImport, candidates);
-
-		final ArrayList<BundleCapability> matches = new ArrayList<BundleCapability>();
-
-		for (final Capability cap : candidates) {
-			final String candidatePackage = (String) cap.getAttributes().get(
-					PackageNamespace.PACKAGE_NAMESPACE);
-
-			assert candidatePackage != null;
-
-			if (multiple
-					&& RFC1960Filter.stringCompare(pkg.toCharArray(), 0,
-							candidatePackage.toCharArray(), 0) != 0) {
-				continue;
-			}
-
-			if (cap instanceof BundleCapability
-					&& Concierge.matches0(PackageNamespace.PACKAGE_NAMESPACE,
-							dynImport, cap, filterStr)) {
-				// we have a match
-				matches.add((BundleCapability) cap);
-			}
-
-		}
-
-		for (final ResolverHook hook : hooks) {
-			hook.end();
-		}
-
-		Collections.sort(matches, Utils.EXPORT_ORDER);
-		return matches;
 
 	}
 
@@ -2117,29 +2129,29 @@ public final class Concierge extends AbstractBundle implements Framework,
 						+ unresolvedRequirements, BundleException.RESOLVE_ERROR);
 			}
 			return false;
-
-			// } catch (final ResolutionException e) {
-			// if (critical) {
-			// throw new BundleException("Resolution failed "
-			// + e.getUnresolvedRequirements(), e);
-			// } else {
-			// System.err.println("RESOLUTION NOT SUCCESSFUL "
-			// + e.getUnresolvedRequirements());
-			// return false;
-			// }
 		} catch (final BundleException be) {
 			throw be;
 		} catch (final Throwable t) {
-			t.printStackTrace();
-			return false;
+			throw new BundleException("Resolve Error",
+					BundleException.REJECTED_BY_HOOK, t);
 		} finally {
+			Throwable error = null;
 			if (resolver.hooks != null) {
 				for (final ResolverHook hook : resolver.hooks) {
-					hook.end();
+					try {
+						hook.end();
+					} catch (final Throwable t) {
+						error = t;
+					}
 				}
 			}
 			resolver.hooks = null;
 			inResolve = false;
+
+			if (error != null) {
+				throw new BundleException("Error",
+						BundleException.REJECTED_BY_HOOK, error);
+			}
 		}
 	}
 

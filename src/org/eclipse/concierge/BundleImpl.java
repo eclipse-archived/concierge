@@ -926,12 +926,12 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 						e.printStackTrace();
 						return null;
 					}
-					// return getEntry(name);
 					return null;
 				}
 			} catch (final BundleException e) {
 				// TODO: to log
 				e.printStackTrace();
+				return null;
 			}
 		}
 		return currentRevision.classloader.findResource(name);
@@ -1007,21 +1007,27 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 		}
 		if (state == INSTALLED) {
 			try {
-				currentRevision.resolve(false);
+				if (!currentRevision.resolve(false)) {
+					final Vector<URL> result = new Vector<URL>();
+
+					for (int i = 0; i < currentRevision.classpath.length; i++) {
+						final URL url = currentRevision.lookupFile(
+								currentRevision.classpath[i], name);
+						if (url != null) {
+							result.add(url);
+						}
+					}
+
+					return result.isEmpty() ? null : result.elements();
+				}
 			} catch (final BundleException e) {
 				// TODO: to log
 				e.printStackTrace();
+				return null;
 			}
 		}
-		if (currentRevision != null) {
-			return currentRevision.classloader.findResources(name);
-		} else {
-			// FIXME: this must fail!
-			// search in this bundle:
-			final Vector<URL> result = currentRevision.searchFiles(name, "*",
-					false, false);
-			return result.isEmpty() ? null : result.elements();
-		}
+
+		return currentRevision.classloader.findResources(name);
 	}
 
 	/**
@@ -1699,11 +1705,6 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 
 			if (!framework.resolve(
 					Collections.<BundleRevision> singletonList(this), critical)) {
-				if (critical) {
-					throw new BundleException(
-							"Could not resolve " + toString(),
-							BundleException.RESOLVE_ERROR);
-				}
 				return false;
 			}
 
@@ -2570,10 +2571,9 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 								.equals(dynImport
 										.getDirectives()
 										.get(Namespace.REQUIREMENT_CARDINALITY_DIRECTIVE));
-						final List<BundleCapability> matches = framework
-								.resolveDynamic(Revision.this, pkg,
-										dynImportPackage, dynImport, wildcard);
-
+						List<BundleCapability> matches;
+						matches = framework.resolveDynamic(Revision.this, pkg,
+								dynImportPackage, dynImport, wildcard);
 						if (matches != null) {
 							final BundleCapability bundleCap = matches.get(0);
 
