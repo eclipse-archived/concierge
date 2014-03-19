@@ -21,6 +21,7 @@ import java.io.FileOutputStream;
 import java.io.FilePermission;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -97,6 +98,35 @@ import org.osgi.service.resolver.HostedCapability;
 public class BundleImpl extends AbstractBundle implements Bundle,
 		BundleStartLevel {
 
+	/*
+	 * Helper methods for loading classes from a .dex file on Dalvik VM
+	 */
+	private static final Method dexFileLoader;
+    private static final Method dexClassLoader;
+    
+    static
+    {
+    	Method classloader;
+    	Method fileloader;
+        try
+        {
+            Class dexFileClass = Class.forName("dalvik.system.DexFile");
+       
+            classloader = dexFileClass.getMethod("loadClass",
+                new Class[] { String.class, ClassLoader.class });
+            fileloader = dexFileClass.getMethod("loadDex",
+                    new Class[]{String.class, String.class, Integer.TYPE});
+        }
+        catch (Throwable ex)
+        {
+        	classloader = null;
+        	fileloader = null;
+        }
+        dexClassLoader = classloader;
+        dexFileLoader = fileloader;
+    }
+	
+	
 	private static final Pattern DIRECTIVE_LIST = Pattern
 			.compile("\\s*([^:]*)\\s*:=\\s*\"\\s*(.+)*?\\s*\"\\s*");
 
@@ -2695,7 +2725,12 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 			 *         found. <code>null</code> otherwise.
 			 */
 			private synchronized Class<?> findOwnClass(final String classname) {
-				final Class<?> clazz = findLoadedClass(classname);
+				final Class<?> clazz;
+				if(dexClassLoader!=null){
+					clazz = findDexClass(classname);
+				} else {
+					clazz = findLoadedClass(classname);
+				}
 				if (clazz != null) {
 					return clazz;
 				}
@@ -2794,7 +2829,31 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 				}
 				return null;
 			}
-
+			
+			
+			/**
+			 * find a class from .dex embedded in the bundle when running on Android
+			 */
+			private Object dexFile = null;
+			
+			private Class<?> findDexClass(final String classname) {
+				try {
+					if(dexFile==null){
+						final String fileName = storageLocation+BUNDLE_FILE_NAME + revId;
+						dexFile = dexFileLoader.invoke(null, new Object[]{fileName,
+	                        storageLocation + "classes.dex", new Integer(0)});
+					}
+					
+					if(dexFile!=null){
+						 return (Class) dexClassLoader.invoke(dexFile,
+				                    new Object[] { classname.replace('.','/'), this});
+					}
+				} catch(Exception e){
+					return null;
+				}
+				return null;
+			}
+			
 			/**
 			 * find one or more resources in the scope of the own class loader.
 			 * 
