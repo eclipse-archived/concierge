@@ -3676,21 +3676,21 @@ public final class Concierge extends AbstractBundle implements Framework,
 				references = serviceRegistry.getAllValues();
 			} else {
 				references = serviceRegistry.get(clazz);
-				if (references == null) {
-					return null;
-				}
 			}
 
 			final List<ServiceReference<?>> result = new ArrayList<ServiceReference<?>>();
-			final ServiceReferenceImpl<?>[] refs = references
-					.toArray(new ServiceReferenceImpl[references.size()]);
-
-			for (int i = 0; i < refs.length; i++) {
-				if (theFilter.match(refs[i])
-						&& (all || refs[i].isAssignableTo(bundle,
-								(String[]) refs[i]
-										.getProperty(Constants.OBJECTCLASS)))) {
-					result.add(refs[i]);
+			
+			if(references!=null){
+				final ServiceReferenceImpl<?>[] refs = references
+						.toArray(new ServiceReferenceImpl[references.size()]);
+	
+				for (int i = 0; i < refs.length; i++) {
+					if (theFilter.match(refs[i])
+							&& (all || refs[i].isAssignableTo(bundle,
+									(String[]) refs[i]
+											.getProperty(Constants.OBJECTCLASS)))) {
+						result.add(refs[i]);
+					}
 				}
 			}
 
