@@ -100,7 +100,7 @@ public class BundleManifestOne implements LegacyBundleProcessing {
 
 					dirs.put(PackageNamespace.REQUIREMENT_RESOLUTION_DIRECTIVE,
 							PackageNamespace.RESOLUTION_DYNAMIC);
-					attrs.put(PackageNamespace.PACKAGE_NAMESPACE, literals[0]);
+					attrs.put(PackageNamespace.PACKAGE_NAMESPACE, literals[0].trim());
 
 					if (literals[0].contains("*")) {
 						dirs.put(
@@ -128,7 +128,7 @@ public class BundleManifestOne implements LegacyBundleProcessing {
 					final Tuple<HashMap<String, String>, HashMap<String, Object>> tuple = Utils
 							.parseLiterals(literals, 1);
 					final HashMap<String, Object> attrs = tuple.getLatter();
-					attrs.put(PackageNamespace.PACKAGE_NAMESPACE, literals[0]);
+					attrs.put(PackageNamespace.PACKAGE_NAMESPACE, literals[0].trim());
 
 					caps.add(new BundleCapabilityImpl(revision,
 							PackageNamespace.PACKAGE_NAMESPACE, tuple

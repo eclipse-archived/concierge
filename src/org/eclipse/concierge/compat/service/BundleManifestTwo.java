@@ -406,7 +406,7 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 							PackageNamespace.EFFECTIVE_ACTIVE);
 
 					// TODO: think of something better
-					dirs.put(PackageNamespace.PACKAGE_NAMESPACE, literals[0]);
+					dirs.put(PackageNamespace.PACKAGE_NAMESPACE, literals[0].trim());
 
 					if (literals[0].contains("*")) {
 						dirs.put(
@@ -461,7 +461,7 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 						}
 					}
 
-					attrs.put(PackageNamespace.PACKAGE_NAMESPACE, literals[0]);
+					attrs.put(PackageNamespace.PACKAGE_NAMESPACE, literals[0].trim());
 
 					if (literals[0].startsWith("java.")) {
 						throw new BundleException(
