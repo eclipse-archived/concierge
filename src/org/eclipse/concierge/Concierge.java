@@ -4044,8 +4044,12 @@ public final class Concierge extends AbstractBundle implements Framework,
 		public <S> Collection<ServiceReference<S>> getServiceReferences(
 				final Class<S> clazz, final String filter)
 				throws InvalidSyntaxException {
-			return (Collection) Arrays.asList(getServiceReferences(
-					clazz.getName(), filter));
+			final ServiceReference[] refs = getServiceReferences(clazz.getName(), filter);
+			if (refs == null){
+				return Collections.EMPTY_LIST;
+			} else {
+				return (Collection) Arrays.asList(refs);
+			}
 		}
 
 		/**
