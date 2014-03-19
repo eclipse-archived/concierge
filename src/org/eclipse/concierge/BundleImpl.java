@@ -2309,6 +2309,11 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 
 		class BundleClassLoader extends ClassLoader implements BundleReference {
 
+			public BundleClassLoader(){
+				// set Concierge Classloader as parent of BundleClassLoader
+				super(Concierge.class.getClassLoader());
+			}
+			
 			/**
 			 * 
 			 * @see java.lang.ClassLoader#loadClass(java.lang.String)
