@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -569,7 +570,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 		defaultProperties.setProperty(Constants.FRAMEWORK_BEGINNING_STARTLEVEL,
 				"3");
 		defaultProperties.setProperty(Constants.FRAMEWORK_STORAGE, "storage");
-
+		
+		defaultProperties.setProperty(Constants.FRAMEWORK_UUID, UUID.randomUUID().toString());
+		
 		// properties
 		properties = new Properties(defaultProperties) {
 
