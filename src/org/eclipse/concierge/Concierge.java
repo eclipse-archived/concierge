@@ -1801,7 +1801,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 	private ArrayList<ResolverHook> getResolverHooks(
 			final Collection<BundleRevision> bundles) throws Throwable {
-		new ArrayList<ResolverHook>();
 		final ArrayList<ResolverHook> hooks = new ArrayList<ResolverHook>();
 		@SuppressWarnings("unchecked")
 		final ServiceReferenceImpl<ResolverHookFactory>[] factories = resolverHookFactories
