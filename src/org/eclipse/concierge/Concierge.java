@@ -1006,6 +1006,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 					+ "--------------------------------------");
 			final long time = System.currentTimeMillis();
 
+			// start System bundle
+			start(context);
+			
 			// set startlevel and start all bundles that are marked to be
 			// started up to the intended startlevel
 			setLevel(bundles.toArray(new Bundle[bundles.size()]),
@@ -1127,6 +1130,10 @@ public final class Concierge extends AbstractBundle implements Framework,
 		try {
 			setLevel(bundles.toArray(new Bundle[bundles.size()]), 0, true);
 			state = Bundle.RESOLVED;
+			
+			// stop System bundle
+			stop(context);
+			
 			// release all resources
 			bundles.clear();
 			bundleID_bundles.clear();
