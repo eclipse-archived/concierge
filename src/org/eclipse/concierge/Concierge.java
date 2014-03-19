@@ -557,7 +557,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 		defaultProperties
 				.setProperty(
 						Constants.FRAMEWORK_SYSTEMPACKAGES,
-						"org.osgi.framework;version=1.7,org.osgi.framework.hooks.bundle;version=1.1,org.osgi.framework.hooks.resolver;version=1.0,org.osgi.framework.hooks.service;version=1.1,org.osgi.framework.hooks.weaving;version=1.0,org.osgi.framework.launch;version=1.1,org.osgi.framework.namespace;version=1.0,org.osgi.framework.startlevel;version=1.0,org.osgi.framework.wiring;version=1.1,org.osgi.resource;version=1.0,org.osgi.service.log;version=1.3,org.osgi.service.packageadmin;version=1.2,org.osgi.service.startlevel;version=1.1,org.osgi.service.url,org.osgi.service.resolver;version=1.0,org.osgi.util.tracker;version=1.5,META-INF.services");
+						"org.osgi.framework;version=1.7,org.osgi.framework.hooks.bundle;version=1.1,org.osgi.framework.hooks.resolver;version=1.0,org.osgi.framework.hooks.service;version=1.1,org.osgi.framework.hooks.weaving;version=1.0,org.osgi.framework.launch;version=1.1,org.osgi.framework.namespace;version=1.0,org.osgi.framework.startlevel;version=1.0,org.osgi.framework.wiring;version=1.1,org.osgi.resource;version=1.0,org.osgi.service.log;version=1.3,org.osgi.service.packageadmin;version=1.2,org.osgi.service.startlevel;version=1.1,org.osgi.service.url;version=1.0,org.osgi.service.resolver;version=1.0,org.osgi.util.tracker;version=1.5,META-INF.services");
 
 		Object obj;
 		defaultProperties.put(Constants.FRAMEWORK_OS_NAME,
