@@ -2407,7 +2407,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 						.findProviders(requirement);
 
 				// filter through the resolver hooks if there are any
-				if (!hooks.isEmpty()
+				if (hooks!=null && !hooks.isEmpty()
 						&& requirement instanceof BundleRequirement) {
 					filterCandidates(hooks, (BundleRequirement) requirement,
 							candidates);
