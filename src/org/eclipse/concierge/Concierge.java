@@ -429,7 +429,13 @@ public final class Concierge extends AbstractBundle implements Framework,
 		}
 
 		final File xargs = new File(INIT_XARGS_FILE_PATH);
-		final Concierge fw = xargsLauncher.processXargsFile(xargs);
+		final Concierge fw;
+		if(xargs.exists()){
+			fw = xargsLauncher.processXargsFile(xargs);
+		} else {
+			fw = (Concierge) new Factory().newFramework(null);
+			fw.init();
+		}
 		fw.waitForStop(0);
 	}
 
