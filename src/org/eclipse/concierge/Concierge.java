@@ -681,7 +681,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 							"Framework bootdelegation " + bds[i]
 									+ " is not supported");
 				}
-				bdsRel.add(bds[i].substring(0, pos - 1));
+				bdsRel.add(bds[i].substring(0, pos));
 			}
 		}
 
