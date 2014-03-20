@@ -102,31 +102,26 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 	 * Helper methods for loading classes from a .dex file on Dalvik VM
 	 */
 	private static final Method dexFileLoader;
-    private static final Method dexClassLoader;
-    
-    static
-    {
-    	Method classloader;
-    	Method fileloader;
-        try
-        {
-            Class dexFileClass = Class.forName("dalvik.system.DexFile");
-       
-            classloader = dexFileClass.getMethod("loadClass",
-                new Class[] { String.class, ClassLoader.class });
-            fileloader = dexFileClass.getMethod("loadDex",
-                    new Class[]{String.class, String.class, Integer.TYPE});
-        }
-        catch (Throwable ex)
-        {
-        	classloader = null;
-        	fileloader = null;
-        }
-        dexClassLoader = classloader;
-        dexFileLoader = fileloader;
-    }
-	
-	
+	private static final Method dexClassLoader;
+
+	static {
+		Method classloader;
+		Method fileloader;
+		try {
+			Class dexFileClass = Class.forName("dalvik.system.DexFile");
+
+			classloader = dexFileClass.getMethod("loadClass", new Class[] {
+					String.class, ClassLoader.class });
+			fileloader = dexFileClass.getMethod("loadDex", new Class[] {
+					String.class, String.class, Integer.TYPE });
+		} catch (Throwable ex) {
+			classloader = null;
+			fileloader = null;
+		}
+		dexClassLoader = classloader;
+		dexFileLoader = fileloader;
+	}
+
 	private static final Pattern DIRECTIVE_LIST = Pattern
 			.compile("\\s*([^:]*)\\s*:=\\s*\"\\s*(.+)*?\\s*\"\\s*");
 
@@ -1057,7 +1052,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 			}
 		}
 
-		return currentRevision.classloader.findResources(name);
+		return currentRevision.classloader.findResources0(name);
 	}
 
 	/**
@@ -2309,11 +2304,11 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 
 		class BundleClassLoader extends ClassLoader implements BundleReference {
 
-			public BundleClassLoader(){
+			public BundleClassLoader() {
 				// set Concierge Classloader as parent of BundleClassLoader
 				super(Concierge.class.getClassLoader());
 			}
-			
+
 			/**
 			 * 
 			 * @see java.lang.ClassLoader#loadClass(java.lang.String)
@@ -2403,13 +2398,20 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 			 * @category ClassLoader
 			 */
 			protected Enumeration<URL> findResources(final String name) {
+				final Enumeration<URL> result = findResources0(name);
+				return result == null ? Collections.<URL> emptyEnumeration()
+						: result;
+			}
+
+			protected Enumeration<URL> findResources0(final String name) {
 				final String strippedName = stripTrailing(name);
 				try {
 					@SuppressWarnings("unchecked")
 					final Vector<URL> results = (Vector<URL>) findResource0(
 							packageOf(pseudoClassname(strippedName)),
 							strippedName, false, true);
-					return (results == null || results.isEmpty()) ? null : results.elements();
+					return (results == null || results.isEmpty()) ? null
+							: results.elements();
 				} catch (final ClassNotFoundException e) {
 					// does not happen
 					e.printStackTrace();
@@ -2731,7 +2733,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 			 */
 			private synchronized Class<?> findOwnClass(final String classname) {
 				final Class<?> clazz;
-				if(dexClassLoader!=null){
+				if (dexClassLoader != null) {
 					clazz = findDexClass(classname);
 				} else {
 					clazz = findLoadedClass(classname);
@@ -2834,31 +2836,34 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 				}
 				return null;
 			}
-			
-			
+
 			/**
-			 * find a class from .dex embedded in the bundle when running on Android
+			 * find a class from .dex embedded in the bundle when running on
+			 * Android
 			 */
 			private Object dexFile = null;
-			
+
 			private Class<?> findDexClass(final String classname) {
 				try {
-					if(dexFile==null){
-						final String fileName = storageLocation+BUNDLE_FILE_NAME + revId;
-						dexFile = dexFileLoader.invoke(null, new Object[]{fileName,
-	                        storageLocation + "classes.dex", new Integer(0)});
+					if (dexFile == null) {
+						final String fileName = storageLocation
+								+ BUNDLE_FILE_NAME + revId;
+						dexFile = dexFileLoader.invoke(null, new Object[] {
+								fileName, storageLocation + "classes.dex",
+								new Integer(0) });
 					}
-					
-					if(dexFile!=null){
-						 return (Class) dexClassLoader.invoke(dexFile,
-				                    new Object[] { classname.replace('.','/'), this});
+
+					if (dexFile != null) {
+						return (Class) dexClassLoader.invoke(dexFile,
+								new Object[] { classname.replace('.', '/'),
+										this });
 					}
-				} catch(Exception e){
+				} catch (Exception e) {
 					return null;
 				}
 				return null;
 			}
-			
+
 			/**
 			 * find one or more resources in the scope of the own class loader.
 			 * 
