@@ -2409,7 +2409,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 					final Vector<URL> results = (Vector<URL>) findResource0(
 							packageOf(pseudoClassname(strippedName)),
 							strippedName, false, true);
-					return results.isEmpty() ? null : results.elements();
+					return (results == null || results.isEmpty()) ? null : results.elements();
 				} catch (final ClassNotFoundException e) {
 					// does not happen
 					e.printStackTrace();
