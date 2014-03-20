@@ -22,12 +22,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.concierge.BundleImpl;
+import org.eclipse.concierge.BundleImpl.Revision;
 import org.eclipse.concierge.Concierge;
 import org.eclipse.concierge.Factory;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
+import org.osgi.framework.wiring.BundleRevision;
 
 public class XargsFileLauncher {
 
@@ -97,7 +99,10 @@ public class XargsFileLauncher {
 						final BundleImpl b = (BundleImpl) context.installBundle(files[i]
 								.getName());
 						b.setStartLevel(initLevel);
-						b.start();
+						final Revision rev = (Revision) b.adapt(BundleRevision.class);
+						if (!rev.isFragment()) {
+							b.start();
+						}
 					}
 					continue;
 				} else if (token.startsWith("-istart")) {

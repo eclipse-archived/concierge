@@ -108,7 +108,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 		Method classloader;
 		Method fileloader;
 		try {
-			Class dexFileClass = Class.forName("dalvik.system.DexFile");
+			Class<?> dexFileClass = Class.forName("dalvik.system.DexFile");
 
 			classloader = dexFileClass.getMethod("loadClass", new Class[] {
 					String.class, ClassLoader.class });
@@ -1628,7 +1628,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 			return index;
 		}
 
-		protected boolean isFragment() {
+		public boolean isFragment() {
 			return requirements.get(HostNamespace.HOST_NAMESPACE) != null;
 		}
 
