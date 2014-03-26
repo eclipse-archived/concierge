@@ -893,7 +893,10 @@ public final class Concierge extends AbstractBundle implements Framework,
 			}
 
 		}
-
+		
+		final BundleCapabilityImpl sysbundleCap = new BundleCapabilityImpl(this, "osgi.wiring.bundle; osgi.wiring.bundle="+Constants.SYSTEM_BUNDLE_SYMBOLICNAME);
+		systemBundleCapabilities.add(sysbundleCap);
+		
 		publishCapabilities(systemBundleCapabilities);
 
 		// add to framework wiring
