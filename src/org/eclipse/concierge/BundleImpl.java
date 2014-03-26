@@ -317,9 +317,9 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 		// we are just installing the bundle, if it is
 		// possible, resolve it, if not, wait until the
 		// exports are really needed (i.e., they become critical)
-		// if (!currentRevision.isFragment()) {
-		// currentRevision.resolve(false);
-		// }
+		if (!currentRevision.isFragment()) {
+			currentRevision.resolve(false);
+		}
 
 		// register bundle with framework:
 		synchronized (framework) {
