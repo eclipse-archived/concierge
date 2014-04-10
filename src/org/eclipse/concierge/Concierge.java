@@ -1142,8 +1142,14 @@ public final class Concierge extends AbstractBundle implements Framework,
 			
 			// stop System bundle
 			stop(context);
-			
+						
 			// release all resources
+			for (final AbstractBundle bundle : bundles) {
+				for (final BundleRevision rev : bundle.getRevisions()) {
+					((Revision) rev).close();
+				}
+			}
+			
 			bundles.clear();
 			bundleID_bundles.clear();
 			serviceRegistry.clear();

@@ -257,13 +257,13 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 	 */
 	private Revision readAndProcessInputStream(final InputStream inStream)
 			throws BundleException {
-		File file = null;
 
 		final int revisionNumber = ++nextRev;
 
 		try {
 			// write the JAR file to the storage
-			file = new File(storageLocation, BUNDLE_FILE_NAME + revisionNumber);
+			final File file = new File(storageLocation, BUNDLE_FILE_NAME
+					+ revisionNumber);
 
 			Utils.storeFile(file, inStream);
 
@@ -306,8 +306,11 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 		} catch (final IOException ioe) {
 			ioe.printStackTrace();
 			Concierge.deleteDirectory(new File(storageLocation));
-			throw new BundleException("Not a valid bundle: " + location
-					+ " (tried to write to " + file + ")",
+			throw new BundleException("Not a valid bundle: "
+					+ location
+					+ " (tried to write to "
+					+ new File(storageLocation, BUNDLE_FILE_NAME
+							+ revisionNumber) + ")",
 					BundleException.READ_ERROR, ioe);
 		}
 	}
@@ -735,6 +738,12 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 				updateLastModified();
 
 				if (currentRevision != null) {
+					try {
+						currentRevision.close();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 					currentRevision.cleanup(false);
 				}
 			}
@@ -2293,6 +2302,8 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 		protected abstract InputStream retrieveFile(final String classpath,
 				final String filename) throws IOException;
 
+		protected abstract void close() throws IOException;
+
 		URL createURL(final String name1, final String fragment)
 				throws MalformedURLException {
 			final String name = name1.replace('\\', '/');
@@ -3326,6 +3337,10 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 			return results;
 		}
 
+		protected void close() throws IOException {
+			jarFile.close();
+		}
+
 		public String toString() {
 			return "JarBundleResource {" + jarFile.getName() + " of bundle "
 					+ BundleImpl.this.toString() + "}";
@@ -3460,6 +3475,10 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 					}
 				}
 			}
+		}
+
+		protected void close() throws IOException {
+			// nop
 		}
 
 	}
