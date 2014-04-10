@@ -2449,6 +2449,14 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 					// check if the provider is already resolved
 					if (existingWirings.get(capability.getResource()) != null) {
+						// check for uses constraints
+						final String usesStr = capability.getDirectives().get(PackageNamespace.CAPABILITY_USES_DIRECTIVE);
+						if (usesStr != null) {
+							final String[] usesConstraints = usesStr.split(Utils.SPLIT_AT_COMMA);
+							
+							//throw new RuntimeException("IGNORING USES " + Arrays.asList(usesConstraints));
+						}
+						
 						final Wire wire = Resources.createWire(capability,
 								requirement);
 						newWires.insert(resource, wire);
