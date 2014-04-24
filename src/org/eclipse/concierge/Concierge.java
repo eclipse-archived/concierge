@@ -37,6 +37,7 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
@@ -430,7 +431,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 		final File xargs = new File(INIT_XARGS_FILE_PATH);
 		final Concierge fw;
-		if(xargs.exists()){
+		if (xargs.exists()) {
 			fw = xargsLauncher.processXargsFile(xargs);
 		} else {
 			fw = (Concierge) new Factory().newFramework(null);
@@ -576,9 +577,10 @@ public final class Concierge extends AbstractBundle implements Framework,
 		defaultProperties.setProperty(Constants.FRAMEWORK_BEGINNING_STARTLEVEL,
 				"3");
 		defaultProperties.setProperty(Constants.FRAMEWORK_STORAGE, "storage");
-		
-		defaultProperties.setProperty(Constants.FRAMEWORK_UUID, UUID.randomUUID().toString());
-		
+
+		defaultProperties.setProperty(Constants.FRAMEWORK_UUID, UUID
+				.randomUUID().toString());
+
 		// properties
 		properties = new Properties(defaultProperties) {
 
@@ -893,10 +895,12 @@ public final class Concierge extends AbstractBundle implements Framework,
 			}
 
 		}
-		
-		final BundleCapabilityImpl sysbundleCap = new BundleCapabilityImpl(this, "osgi.wiring.bundle; osgi.wiring.bundle="+Constants.SYSTEM_BUNDLE_SYMBOLICNAME);
+
+		final BundleCapabilityImpl sysbundleCap = new BundleCapabilityImpl(
+				this, "osgi.wiring.bundle; osgi.wiring.bundle="
+						+ Constants.SYSTEM_BUNDLE_SYMBOLICNAME);
 		systemBundleCapabilities.add(sysbundleCap);
-		
+
 		publishCapabilities(systemBundleCapabilities);
 
 		// add to framework wiring
@@ -1017,7 +1021,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 			// start System bundle
 			start(context);
-			
+
 			// set startlevel and start all bundles that are marked to be
 			// started up to the intended startlevel
 			setLevel(bundles.toArray(new Bundle[bundles.size()]),
@@ -1139,17 +1143,17 @@ public final class Concierge extends AbstractBundle implements Framework,
 		try {
 			setLevel(bundles.toArray(new Bundle[bundles.size()]), 0, true);
 			state = Bundle.RESOLVED;
-			
+
 			// stop System bundle
 			stop(context);
-						
+
 			// release all resources
 			for (final AbstractBundle bundle : bundles) {
 				for (final BundleRevision rev : bundle.getRevisions()) {
 					((Revision) rev).close();
 				}
 			}
-			
+
 			bundles.clear();
 			bundleID_bundles.clear();
 			serviceRegistry.clear();
@@ -2104,6 +2108,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 									host.attachFragment(revision);
 									attached = true;
 								} catch (final BundleException be) {
+									// TODO: remove
+									be.printStackTrace();
 									notifyFrameworkListeners(
 											FrameworkEvent.ERROR,
 											revision.getBundle(), be);
@@ -2156,6 +2162,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 		} catch (final BundleException be) {
 			throw be;
 		} catch (final Throwable t) {
+			t.printStackTrace();
 			throw new BundleException("Resolve Error",
 					BundleException.REJECTED_BY_HOOK, t);
 		} finally {
@@ -2428,7 +2435,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 						.findProviders(requirement);
 
 				// filter through the resolver hooks if there are any
-				if (hooks!=null && !hooks.isEmpty()
+				if (hooks != null && !hooks.isEmpty()
 						&& requirement instanceof BundleRequirement) {
 					filterCandidates(hooks, (BundleRequirement) requirement,
 							candidates);
@@ -2455,14 +2462,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 					// check if the provider is already resolved
 					if (existingWirings.get(capability.getResource()) != null) {
-						// check for uses constraints
-						final String usesStr = capability.getDirectives().get(PackageNamespace.CAPABILITY_USES_DIRECTIVE);
-						if (usesStr != null) {
-							final String[] usesConstraints = usesStr.split(Utils.SPLIT_AT_COMMA);
-							
-							//throw new RuntimeException("IGNORING USES " + Arrays.asList(usesConstraints));
-						}
-						
+
+
 						final Wire wire = Resources.createWire(capability,
 								requirement);
 						newWires.insert(resource, wire);
@@ -3708,15 +3709,15 @@ public final class Concierge extends AbstractBundle implements Framework,
 			}
 
 			final List<ServiceReference<?>> result = new ArrayList<ServiceReference<?>>();
-			
-			if(references!=null){
+
+			if (references != null) {
 				final ServiceReferenceImpl<?>[] refs = references
 						.toArray(new ServiceReferenceImpl[references.size()]);
-	
+
 				for (int i = 0; i < refs.length; i++) {
 					if (theFilter.match(refs[i])
-							&& (all || refs[i].isAssignableTo(bundle,
-									(String[]) refs[i]
+							&& (all || refs[i]
+									.isAssignableTo(bundle, (String[]) refs[i]
 											.getProperty(Constants.OBJECTCLASS)))) {
 						result.add(refs[i]);
 					}
@@ -4076,8 +4077,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 		public <S> Collection<ServiceReference<S>> getServiceReferences(
 				final Class<S> clazz, final String filter)
 				throws InvalidSyntaxException {
-			final ServiceReference[] refs = getServiceReferences(clazz.getName(), filter);
-			if (refs == null){
+			final ServiceReference[] refs = getServiceReferences(
+					clazz.getName(), filter);
+			if (refs == null) {
 				return Collections.EMPTY_LIST;
 			} else {
 				return (Collection) Arrays.asList(refs);

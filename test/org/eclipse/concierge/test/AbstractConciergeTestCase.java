@@ -114,6 +114,15 @@ public abstract class AbstractConciergeTestCase {
 		return false;
 	}
 
+	protected Bundle[] installBundles(final String[] bundleNames) throws BundleException {
+		final Bundle[] bundles = new Bundle[bundleNames.length];
+		for (int i = 0; i < bundleNames.length; i++) {
+			final String url = getURLForBundle(bundleNames[i]);
+			bundles[i] = bundleContext.installBundle(url);
+		}
+		return bundles;
+	}
+
 	protected Bundle[] installAndStartBundles(final String[] bundleNames)
 			throws BundleException {
 		final Bundle[] bundles = new Bundle[bundleNames.length];
@@ -148,7 +157,8 @@ public abstract class AbstractConciergeTestCase {
 		final Concierge concierge = (Concierge) framework;
 		final Collection<Bundle> bundlesToResolve = new ArrayList<Bundle>();
 		bundlesToResolve.add(bundle);
-		concierge.resolveBundles(bundlesToResolve);
+		final boolean result = concierge.resolveBundles(bundlesToResolve);
+		Assert.assertTrue(result);
 	}
 
 	/** Returns true when the specified bundle is a fragment. */

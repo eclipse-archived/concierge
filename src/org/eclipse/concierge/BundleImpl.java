@@ -320,9 +320,9 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 		// we are just installing the bundle, if it is
 		// possible, resolve it, if not, wait until the
 		// exports are really needed (i.e., they become critical)
-		if (!currentRevision.isFragment()) {
-			currentRevision.resolve(false);
-		}
+		//if (!currentRevision.isFragment()) {
+		//	currentRevision.resolve(false);
+		//}
 
 		// register bundle with framework:
 		synchronized (framework) {
@@ -2046,6 +2046,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 		}
 
 		boolean attachFragment(final Revision fragment) throws BundleException {
+			System.err.println("ATTACHING FRAGMENT ... " + fragment);
 			if (fragments != null) {
 				if (fragments.contains(fragment)) {
 					throw new RuntimeException("ALREADY HAVING FRAGMENT");
@@ -2217,7 +2218,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 				throw new IllegalArgumentException("list1 == null");
 			}
 			if (list2 == null) {
-				throw new IllegalArgumentException("list2 == null");
+				return;
 			}
 
 			final int list1size = list1.size();
