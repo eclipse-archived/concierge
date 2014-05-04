@@ -37,7 +37,6 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
@@ -2387,31 +2386,18 @@ public final class Concierge extends AbstractBundle implements Framework,
 				final HashSet<Resource> inResolution) {
 			inResolution.add(resource);
 
-			//if (existingWirings.containsKey(resource)
-			//		|| solution.containsKey(resource)) {
-			//	return Collections.emptyList();
-			//}
 			if (solution.containsKey(resource)) {
 				return Collections.emptyList();
 			}
 
 			final Collection<Requirement> unresolvedRequirements = new ArrayList<Requirement>();
-
 			final MultiMap<Resource, Wire> newWires = new MultiMap<Resource, Wire>();
-
-			// TODO: debug output
-			System.err.println("resolving " + resource);
 
 			boolean isFragment = false;
 
 			if (resource instanceof Revision) {
 				final Revision revision = (Revision) resource;
 
-				//if (revision.getBundle().getState() == Bundle.RESOLVED) {
-					// optimization
-				//	return Collections.emptyList();
-				//}
-				
 				checkSingleton(revision);
 
 				isFragment = revision.isFragment();
@@ -2425,14 +2411,21 @@ public final class Concierge extends AbstractBundle implements Framework,
 								}
 
 								hostFragment(context, frag, revision, solution);
-							} catch (BundleException e) {
-								e.printStackTrace();
-
-								// TODO: to log
+							} catch (final BundleException e) {
+								// does not attach...
+								if (LOG_ENABLED) {
+									logger.log(LogService.LOG_ERROR,
+											"Unsuccessfully attempted to attach "
+													+ frag + " to " + revision,
+											e);
+								}
 							}
 						}
 					}
 				}
+			} else {
+				isFragment = !resource.getRequirements(
+						HostNamespace.HOST_NAMESPACE).isEmpty();
 			}
 
 			final Collection<Requirement> requirements = resource
@@ -2447,6 +2440,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 				if (isFragment
 						&& !HostNamespace.HOST_NAMESPACE.equals(requirement
 								.getNamespace())) {
+					// skip fragment requirements
 					continue;
 				}
 
@@ -2538,7 +2532,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 							+ requirement + " CANDIDATES WERE " + candidates);
 					unresolvedRequirements.add(requirement);
 				}
-
 			}
 
 			if (unresolvedRequirements.isEmpty()) {
