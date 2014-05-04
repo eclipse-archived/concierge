@@ -2418,34 +2418,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 									continue;
 								}
 
-								// host the capabilities
-								for (final Capability cap : frag
-										.getCapabilities(null)) {
-									if (!IdentityNamespace.IDENTITY_NAMESPACE
-											.equals(cap.getNamespace())) {
-										final HostedBundleCapability hostedCap = new HostedBundleCapability(
-												revision, cap);
-
-										context.insertHostedCapability(
-												revision.getCapabilities(null),
-												hostedCap);
-									}
-								}
-
-								// create host wire
-								final Capability hostCapability = revision
-										.getCapabilities(
-												HostNamespace.HOST_NAMESPACE)
-										.get(0);
-								final Requirement hostRequirement = frag
-										.getRequirements(
-												HostNamespace.HOST_NAMESPACE)
-										.get(0);
-
-								final Wire wire = Resources.createWire(
-										hostCapability, hostRequirement);
-								solution.insert(frag, wire);
-								solution.insert(resource, wire);
+								hostFragment(context, frag, revision, solution);
 							} catch (BundleException e) {
 								e.printStackTrace();
 
@@ -2493,10 +2466,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 						if (!((Revision) capability.getResource())
 								.checkFragment((Revision) resource)) {
-							resolved = true;
 							continue;
 						}
-
+						resolved = true;
 						hosts.add(capability.getResource());
 					}
 
@@ -2582,34 +2554,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 							resolved = true;
 
-							// host the capabilities
-							for (final Capability cap : revision
-									.getCapabilities(null)) {
-								if (!IdentityNamespace.IDENTITY_NAMESPACE
-										.equals(cap.getNamespace())) {
-									final HostedBundleCapability hostedCap = new HostedBundleCapability(
-											host, cap);
-
-									context.insertHostedCapability(
-											host.getCapabilities(null),
-											hostedCap);
-								}
-							}
-
-							// create host wire
-							final Capability hostCapability = host
-									.getCapabilities(
-											HostNamespace.HOST_NAMESPACE)
-									.get(0);
-							final Requirement hostRequirement = revision
-									.getRequirements(
-											HostNamespace.HOST_NAMESPACE)
-									.get(0);
-
-							final Wire wire = Resources.createWire(
-									hostCapability, hostRequirement);
-							solution.insert(host, wire);
-							solution.insert(revision, wire);
+							hostFragment(context, revision, host, solution);
 						}
 					}
 
@@ -2620,6 +2565,33 @@ public final class Concierge extends AbstractBundle implements Framework,
 			}
 
 			return unresolvedRequirements;
+		}
+
+		private void hostFragment(final ResolveContext context,
+				final Revision fragment, final Revision host,
+				final MultiMap<Resource, Wire> solution) {
+			// host the capabilities
+			for (final Capability cap : fragment.getCapabilities(null)) {
+				if (!IdentityNamespace.IDENTITY_NAMESPACE.equals(cap
+						.getNamespace())) {
+					final HostedBundleCapability hostedCap = new HostedBundleCapability(
+							host, cap);
+
+					context.insertHostedCapability(host.getCapabilities(null),
+							hostedCap);
+				}
+			}
+
+			// create host wire
+			final Capability hostCapability = host.getCapabilities(
+					HostNamespace.HOST_NAMESPACE).get(0);
+			final Requirement hostRequirement = fragment.getRequirements(
+					HostNamespace.HOST_NAMESPACE).get(0);
+
+			final Wire wire = Resources.createWire(hostCapability,
+					hostRequirement);
+			solution.insert(fragment, wire);
+			solution.insert(host, wire);
 		}
 	}
 
