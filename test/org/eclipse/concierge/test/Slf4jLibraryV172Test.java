@@ -106,25 +106,17 @@ public class Slf4jLibraryV172Test extends AbstractConciergeTestCase {
 				"ch.qos.logback.slf4j_1.0.7.v20121108-1250.jar" };
 		//final Bundle[] bundles = installAndStartBundles(bundleNames);
 		final Bundle[] bundles = installBundles(bundleNames);
-		//assertBundleResolved(bundles[0]);
-		//assertBundleResolved(bundles[1]);
-		//assertBundleResolved(bundles[2]);
 
 		bundles[0].start();
 		
-		// fragment will actually NOT be resolved (see BundleImpl.install)
-		// enforce Concierge to resolve explicitly
-		//enforceResolveBundle(bundles[3]);
-		// TODO does even fail
-		//assertBundleResolved(bundles[3]);
-
 		// install a test bundle
 		final Map<String, String> manifestEntries = new HashMap<String, String>();
 		manifestEntries.put("Bundle-Version", "1.0.0");
 		manifestEntries.put("Import-Package", "org.slf4j");
 		final Bundle bundle = installBundle(
 				"concierge.test.testSLf4JGetLogbackLogger", manifestEntries);
-		//assertBundleResolved(bundle);
+
+		bundle.start();
 
 		// Logger logger = LoggerFactory.getLogger(Slf4jLibraryV172Test.class);
 		// logger.info("Logger Test");
@@ -133,7 +125,7 @@ public class Slf4jLibraryV172Test extends AbstractConciergeTestCase {
 				"getLogger", new Object[] { "someCategory" });
 		runner.callMethod(logger, "info", new Object[] { "Logger Test" });
 		// TODO add here correct class name when test is working
-		Assert.assertEquals("addLogbackLoggerClassNameHere", logger.getClass()
+		Assert.assertEquals("ch.qos.logback.classic.Logger", logger.getClass()
 				.getName());
 	}
 

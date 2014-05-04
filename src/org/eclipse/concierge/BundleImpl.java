@@ -320,9 +320,9 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 		// we are just installing the bundle, if it is
 		// possible, resolve it, if not, wait until the
 		// exports are really needed (i.e., they become critical)
-		//if (!currentRevision.isFragment()) {
-		//	currentRevision.resolve(false);
-		//}
+		// if (!currentRevision.isFragment()) {
+		// currentRevision.resolve(false);
+		// }
 
 		// register bundle with framework:
 		synchronized (framework) {
@@ -733,6 +733,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 
 			if (currentRevision.isFragment()) {
 				state = INSTALLED;
+				framework.removeFragment(currentRevision);
 				framework.notifyBundleListeners(BundleEvent.UPDATED, this);
 			} else {
 				updateLastModified();
@@ -1379,7 +1380,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 
 		private ConciergeBundleWiring wiring;
 		private HashMap<String, BundleWire> packageImportWires;
-		private List<BundleWire> requireBundleWires;
+		protected List<BundleWire> requireBundleWires;
 		private final HashSet<String> exportIndex;
 
 		protected Revision(final int revId, final Manifest manifest,
@@ -2045,13 +2046,24 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 			return fragments != null ? !fragments.contains(fragment) : true;
 		}
 
+		List<Revision> getAttachedFragments() {
+			return fragments;
+		}
+		
+		/**
+		 * 
+		 * @param fragment
+		 * @return false if the fragment was already attached.
+		 * @throws BundleException
+		 */
 		boolean attachFragment(final Revision fragment) throws BundleException {
-			System.err.println("ATTACHING FRAGMENT ... " + fragment);
 			if (fragments != null) {
 				if (fragments.contains(fragment)) {
-					throw new RuntimeException("ALREADY HAVING FRAGMENT");
+					return false;
 				}
 			}
+			
+			System.err.println("ATTACHING FRAGMENT ... " + fragment);
 
 			if (state == Bundle.ACTIVE || state == Bundle.STARTING) {
 				// attaching fragment at runtime
@@ -2167,8 +2179,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 			if (fragments == null) {
 				fragments = new ArrayList<Revision>();
 			}
-			fragments.add(fragmentBundle.currentRevision);
-
+			fragments.add(fragment);
 			Collections.sort(fragments);
 
 			// register the host
@@ -2207,7 +2218,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 					+ fragment.getSymbolicName() + "~~~~~TO~~~~~"
 					+ getSymbolicName() + "(revision=" + this
 					+ " FRAGMENTS IS NOW " + fragments);
-
+			
 			return true;
 		}
 
@@ -2445,8 +2456,6 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 					final boolean multiple) throws ClassNotFoundException {
 				final Vector<URL> resources = multiple ? new Vector<URL>()
 						: null;
-
-				final int state = getState();
 
 				// is the bundle uninstalled?
 				if (state == Bundle.UNINSTALLED) {
@@ -2805,6 +2814,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 							return null;
 						} catch (final LinkageError le) {
 							System.err.println("ERROR in " + toString() + ":");
+							le.printStackTrace();
 							throw le;
 						}
 					}

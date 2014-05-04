@@ -481,6 +481,11 @@ public final class Concierge extends AbstractBundle implements Framework,
 		} finally {
 			minor = parsed;
 		}
+
+		System.out.println("JAVA.SPECIFICATION.VERSION "
+				+ System.getProperty("java.specification.version"));
+		System.out.println("PARSED " + minor);
+
 		if (System.getProperty("java.specification.name").equals(
 				"J2ME Foundation Specification")) {
 			switch (minor) {
@@ -491,6 +496,10 @@ public final class Concierge extends AbstractBundle implements Framework,
 			}
 		} else {
 			switch (minor) {
+			case 8:
+				myEEs.append("J2SE-1.8,");
+				myEEs.append("JavaSE-1.8,");
+				seVersionList.append("1.8,");
 			case 7:
 				myEEs.append("J2SE-1.7,");
 				myEEs.append("JavaSE-1.7,");
@@ -1972,19 +1981,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 		inResolve = true;
 
 		try {
-			final Collection<Resource> fragments = new ArrayList<Resource>();
-
-			// check which fragments can be attached to the bundles
-			for (final Resource bundle : bundles) {
-				if (bundle instanceof Revision) {
-					final Revision revision = (Revision) bundle;
-
-					// potential host ?
-					if (revision.allowsFragmentAttachment()) {
-						fragments.addAll(getFragments(revision));
-					}
-				}
-			}
 
 			final MultiMap<Resource, HostedCapability> hostedCapabilities = new MultiMap<Resource, HostedCapability>();
 
@@ -2001,7 +1997,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 				}
 
 				public Collection<Resource> getOptionalResources() {
-					return fragments;
+					return Collections.emptyList();
 				}
 
 				@Override
@@ -2069,6 +2065,14 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 				@Override
 				public boolean isEffective(final Requirement requirement) {
+					if (requirement.getResource() instanceof Revision
+							&& ((Revision) requirement.getResource())
+									.isFragment()
+							&& !HostNamespace.HOST_NAMESPACE.equals(requirement
+									.getNamespace())) {
+						return false;
+					}
+
 					final String effective = requirement.getDirectives().get(
 							Namespace.REQUIREMENT_EFFECTIVE_DIRECTIVE);
 					return effective == null
@@ -2093,38 +2097,24 @@ public final class Concierge extends AbstractBundle implements Framework,
 					final List<Wire> wires = solution.get(resource);
 
 					final boolean isFragment = revision.isFragment();
-					if (isFragment) {
-						boolean attached = false;
-						for (final Iterator<Wire> iter = wires.iterator(); iter
-								.hasNext();) {
-							final Wire wire = iter.next();
-
-							// scan the wires for host namespace wires
-							if (HostNamespace.HOST_NAMESPACE.equals(wire
-									.getRequirement().getNamespace())) {
-								final Revision host = (Revision) wire
-										.getProvider();
-								try {
-									host.attachFragment(revision);
-									attached = true;
-								} catch (final BundleException be) {
-									// TODO: remove
-									be.printStackTrace();
-									notifyFrameworkListeners(
-											FrameworkEvent.ERROR,
-											revision.getBundle(), be);
-									iter.remove();
-								}
-							}
-						}
-						if (!attached) {
-							continue;
-						}
-
-						// fragment has been attached to at least one host =>
-						// becomes resolved.
-						revision.markResolved();
-					}
+					/*
+					 * if (isFragment) { boolean attached = false; for (final
+					 * Iterator<Wire> iter = wires.iterator(); iter .hasNext();)
+					 * { final Wire wire = iter.next();
+					 * 
+					 * // scan the wires for host namespace wires if
+					 * (HostNamespace.HOST_NAMESPACE.equals(wire
+					 * .getRequirement().getNamespace())) { final Revision host
+					 * = (Revision) wire .getProvider(); try {
+					 * host.attachFragment(revision); attached = true; } catch
+					 * (final BundleException be) { // TODO: remove
+					 * be.printStackTrace(); notifyFrameworkListeners(
+					 * FrameworkEvent.ERROR, revision.getBundle(), be);
+					 * iter.remove(); } } } if (!attached) { continue; }
+					 * 
+					 * // fragment has been attached to at least one host => //
+					 * becomes resolved. revision.markResolved(); }
+					 */
 
 					final ConciergeBundleWiring wiring;
 					if (revision.getWiring() == null) {
@@ -2411,8 +2401,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 			}
 
 			final Collection<Requirement> unresolvedRequirements = new ArrayList<Requirement>();
-			final Collection<Requirement> requirements = resource
-					.getRequirements(null);
 
 			final MultiMap<Resource, Wire> newWires = new MultiMap<Resource, Wire>();
 			final List<Resource> hosts = new ArrayList<Resource>();
@@ -2421,9 +2409,59 @@ public final class Concierge extends AbstractBundle implements Framework,
 			System.out.println("resolving " + resource);
 
 			if (resource instanceof Revision) {
-				checkSingleton((Revision) resource);
+				final Revision revision = (Revision) resource;
+
+				checkSingleton(revision);
+
+				if (!revision.isFragment()) {
+					// check which fragments can be attached to the bundles
+					if (revision.allowsFragmentAttachment()) {
+						for (final Revision frag : getFragments(revision)) {
+							try {
+								if (!revision.attachFragment(frag)) {
+									continue;
+								}
+
+								// host the capabilities
+								for (final Capability cap : frag
+										.getCapabilities(null)) {
+									if (!IdentityNamespace.IDENTITY_NAMESPACE
+											.equals(cap.getNamespace())) {
+										final HostedBundleCapability hostedCap = new HostedBundleCapability(
+												revision, cap);
+
+										context.insertHostedCapability(
+												revision.getCapabilities(null),
+												hostedCap);
+									}
+								}
+
+								// create host wire
+								final Capability hostCapability = revision
+										.getCapabilities(
+												HostNamespace.HOST_NAMESPACE)
+										.get(0);
+								final Requirement hostRequirement = frag
+										.getRequirements(
+												HostNamespace.HOST_NAMESPACE)
+										.get(0);
+
+								final Wire wire = Resources.createWire(
+										hostCapability, hostRequirement);
+								solution.insert(frag, wire);
+								solution.insert(resource, wire);
+							} catch (BundleException e) {
+								e.printStackTrace();
+
+								// TODO: to log
+							}
+						}
+					}
+				}
 			}
 
+			final Collection<Requirement> requirements = resource
+					.getRequirements(null);
 			for (final Requirement requirement : requirements) {
 				// skip requirements which are not effective
 				if (!context.isEffective(requirement)) {
@@ -2447,7 +2485,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 								Namespace.REQUIREMENT_CARDINALITY_DIRECTIVE));
 
 				for (final Capability capability : candidates) {
-
 					if (HostNamespace.HOST_NAMESPACE.equals(capability
 							.getNamespace())) {
 
@@ -2462,7 +2499,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 					// check if the provider is already resolved
 					if (existingWirings.get(capability.getResource()) != null) {
-
 
 						final Wire wire = Resources.createWire(capability,
 								requirement);
@@ -2522,17 +2558,34 @@ public final class Concierge extends AbstractBundle implements Framework,
 					solution.insertMap(newWires);
 				}
 
+				boolean resolved = true;
+
 				if (resource instanceof Revision) {
 					final Revision revision = (Revision) resource;
-					if (revision.isFragment() && !hosts.isEmpty()) {
-						// host the capabilities
-						for (final Capability cap : resource
-								.getCapabilities(null)) {
-							if (!IdentityNamespace.IDENTITY_NAMESPACE
-									.equals(cap.getNamespace())) {
-								for (final Resource host : hosts) {
+
+					if (revision.isFragment()) {
+						resolved = false;
+
+						for (final Resource hostRes : hosts) {
+							final Revision host = (Revision) hostRes;
+							try {
+								if (!host.attachFragment(revision)) {
+									continue;
+								}
+							} catch (final BundleException be) {
+								// cannot attach
+								continue;
+							}
+
+							resolved = true;
+
+							// host the capabilities
+							for (final Capability cap : revision
+									.getCapabilities(null)) {
+								if (!IdentityNamespace.IDENTITY_NAMESPACE
+										.equals(cap.getNamespace())) {
 									final HostedBundleCapability hostedCap = new HostedBundleCapability(
-											(Revision) host, cap);
+											host, cap);
 
 									context.insertHostedCapability(
 											host.getCapabilities(null),
@@ -2540,9 +2593,25 @@ public final class Concierge extends AbstractBundle implements Framework,
 								}
 							}
 
+							// create host wire
+							final Capability hostCapability = host
+									.getCapabilities(
+											HostNamespace.HOST_NAMESPACE)
+									.get(0);
+							final Requirement hostRequirement = revision
+									.getRequirements(
+											HostNamespace.HOST_NAMESPACE)
+									.get(0);
+
+							final Wire wire = Resources.createWire(
+									hostCapability, hostRequirement);
+							solution.insert(host, wire);
+							solution.insert(revision, wire);
 						}
-					} else {
-						revision.markResolved();
+					}
+
+					if (resolved) {
+						((Revision) resource).markResolved();
 					}
 				}
 			}
@@ -2776,8 +2845,23 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 *         bundle
 	 */
 	List<Revision> getFragments(final BundleRevision hostBundle) {
-		// TODO: evaluate filter!
-		return fragmentIndex.lookup(hostBundle.getSymbolicName());
+		final List<Revision> candidates = new ArrayList<Revision>(
+				fragmentIndex.lookup(hostBundle.getSymbolicName()));
+
+		if (!candidates.isEmpty()) {
+			final Capability cap = hostBundle.getCapabilities(
+					HostNamespace.HOST_NAMESPACE).get(0);
+			for (final Iterator<Revision> iter = candidates.iterator(); iter
+					.hasNext();) {
+				final Requirement req = iter.next().getRequirements(
+						HostNamespace.HOST_NAMESPACE).get(0);
+				if (!(matches(req, cap))) {
+					iter.remove();
+				}
+			}
+		}
+
+		return candidates;
 	}
 
 	/**
