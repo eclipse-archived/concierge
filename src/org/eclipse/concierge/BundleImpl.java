@@ -3048,15 +3048,16 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 								throw new IllegalArgumentException(dynImport);
 							}
 
-							final Tuple<HashMap<String, String>, HashMap<String, Object>> tuple = Utils
+							final Tuple.ParseResult parseResult = Utils
 									.parseLiterals(literals, 1);
-							final HashMap<String, String> dirs = tuple
-									.getFormer();
+							final HashMap<String, String> dirs = parseResult
+									.getDirectives();
 
 							dirs.put(Namespace.REQUIREMENT_FILTER_DIRECTIVE,
 									Utils.createFilter(
 											PackageNamespace.PACKAGE_NAMESPACE,
-											literals[0], tuple.getLatter()));
+											literals[0],
+											parseResult.getLatter()));
 							dirs.put(
 									Namespace.REQUIREMENT_RESOLUTION_DIRECTIVE,
 									PackageNamespace.RESOLUTION_DYNAMIC);

@@ -952,14 +952,14 @@ public final class Concierge extends AbstractBundle implements Framework,
 		for (final String pkg : pkgs) {
 			final String[] literals = pkg.split(Utils.SPLIT_AT_SEMICOLON);
 
-			final Tuple<HashMap<String, String>, HashMap<String, Object>> tuple = Utils
-					.parseLiterals(literals, 1);
-			final HashMap<String, Object> attrs = tuple.getLatter();
+			final Tuple.ParseResult parseResult = Utils.parseLiterals(literals,
+					1);
+			final HashMap<String, Object> attrs = parseResult.getAttributes();
 			attrs.put(PackageNamespace.PACKAGE_NAMESPACE, literals[0].trim());
 			systemBundleCapabilities.add(new BundleCapabilityImpl(this,
-					PackageNamespace.PACKAGE_NAMESPACE, tuple.getFormer(),
-					tuple.getLatter(), Constants.EXPORT_PACKAGE + ' ' + pkg));
-
+					PackageNamespace.PACKAGE_NAMESPACE, parseResult
+							.getDirectives(), attrs, Constants.EXPORT_PACKAGE
+							+ ' ' + pkg));
 		}
 	}
 

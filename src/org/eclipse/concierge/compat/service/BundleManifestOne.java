@@ -57,13 +57,14 @@ public class BundleManifestOne implements LegacyBundleProcessing {
 					final String[] literals = imports[i]
 							.split(SPLIT_AT_SEMICOLON);
 
-					final Tuple<HashMap<String, String>, HashMap<String, Object>> tuple = Utils
-							.parseLiterals(literals, 1);
-					final HashMap<String, String> dirs = tuple.getFormer();
+					final Tuple.ParseResult parseResult = Utils.parseLiterals(
+							literals, 1);
+					final HashMap<String, String> dirs = parseResult
+							.getDirectives();
 					dirs.put(
 							Namespace.REQUIREMENT_FILTER_DIRECTIVE,
 							createFilterFromImport(literals[0],
-									tuple.getLatter(), false));
+									parseResult.getAttributes(), false));
 
 					reqs.add(new BundleRequirementImpl(revision,
 							PackageNamespace.PACKAGE_NAMESPACE, dirs, null,
@@ -93,14 +94,17 @@ public class BundleManifestOne implements LegacyBundleProcessing {
 					final String[] literals = dynImports[i]
 							.split(SPLIT_AT_SEMICOLON);
 
-					final Tuple<HashMap<String, String>, HashMap<String, Object>> tuple = Utils
-							.parseLiterals(literals, 1);
-					final HashMap<String, String> dirs = tuple.getFormer();
-					final HashMap<String, Object> attrs = tuple.getLatter();
+					final Tuple.ParseResult parseResult = Utils.parseLiterals(
+							literals, 1);
+					final HashMap<String, String> dirs = parseResult
+							.getDirectives();
+					final HashMap<String, Object> attrs = parseResult
+							.getAttributes();
 
 					dirs.put(PackageNamespace.REQUIREMENT_RESOLUTION_DIRECTIVE,
 							PackageNamespace.RESOLUTION_DYNAMIC);
-					attrs.put(PackageNamespace.PACKAGE_NAMESPACE, literals[0].trim());
+					attrs.put(PackageNamespace.PACKAGE_NAMESPACE,
+							literals[0].trim());
 
 					if (literals[0].contains("*")) {
 						dirs.put(
@@ -125,14 +129,16 @@ public class BundleManifestOne implements LegacyBundleProcessing {
 					final String[] literals = exports[i]
 							.split(SPLIT_AT_SEMICOLON);
 
-					final Tuple<HashMap<String, String>, HashMap<String, Object>> tuple = Utils
-							.parseLiterals(literals, 1);
-					final HashMap<String, Object> attrs = tuple.getLatter();
-					attrs.put(PackageNamespace.PACKAGE_NAMESPACE, literals[0].trim());
+					final Tuple.ParseResult parseResult = Utils.parseLiterals(
+							literals, 1);
+					final HashMap<String, Object> attrs = parseResult
+							.getAttributes();
+					attrs.put(PackageNamespace.PACKAGE_NAMESPACE,
+							literals[0].trim());
 
 					caps.add(new BundleCapabilityImpl(revision,
-							PackageNamespace.PACKAGE_NAMESPACE, tuple
-									.getFormer(), attrs,
+							PackageNamespace.PACKAGE_NAMESPACE, parseResult
+									.getDirectives(), attrs,
 							Constants.EXPORT_PACKAGE + ' ' + exports[i]));
 				}
 			}

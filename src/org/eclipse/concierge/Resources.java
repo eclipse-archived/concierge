@@ -66,15 +66,15 @@ public class Resources {
 
 			this.namespace = literals[0].trim();
 
-			final Tuple<HashMap<String, String>, HashMap<String, Object>> tuple = Utils
-					.parseLiterals(literals, 1);
+			final Tuple.ParseResult parseResult = Utils.parseLiterals(literals,
+					1);
 
-			this.directives = tuple.getFormer() == null ? Collections
+			this.directives = parseResult.getDirectives() == null ? Collections
 					.<String, String> emptyMap() : Collections
-					.unmodifiableMap(tuple.getFormer());
-			this.attributes = tuple.getLatter() == null ? Collections
+					.unmodifiableMap(parseResult.getDirectives());
+			this.attributes = parseResult.getAttributes() == null ? Collections
 					.<String, Object> emptyMap() : Collections
-					.unmodifiableMap(tuple.getLatter());
+					.unmodifiableMap(parseResult.getAttributes());
 		}
 
 		public GenericReqCap(final String namespace,

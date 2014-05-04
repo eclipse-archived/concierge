@@ -102,8 +102,8 @@ public final class Utils {
 
 	};
 
-	public static Tuple<HashMap<String, String>, HashMap<String, Object>> parseLiterals(
-			final String[] literals, final int start) throws BundleException {
+	public static Tuple.ParseResult parseLiterals(final String[] literals,
+			final int start) throws BundleException {
 
 		final HashMap<String, String> directives = new HashMap<String, String>();
 		final HashMap<String, Object> attributes = new HashMap<String, Object>();
@@ -152,8 +152,7 @@ public final class Utils {
 				}
 			}
 		}
-		return new Tuple<HashMap<String, String>, HashMap<String, Object>>(
-				directives, attributes);
+		return new Tuple.ParseResult(directives, attributes);
 	}
 
 	private static final short STRING_TYPE = 0;

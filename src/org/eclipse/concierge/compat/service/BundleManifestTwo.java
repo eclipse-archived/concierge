@@ -82,17 +82,17 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 				throw new IllegalArgumentException(symNameStr);
 			}
 
-			final Tuple<HashMap<String, String>, HashMap<String, Object>> tuple = Utils
-					.parseLiterals(parts, 1);
+			final Tuple.ParseResult parseResult = Utils.parseLiterals(parts, 1);
 
-			symbolicNameAttrs = tuple.getLatter();
+			symbolicNameAttrs = parseResult.getAttributes();
 
 			final String fragHostStr = mfAttrs
 					.getValue(Constants.FRAGMENT_HOST);
 
 			// identity namespace and bundle namespace capability
 			{
-				final Map<String, Object> attrs = new HashMap<String, Object>(symbolicNameAttrs);
+				final Map<String, Object> attrs = new HashMap<String, Object>(
+						symbolicNameAttrs);
 				final Map<String, String> dirs = new HashMap<String, String>();
 
 				bundleSymbolicName = parts[0].trim();
@@ -110,14 +110,16 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 							"Syntactic error in bundle manifest", e);
 				}
 
-				final String singletonStr = (String) tuple.getFormer().get(
-						Constants.SINGLETON_DIRECTIVE);
+				final String singletonStr = (String) parseResult
+						.getDirectives().get(Constants.SINGLETON_DIRECTIVE);
 				dirs.put(IdentityNamespace.CAPABILITY_SINGLETON_DIRECTIVE,
 						singletonStr == null ? "false" : singletonStr.trim());
 
-				final String mandatory = tuple.getFormer().get(Constants.MANDATORY_DIRECTIVE);
+				final String mandatory = parseResult.getDirectives().get(
+						Constants.MANDATORY_DIRECTIVE);
 				if (mandatory != null) {
-					dirs.put(BundleNamespace.CAPABILITY_MANDATORY_DIRECTIVE, mandatory);
+					dirs.put(BundleNamespace.CAPABILITY_MANDATORY_DIRECTIVE,
+							mandatory);
 				}
 
 				if (fragHostStr == null) {
@@ -177,11 +179,11 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 						throw new IllegalArgumentException(fragHostStr);
 					}
 
-					final Tuple<HashMap<String, String>, HashMap<String, Object>> tuple2 = Utils
-							.parseLiterals(parts2, 1);
+					final Tuple.ParseResult parseResult2 = Utils.parseLiterals(
+							parts2, 1);
 
-					if (tuple2.getFormer() != null) {
-						dirs2.putAll(tuple2.getFormer());
+					if (parseResult2.getDirectives() != null) {
+						dirs2.putAll(parseResult2.getDirectives());
 					}
 
 					// must not have uses directive
@@ -192,7 +194,7 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 
 					dirs2.put(Namespace.REQUIREMENT_FILTER_DIRECTIVE, Utils
 							.createFilter(HostNamespace.HOST_NAMESPACE,
-									parts2[0], tuple2.getLatter()));
+									parts2[0], parseResult2.getAttributes()));
 
 					// fragments can attach to multiple hosts
 					dirs2.put(Namespace.REQUIREMENT_CARDINALITY_DIRECTIVE,
@@ -200,8 +202,9 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 
 					// some attributes for convenience
 					dirs2.put(HostNamespace.HOST_NAMESPACE, parts2[0]);
-					final String versionRange = (String) tuple2.getLatter()
-							.get(Constants.BUNDLE_VERSION_ATTRIBUTE);
+					final String versionRange = (String) parseResult2
+							.getAttributes().get(
+									Constants.BUNDLE_VERSION_ATTRIBUTE);
 					if (versionRange != null) {
 						dirs2.put(
 								HostNamespace.CAPABILITY_BUNDLE_VERSION_ATTRIBUTE,
@@ -220,14 +223,14 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 									+ (versionRange == null ? "" : versionRange));
 					reqs.add(hostReq);
 				} else {
-					if (!Constants.FRAGMENT_ATTACHMENT_NEVER.equals(tuple
-							.getFormer().get(
+					if (!Constants.FRAGMENT_ATTACHMENT_NEVER.equals(parseResult
+							.getDirectives().get(
 									Constants.FRAGMENT_ATTACHMENT_DIRECTIVE))) {
 						final Map<String, Object> attrs = new HashMap<String, Object>();
 						final Map<String, String> dirs = new HashMap<String, String>();
 
-						if (tuple.getFormer() != null) {
-							dirs.putAll(tuple.getFormer());
+						if (parseResult.getDirectives() != null) {
+							dirs.putAll(parseResult.getDirectives());
 						}
 
 						attrs.putAll(symbolicNameAttrs);
@@ -365,13 +368,14 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 					}
 					importSet.add(literals[0]);
 
-					final Tuple<HashMap<String, String>, HashMap<String, Object>> tuple = Utils
-							.parseLiterals(literals, 1);
-					final HashMap<String, String> dirs = tuple.getFormer();
+					final Tuple.ParseResult parseResult = Utils.parseLiterals(
+							literals, 1);
+					final HashMap<String, String> dirs = parseResult
+							.getDirectives();
 
 					dirs.put(Namespace.REQUIREMENT_FILTER_DIRECTIVE, Utils
 							.createFilter(PackageNamespace.PACKAGE_NAMESPACE,
-									literals[0], tuple.getLatter()));
+									literals[0], parseResult.getAttributes()));
 
 					reqs.add(new BundleRequirementImpl(revision,
 							PackageNamespace.PACKAGE_NAMESPACE, dirs, null,
@@ -391,13 +395,14 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 					final String[] literals = dynImports[i]
 							.split(Utils.SPLIT_AT_SEMICOLON);
 
-					final Tuple<HashMap<String, String>, HashMap<String, Object>> tuple = Utils
-							.parseLiterals(literals, 1);
-					final HashMap<String, String> dirs = tuple.getFormer();
+					final Tuple.ParseResult parseResult = Utils.parseLiterals(
+							literals, 1);
+					final HashMap<String, String> dirs = parseResult
+							.getDirectives();
 
 					dirs.put(Namespace.REQUIREMENT_FILTER_DIRECTIVE, Utils
 							.createFilter(PackageNamespace.PACKAGE_NAMESPACE,
-									literals[0], tuple.getLatter()));
+									literals[0], parseResult.getAttributes()));
 
 					dirs.put(PackageNamespace.REQUIREMENT_RESOLUTION_DIRECTIVE,
 							PackageNamespace.RESOLUTION_DYNAMIC);
@@ -406,7 +411,8 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 							PackageNamespace.EFFECTIVE_ACTIVE);
 
 					// TODO: think of something better
-					dirs.put(PackageNamespace.PACKAGE_NAMESPACE, literals[0].trim());
+					dirs.put(PackageNamespace.PACKAGE_NAMESPACE,
+							literals[0].trim());
 
 					if (literals[0].contains("*")) {
 						dirs.put(
@@ -432,9 +438,10 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 					final String[] literals = exports[i]
 							.split(Utils.SPLIT_AT_SEMICOLON);
 
-					final Tuple<HashMap<String, String>, HashMap<String, Object>> tuple = Utils
-							.parseLiterals(literals, 1);
-					final HashMap<String, Object> attrs = tuple.getLatter();
+					final Tuple.ParseResult parseResult = Utils.parseLiterals(
+							literals, 1);
+					final HashMap<String, Object> attrs = parseResult
+							.getAttributes();
 
 					if (attrs
 							.containsKey(Constants.BUNDLE_SYMBOLICNAME_ATTRIBUTE)
@@ -461,7 +468,8 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 						}
 					}
 
-					attrs.put(PackageNamespace.PACKAGE_NAMESPACE, literals[0].trim());
+					attrs.put(PackageNamespace.PACKAGE_NAMESPACE,
+							literals[0].trim());
 
 					if (literals[0].startsWith("java.")) {
 						throw new BundleException(
@@ -476,8 +484,8 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 							bundleVersion);
 
 					caps.add(new BundleCapabilityImpl(revision,
-							PackageNamespace.PACKAGE_NAMESPACE, tuple
-									.getFormer(), attrs,
+							PackageNamespace.PACKAGE_NAMESPACE, parseResult
+									.getDirectives(), attrs,
 							Constants.EXPORT_PACKAGE + ' ' + exports[i]));
 				}
 			}
@@ -498,12 +506,12 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 
 					final String requiredBundle = literals[0].trim();
 
-					final Tuple<HashMap<String, String>, HashMap<String, Object>> tuple = Utils
+					final Tuple.ParseResult parseResult = Utils
 							.parseLiterals(literals, 1);
 
-					final Map<String, String> dirs = tuple.getFormer();
+					final Map<String, String> dirs = parseResult.getDirectives();
 
-					final String visibility = tuple.getFormer().get(
+					final String visibility = parseResult.getDirectives().get(
 							Constants.VISIBILITY_DIRECTIVE);
 					if (Constants.VISIBILITY_REEXPORT.equals(visibility)) {
 						dirs.put(
@@ -515,16 +523,16 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 								BundleNamespace.VISIBILITY_PRIVATE);
 					}
 
-					if (Constants.RESOLUTION_OPTIONAL.equals(tuple.getFormer()
+					if (Constants.RESOLUTION_OPTIONAL.equals(parseResult.getDirectives()
 							.get(Constants.RESOLUTION_DIRECTIVE))) {
 						dirs.put(
 								BundleNamespace.REQUIREMENT_RESOLUTION_DIRECTIVE,
 								BundleNamespace.RESOLUTION_OPTIONAL);
 					}
-					
+
 					dirs.put(Namespace.REQUIREMENT_FILTER_DIRECTIVE, Utils
 							.createFilter(BundleNamespace.BUNDLE_NAMESPACE,
-									requiredBundle, tuple.getLatter()));
+									requiredBundle, parseResult.getAttributes()));
 
 					reqs.add(new BundleRequirementImpl(revision,
 							BundleNamespace.BUNDLE_NAMESPACE, dirs, null,
@@ -544,32 +552,7 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 			attributes.put(name, str);
 		}
 	}
-
-	public static void main(String... args) throws BundleException {
-		final String s1 = "AA/BB";
-		final String s2 = "CDC-1.0/Foundation-1.0";
-		final String s3 = "AA/BB-1.7";
-		final String s4 = "JavaSE-1.6";
-		final String s5 = "V1-1.5/V2-1.6";
-		final String s6 = "MyEE-badVersion";
-		final String s7 = "V1-1.5/V2-1.5";
-		final String s8 = "EE-2.0/FF-YY";
-		final String s9 = "CDC-1.0/Foundation-1.0," + "OSGi/Minimum-1.2,"
-				+ "J2SE-1.4," + "JavaSE-1.6," + "AA/BB-1.7," + "V1-1.5/V2-1.6,"
-				+ "MyEE-badVersion";
-
-		final String[] reqs = new String[] { s1, s2, s3, s4, s5, s6, s7, s8, s9 };
-
-		for (final String requiredEEStr : reqs) {
-			System.out.println(requiredEEStr);
-			final String s = parse(requiredEEStr);
-
-			System.out.println(s);
-			System.out.println(new BundleRequirementImpl(null, s));
-			System.out.println();
-		}
-	}
-
+	
 	public static String parse(final String requiredEEStr)
 			throws BundleException {
 		final String[] requiredEEs = requiredEEStr.split(",");
