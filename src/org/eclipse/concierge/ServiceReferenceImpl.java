@@ -157,11 +157,6 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 		if (cachedServices != null) {
 			cachedServices = null;
 		}
-		// this causes Knopflerfish's test case 55 to fail
-		// final String[] keys = getPropertyKeys();
-		// for (int i=0; i<keys.length; i++) {
-		// properties.remove(keys[i]);
-		// }
 	}
 
 	/**
@@ -381,7 +376,7 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 	 * @return integer , return value < 0 if this < reference return value = 0
 	 *         if this = reference return value > 0 if tis > reference
 	 * @see org.osgi.framework.ServiceReference#compareTo(Object)
-	 * @category ServiceReference FIXME: ugly code!!!
+	 * @category ServiceReference
 	 */
 	public int compareTo(final Object reference) {
 		if (!(reference instanceof ServiceReferenceImpl)
@@ -389,6 +384,7 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 			throw new IllegalArgumentException(
 					"ServiceReference was not created by the same framework instance");
 		}
+
 		final ServiceReferenceImpl<?> other = (ServiceReferenceImpl<?>) reference;
 		final int comparedServiceIds = ((Long) properties
 				.get(Constants.SERVICE_ID)).compareTo((Long) other.properties
@@ -541,7 +537,6 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 
 	boolean isAssignableTo(final AbstractBundle otherBundle,
 			final String[] clazzes) {
-		// TODO: simplify or cache results.
 		for (int j = 0; j < clazzes.length; j++) {
 			if (!isAssignableTo(otherBundle, clazzes[j])) {
 				return false;

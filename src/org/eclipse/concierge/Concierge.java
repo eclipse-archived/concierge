@@ -1577,7 +1577,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 * @category BundleRevision
 	 */
 	public List<BundleCapability> getDeclaredCapabilities(final String namespace) {
-		// FIXME:
 		return Collections.unmodifiableList(systemBundleCapabilities);
 	}
 
@@ -2229,14 +2228,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 			final BundleImpl bundle = (BundleImpl) b;
 
 			for (final BundleRevision brev : bundle.revisions) {
-				// FIXME: why null???
-				// if (brev == null)
-				// continue;
-
-				// final BundleWiring wiring = bundle.currentRevision == null ?
-				// bundle
-				// .getRevisions().get(0).getWiring()
-				// : bundle.currentRevision.getWiring();
 				final BundleWiring wiring = brev.getWiring();
 
 				// all package exports
@@ -4342,11 +4333,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 		for (final ServiceReferenceImpl<WeavingHook> sref : weavingHooks) {
 			final WeavingHook hook = sref.getService(this);
-
-			// FIXME: why do I see null here?
-			if (hook == null) {
-				continue;
-			}
 
 			try {
 				hook.weave(wovenClass);

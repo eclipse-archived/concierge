@@ -114,7 +114,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 					String.class, ClassLoader.class });
 			fileloader = dexFileClass.getMethod("loadDex", new Class[] {
 					String.class, String.class, Integer.TYPE });
-		} catch (Throwable ex) {
+		} catch (final Throwable ignore) {
 			classloader = null;
 			fileloader = null;
 		}

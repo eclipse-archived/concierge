@@ -153,8 +153,8 @@ public abstract class AbstractBundle implements Bundle, BundleRevisions {
 		}
 
 		/*
-		 * FIXME: not the same page anymore core specifications page=91: If the
-		 * Java runtime supports permissions, a ServiceReference object to a
+		 * FIXME: not the same page anymore --> core specifications page=91: If
+		 * the Java runtime supports permissions, a ServiceReference object to a
 		 * service is included in the returned list only if the caller has the
 		 * ServicePermission to get the service using at least one of the names
 		 * classes the service was registered under.

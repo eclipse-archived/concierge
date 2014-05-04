@@ -26,7 +26,6 @@ import org.eclipse.concierge.Utils;
 import org.eclipse.concierge.compat.LegacyBundleProcessing;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
-import org.osgi.framework.Version;
 import org.osgi.framework.namespace.PackageNamespace;
 import org.osgi.framework.wiring.BundleCapability;
 import org.osgi.framework.wiring.BundleRequirement;
@@ -44,8 +43,6 @@ public class BundleManifestOne implements LegacyBundleProcessing {
 
 		final List<BundleCapability> caps = new ArrayList<BundleCapability>();
 		final List<BundleRequirement> reqs = new ArrayList<BundleRequirement>();
-
-		final Version bundleVersion;
 
 		// package namespace
 		{

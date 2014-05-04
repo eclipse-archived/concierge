@@ -506,10 +506,11 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 
 					final String requiredBundle = literals[0].trim();
 
-					final Tuple.ParseResult parseResult = Utils
-							.parseLiterals(literals, 1);
+					final Tuple.ParseResult parseResult = Utils.parseLiterals(
+							literals, 1);
 
-					final Map<String, String> dirs = parseResult.getDirectives();
+					final Map<String, String> dirs = parseResult
+							.getDirectives();
 
 					final String visibility = parseResult.getDirectives().get(
 							Constants.VISIBILITY_DIRECTIVE);
@@ -523,15 +524,18 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 								BundleNamespace.VISIBILITY_PRIVATE);
 					}
 
-					if (Constants.RESOLUTION_OPTIONAL.equals(parseResult.getDirectives()
+					if (Constants.RESOLUTION_OPTIONAL.equals(parseResult
+							.getDirectives()
 							.get(Constants.RESOLUTION_DIRECTIVE))) {
 						dirs.put(
 								BundleNamespace.REQUIREMENT_RESOLUTION_DIRECTIVE,
 								BundleNamespace.RESOLUTION_OPTIONAL);
 					}
 
-					dirs.put(Namespace.REQUIREMENT_FILTER_DIRECTIVE, Utils
-							.createFilter(BundleNamespace.BUNDLE_NAMESPACE,
+					dirs.put(
+							Namespace.REQUIREMENT_FILTER_DIRECTIVE,
+							Utils.createFilter(
+									BundleNamespace.BUNDLE_NAMESPACE,
 									requiredBundle, parseResult.getAttributes()));
 
 					reqs.add(new BundleRequirementImpl(revision,
@@ -552,7 +556,7 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 			attributes.put(name, str);
 		}
 	}
-	
+
 	public static String parse(final String requiredEEStr)
 			throws BundleException {
 		final String[] requiredEEs = requiredEEStr.split(",");
