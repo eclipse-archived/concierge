@@ -11,6 +11,7 @@
 package org.eclipse.concierge.test;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,6 +21,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleException;
+import org.osgi.framework.wiring.FrameworkWiring;
 
 /**
  * @author Jochen Hiller
@@ -43,6 +45,8 @@ public class Slf4jLibraryV172Test extends AbstractConciergeTestCase {
 		manifestEntries.put("Bundle-Version", "1.0.0");
 		final Bundle bundle = installBundle("concierge.test.bundle",
 				manifestEntries);
+		framework.adapt(FrameworkWiring.class).resolveBundles(
+				Collections.singleton(bundle));
 		assertBundleResolved(bundle);
 	}
 
@@ -63,7 +67,6 @@ public class Slf4jLibraryV172Test extends AbstractConciergeTestCase {
 		manifestEntries.put("Import-Package", "org.slf4j");
 		final Bundle bundle = installBundle(
 				"concierge.test.testSLf4JGetNOPLogger", manifestEntries);
-		assertBundleResolved(bundle);
 
 		// make calls into classloader of installed bundle
 		// Logger logger = org.slf4j.LoggerFactory.getLogger("someCategory");
@@ -104,11 +107,11 @@ public class Slf4jLibraryV172Test extends AbstractConciergeTestCase {
 				"ch.qos.logback.core_1.0.7.v20121108-1250.jar",
 				"ch.qos.logback.classic_1.0.7.v20121108-1250.jar",
 				"ch.qos.logback.slf4j_1.0.7.v20121108-1250.jar" };
-		//final Bundle[] bundles = installAndStartBundles(bundleNames);
+		// final Bundle[] bundles = installAndStartBundles(bundleNames);
 		final Bundle[] bundles = installBundles(bundleNames);
 
 		bundles[0].start();
-		
+
 		// install a test bundle
 		final Map<String, String> manifestEntries = new HashMap<String, String>();
 		manifestEntries.put("Bundle-Version", "1.0.0");
