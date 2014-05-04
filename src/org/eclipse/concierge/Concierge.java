@@ -2065,14 +2065,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 				@Override
 				public boolean isEffective(final Requirement requirement) {
-					if (requirement.getResource() instanceof Revision
-							&& ((Revision) requirement.getResource())
-									.isFragment()
-							&& !HostNamespace.HOST_NAMESPACE.equals(requirement
-									.getNamespace())) {
-						return false;
-					}
-
 					final String effective = requirement.getDirectives().get(
 							Namespace.REQUIREMENT_EFFECTIVE_DIRECTIVE);
 					return effective == null
@@ -2408,12 +2400,16 @@ public final class Concierge extends AbstractBundle implements Framework,
 			// TODO: debug output
 			System.out.println("resolving " + resource);
 
+			boolean isFragment = false;
+
 			if (resource instanceof Revision) {
 				final Revision revision = (Revision) resource;
 
 				checkSingleton(revision);
 
-				if (!revision.isFragment()) {
+				isFragment = revision.isFragment();
+
+				if (!isFragment) {
 					// check which fragments can be attached to the bundles
 					if (revision.allowsFragmentAttachment()) {
 						for (final Revision frag : getFragments(revision)) {
@@ -2462,9 +2458,16 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 			final Collection<Requirement> requirements = resource
 					.getRequirements(null);
+
 			for (final Requirement requirement : requirements) {
 				// skip requirements which are not effective
 				if (!context.isEffective(requirement)) {
+					continue;
+				}
+
+				if (isFragment
+						&& !HostNamespace.HOST_NAMESPACE.equals(requirement
+								.getNamespace())) {
 					continue;
 				}
 
@@ -2563,7 +2566,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 				if (resource instanceof Revision) {
 					final Revision revision = (Revision) resource;
 
-					if (revision.isFragment()) {
+					if (isFragment) {
 						resolved = false;
 
 						for (final Resource hostRes : hosts) {
@@ -2853,8 +2856,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 					HostNamespace.HOST_NAMESPACE).get(0);
 			for (final Iterator<Revision> iter = candidates.iterator(); iter
 					.hasNext();) {
-				final Requirement req = iter.next().getRequirements(
-						HostNamespace.HOST_NAMESPACE).get(0);
+				final Requirement req = iter.next()
+						.getRequirements(HostNamespace.HOST_NAMESPACE).get(0);
 				if (!(matches(req, cap))) {
 					iter.remove();
 				}
