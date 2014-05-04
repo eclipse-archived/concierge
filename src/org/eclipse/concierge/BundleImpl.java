@@ -655,6 +655,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 
 		// reset locale
 		lastDefaultLocale = Locale.getDefault();
+		headers.headerCache = null;
 
 		state = UNINSTALLED;
 		synchronized (framework) {
@@ -2045,7 +2046,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 		List<Revision> getAttachedFragments() {
 			return fragments;
 		}
-		
+
 		/**
 		 * 
 		 * @param fragment
@@ -2058,7 +2059,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 					return false;
 				}
 			}
-			
+
 			System.err.println("ATTACHING FRAGMENT ... " + fragment);
 
 			if (state == Bundle.ACTIVE || state == Bundle.STARTING) {
@@ -2214,7 +2215,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 					+ fragment.getSymbolicName() + "~~~~~TO~~~~~"
 					+ getSymbolicName() + "(revision=" + this
 					+ " FRAGMENTS IS NOW " + fragments);
-			
+
 			return true;
 		}
 
@@ -2872,7 +2873,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 					}
 
 					if (dexFile != null) {
-						return (Class) dexClassLoader.invoke(dexFile,
+						return (Class<?>) dexClassLoader.invoke(dexFile,
 								new Object[] { classname.replace('.', '/'),
 										this });
 					}
@@ -3156,7 +3157,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 		private static final long serialVersionUID = 6688251578575649710L;
 
 		// lazily initialized
-		private WeakHashMap<String, Dictionary<String, String>> headerCache;
+		private WeakHashMap<Locale, HeaderDictionary> headerCache;
 
 		private final HashMap<String, String> index = new HashMap<String, String>();
 
@@ -3170,7 +3171,14 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 			if (!hasLocalizedValues) {
 				return this;
 			}
-			// TODO: cache results
+
+			if (headerCache != null) {
+				HeaderDictionary cached = headerCache.get(locale);
+				if (cached != null) {
+					return cached;
+				}
+			}
+
 			final Properties props = getLocalizationFile(locale,
 					bundleLocalizationBaseDir, bundleLocalizationBaseFilename);
 
@@ -3187,6 +3195,12 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 							: localizedValue);
 				}
 			}
+
+			if (headerCache == null) {
+				headerCache = new WeakHashMap<Locale, HeaderDictionary>();
+				headerCache.put(locale, localized);
+			}
+
 			return localized;
 		}
 
