@@ -2042,10 +2042,6 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 			return fragmentAttachmentPolicy != FRAGMENT_ATTACHMENT_NEVER;
 		}
 
-		final boolean checkFragment(final Revision fragment) {
-			return fragments != null ? !fragments.contains(fragment) : true;
-		}
-
 		List<Revision> getAttachedFragments() {
 			return fragments;
 		}

@@ -2342,7 +2342,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 			}
 		}
 
-		private void checkSingleton(final Revision resource) {
+		private void checkSingleton(final BundleRevision resource) {
 			try {
 				final List<Capability> identities = resource
 						.getCapabilities(IdentityNamespace.IDENTITY_NAMESPACE);
@@ -2387,28 +2387,34 @@ public final class Concierge extends AbstractBundle implements Framework,
 				final HashSet<Resource> inResolution) {
 			inResolution.add(resource);
 
-			if (existingWirings.containsKey(resource)
-					|| solution.containsKey(resource)) {
+			//if (existingWirings.containsKey(resource)
+			//		|| solution.containsKey(resource)) {
+			//	return Collections.emptyList();
+			//}
+			if (solution.containsKey(resource)) {
 				return Collections.emptyList();
 			}
 
 			final Collection<Requirement> unresolvedRequirements = new ArrayList<Requirement>();
 
 			final MultiMap<Resource, Wire> newWires = new MultiMap<Resource, Wire>();
-			final List<Resource> hosts = new ArrayList<Resource>();
 
 			// TODO: debug output
-			System.out.println("resolving " + resource);
+			System.err.println("resolving " + resource);
 
 			boolean isFragment = false;
 
 			if (resource instanceof Revision) {
 				final Revision revision = (Revision) resource;
 
+				//if (revision.getBundle().getState() == Bundle.RESOLVED) {
+					// optimization
+				//	return Collections.emptyList();
+				//}
+				
 				checkSingleton(revision);
 
 				isFragment = revision.isFragment();
-
 				if (!isFragment) {
 					// check which fragments can be attached to the bundles
 					if (revision.allowsFragmentAttachment()) {
@@ -2461,15 +2467,25 @@ public final class Concierge extends AbstractBundle implements Framework,
 								Namespace.REQUIREMENT_CARDINALITY_DIRECTIVE));
 
 				for (final Capability capability : candidates) {
-					if (HostNamespace.HOST_NAMESPACE.equals(capability
-							.getNamespace())) {
-
-						if (!((Revision) capability.getResource())
-								.checkFragment((Revision) resource)) {
+					if (isFragment) {
+						final Revision revision = (Revision) resource;
+						final Revision host = (Revision) capability
+								.getResource();
+						try {
+							if (!host.attachFragment(revision)) {
+								continue;
+							}
+						} catch (final BundleException be) {
+							// cannot attach
 							continue;
 						}
+
 						resolved = true;
-						hosts.add(capability.getResource());
+
+						hostFragment(context, revision, host, solution);
+
+						// dont' trigger resolution of the host
+						continue;
 					}
 
 					// check if the provider is already resolved
@@ -2533,34 +2549,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 					solution.insertMap(newWires);
 				}
 
-				boolean resolved = true;
-
 				if (resource instanceof Revision) {
-					final Revision revision = (Revision) resource;
-
-					if (isFragment) {
-						resolved = false;
-
-						for (final Resource hostRes : hosts) {
-							final Revision host = (Revision) hostRes;
-							try {
-								if (!host.attachFragment(revision)) {
-									continue;
-								}
-							} catch (final BundleException be) {
-								// cannot attach
-								continue;
-							}
-
-							resolved = true;
-
-							hostFragment(context, revision, host, solution);
-						}
-					}
-
-					if (resolved) {
-						((Revision) resource).markResolved();
-					}
+					((Revision) resource).markResolved();
 				}
 			}
 
