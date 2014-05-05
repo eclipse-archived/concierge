@@ -614,6 +614,8 @@ public final class Utils {
 					throw new BundleException(
 							"both version and specification-version are given for the import "
 									+ req);
+				} else {
+					attributes.remove(SPECIFICATION_VERSION);
 				}
 			}
 		}

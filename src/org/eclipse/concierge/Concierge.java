@@ -1923,6 +1923,14 @@ public final class Concierge extends AbstractBundle implements Framework,
 								PackageNamespace.PACKAGE_NAMESPACE, dynImport,
 								cap, filterStr)) {
 					// we have a match
+					// FIXME: cleanup...
+					if ((((BundleCapability) cap)).getRevision().getBundle().getState() == Bundle.INSTALLED) {
+						// need to resolve first
+						if (!resolve(Collections.singletonList((((BundleCapability) cap)).getRevision()), false)) {
+							continue;
+						}
+					}
+					
 					matches.add((BundleCapability) cap);
 				}
 

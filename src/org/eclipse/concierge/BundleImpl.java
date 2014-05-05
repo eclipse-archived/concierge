@@ -2637,14 +2637,11 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 							final BundleWire wire = new ConciergeBundleWire(
 									bundleCap, dynImport);
 							if (wiring == null) {
-								if (BundleImpl.this.getState() == Bundle.INSTALLED) {
-									throw new IllegalStateException(
-											"BUNDLE WAS NOT RESOLVED!!!");
-								}
 								setWiring(new ConciergeBundleWiring(
 										Revision.this, null));
 							}
 							wiring.addWire(wire);
+							
 							((ConciergeBundleWiring) bundleCap.getRevision()
 									.getWiring()).addWire(wire);
 
