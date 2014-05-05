@@ -465,7 +465,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 		final String feeStr = defaultProperties
 				.getProperty(FRAMEWORK_EXECUTIONENVIRONMENT);
-		System.out.println("feeStr " + feeStr);
 
 		final StringBuffer myEEs = new StringBuffer();
 
@@ -482,10 +481,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 		} finally {
 			minor = parsed;
 		}
-
-		System.out.println("JAVA.SPECIFICATION.VERSION "
-				+ System.getProperty("java.specification.version"));
-		System.out.println("PARSED " + minor);
 
 		if (System.getProperty("java.specification.name").equals(
 				"J2ME Foundation Specification")) {
@@ -1649,7 +1644,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 					final ArrayList<Bundle> toProcess = new ArrayList<Bundle>();
 
-					// filter out those who need to be updated
+					// filter out those which need to be updated
 					for (int i = 0; i < initial.length; i++) {
 						if (initial[i] == Concierge.this) {
 							// don't process (stop/start)
@@ -1715,7 +1710,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 					// perform a cleanup for all bundles
 					// CLEANUP
-					final List<Bundle> restartList = new ArrayList<Bundle>(1);
+					final List<Bundle> restartList = new ArrayList<Bundle>();
 
 					for (int i = 0; i < refreshArray.length; i++) {
 						final BundleImpl bu = (BundleImpl) refreshArray[i];
