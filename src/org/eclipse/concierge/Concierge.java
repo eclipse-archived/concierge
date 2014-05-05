@@ -136,6 +136,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 	private static Class<?> SERVICE_EVENT_HOOK_CLASS = org.osgi.framework.hooks.service.EventHook.class;
 
 	// the runtime args
+
 	/**
 	 * framework basedir.
 	 */
@@ -2421,8 +2422,15 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 			final Collection<Requirement> requirements = resource
 					.getRequirements(null);
+			final HashSet<Requirement> skip = new HashSet<Requirement>();
 
 			for (final Requirement requirement : requirements) {
+				// skip requirements that are already resolved through uses
+				// constraints
+				if (skip.contains(requirement)) {
+					continue;
+				}
+
 				// skip requirements which are not effective
 				if (!context.isEffective(requirement)) {
 					continue;
@@ -2471,6 +2479,114 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 						// dont' trigger resolution of the host
 						continue;
+					}
+
+					// handling potential uses constraints
+					// FIXME: CLEANUP!!!
+					final ArrayList<BundleCapability> caps = new ArrayList<BundleCapability>();
+					caps.add((BundleCapability) capability);
+
+					final ArrayList<BundleCapability> impliedConstraints = new ArrayList<BundleCapability>();
+					final HashSet<BundleCapability> seen = new HashSet<BundleCapability>();
+					while (!caps.isEmpty()) {
+						final BundleCapability cap = caps.remove(0);
+
+						if (seen.contains(cap)) {
+							continue;
+						}
+
+						seen.add(cap);
+						
+						final String usesStr = cap.getDirectives().get(
+								PackageNamespace.CAPABILITY_USES_DIRECTIVE);
+
+						if (usesStr != null) {
+							final String[] usesConstraints = usesStr
+									.split(Utils.SPLIT_AT_COMMA);
+							final HashSet<String> usesSet = new HashSet<String>();
+							usesSet.addAll(Arrays.asList(usesConstraints));
+
+							final BundleWiring wiring = cap.getResource()
+									.getWiring();
+							// TODO: what does it mean that wiring is null at
+							// this point???
+							if (wiring != null) {
+								final List<BundleWire> wires = wiring
+										.getRequiredWires(PackageNamespace.PACKAGE_NAMESPACE);
+
+								for (final BundleWire wire : wires) {
+									final Object pkg = wire
+											.getCapability()
+											.getAttributes()
+											.get(PackageNamespace.PACKAGE_NAMESPACE);
+									System.err.println("MATCHES? " + pkg
+											+ " set=" + usesSet);
+
+									if (usesSet.contains(pkg)) {
+										System.err.println("MATCH!!!");
+
+										impliedConstraints.add(wire
+												.getCapability());
+										caps.add(wire.getCapability());
+									}
+								}
+								final List<BundleCapability> caps2 = wiring
+										.getCapabilities(PackageNamespace.PACKAGE_NAMESPACE);
+
+								System.err.println("CHECKING " + caps2);
+
+								for (final Capability cap2 : caps2) {
+									final Object pkg = cap2
+											.getAttributes()
+											.get(PackageNamespace.PACKAGE_NAMESPACE);
+									System.err.println("MATCHES? " + pkg
+											+ " set=" + usesSet);
+
+									if (usesSet.contains(pkg)) {
+										System.err.println("MATCH!!!");
+
+										impliedConstraints
+												.add((BundleCapability) cap2);
+										caps.add((BundleCapability) cap2);
+									}
+								}
+							}
+						}
+					}
+
+					if (!impliedConstraints.isEmpty()) {
+						// go over implied constraints
+
+						for (final BundleCapability implied : impliedConstraints) {
+							for (final Requirement req : requirements) {
+								if (matches(req, implied)) {
+									System.err.println("MATCH MATCH");
+
+									for (final Map.Entry<Resource, List<Wire>> entry : newWires
+											.entrySet()) {
+										for (final Iterator<Wire> iter = entry
+												.getValue().iterator(); iter
+												.hasNext();) {
+											final Wire wire = iter.next();
+											if (wire.getRequirement() == req) {
+												iter.remove();
+											}
+										}
+									}
+
+									skip.add(req);
+
+									final Wire wire = Resources.createWire(
+											implied, req);
+									newWires.insert(resource, wire);
+
+								}
+							}
+
+						}
+
+						// throw new RuntimeException("IGNORING USES "
+						// + impliedConstraints);
 					}
 
 					// check if the provider is already resolved
