@@ -49,6 +49,9 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 	@SuppressWarnings("deprecation")
 	private static final String BUNDLE_REQUIREDEXECUTIONENVIRONMENT = Constants.BUNDLE_REQUIREDEXECUTIONENVIRONMENT;
 
+	@SuppressWarnings("deprecation")
+	private static final String FRAMEWORK_EXECUTIONENVIRONMENT = Constants.FRAMEWORK_EXECUTIONENVIRONMENT;
+
 	private static final Pattern PARSE_EE = Pattern
 			.compile("([^-|\\.]*)(?:\\-(\\d\\.\\d))(?:\\/([^\\d|\\.|\\/]*))|([^\\d|\\.|\\/]*)(?:\\/([^-|\\.]*)(?:\\-(\\d\\.\\d)))|([^\\.|\\d]*)");
 
@@ -641,7 +644,7 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 	public List<BundleCapability> translateToCapability(
 			final Concierge framework, final String attributeName,
 			final String valueStr) {
-		if (Constants.FRAMEWORK_EXECUTIONENVIRONMENT.equals(attributeName)) {
+		if (FRAMEWORK_EXECUTIONENVIRONMENT.equals(attributeName)) {
 			final String[] fees = valueStr.split(Utils.SPLIT_AT_COMMA);
 			final List<BundleCapability> caps = new ArrayList<BundleCapability>();
 
@@ -708,9 +711,8 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 				final BundleCapability cap = new BundleCapabilityImpl(
 						framework,
 						ExecutionEnvironmentNamespace.EXECUTION_ENVIRONMENT_NAMESPACE,
-						null, attrs,
-						"ExecutionEnvironment " + eeStr + version == null ? ""
-								: ' ' + version);
+						null, attrs, "ExecutionEnvironment " + eeStr
+								+ (version == null ? "" : ' ' + version));
 				caps.add(cap);
 			}
 			return caps;

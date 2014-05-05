@@ -95,14 +95,13 @@ import org.osgi.resource.Wire;
 import org.osgi.service.log.LogService;
 import org.osgi.service.resolver.HostedCapability;
 
-public class BundleImpl extends AbstractBundle implements Bundle,
-		BundleStartLevel {
+public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 	/*
 	 * Helper methods for loading classes from a .dex file on Dalvik VM
 	 */
-	private static final Method dexFileLoader;
-	private static final Method dexClassLoader;
+	protected static final Method dexFileLoader;
+	protected static final Method dexClassLoader;
 
 	static {
 		Method classloader;
@@ -122,7 +121,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 		dexFileLoader = fileloader;
 	}
 
-	private static final Pattern DIRECTIVE_LIST = Pattern
+	protected static final Pattern DIRECTIVE_LIST = Pattern
 			.compile("\\s*([^:]*)\\s*:=\\s*\"\\s*(.+)*?\\s*\"\\s*");
 
 	private static final int TIMEOUT = 10000;
@@ -148,21 +147,21 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 
 	private Version version;
 
-	private static ThreadLocal<ArrayList<AbstractBundle>> activationChain = new ThreadLocal<ArrayList<AbstractBundle>>();
+	protected static ThreadLocal<ArrayList<AbstractBundle>> activationChain = new ThreadLocal<ArrayList<AbstractBundle>>();
 
 	/**
 	 * the host to which this bundle is attached (if any), only valid for
 	 * fragment bundles
 	 */
-	private List<BundleImpl> hostBundles;
+	protected List<BundleImpl> hostBundles;
 
-	private final Concierge framework;
+	protected final Concierge framework;
 
 	/**
 	 * is bundle marked to start with lazy activation policy? (otherwise use
 	 * eager activation)
 	 */
-	private boolean lazyActivation;
+	protected boolean lazyActivation;
 
 	protected String[] activationIncludes;
 
@@ -1179,10 +1178,12 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 		} catch (final IOException ioe) {
 			ioe.printStackTrace();
 		} finally {
-			try {
-				out.close();
-			} catch (final Exception e) {
-				// ignore
+			if (out != null) {
+				try {
+					out.close();
+				} catch (final Exception e) {
+					// ignore
+				}
 			}
 		}
 	}
@@ -1297,7 +1298,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 				.split(Utils.SPLIT_AT_COMMA);
 	}
 
-	private static String readProperty(final Attributes attrs,
+	protected static String readProperty(final Attributes attrs,
 			final String property) throws BundleException {
 		final String value = attrs.getValue(property);
 		if (value != null && value.equals("")) {
@@ -1357,14 +1358,14 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 		return "[" + getSymbolicName() + "-" + getVersion() + "]";
 	}
 
-	public abstract class Revision implements BundleRevision, BundleReference,
+	public abstract class Revision implements BundleRevision,
 			Comparable<Revision> {
 
-		private final int revId;
-		private final MultiMap<String, BundleCapability> capabilities;
-		private final MultiMap<String, BundleRequirement> requirements;
+		protected final int revId;
+		protected final MultiMap<String, BundleCapability> capabilities;
+		protected final MultiMap<String, BundleRequirement> requirements;
 		private final List<HostedCapability> hostedCapabilities = new ArrayList<HostedCapability>();
-		private final List<BundleRequirement> dynamicImports;
+		protected final List<BundleRequirement> dynamicImports;
 
 		private BundleCapability identity;
 
@@ -1373,16 +1374,16 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 		protected final String activatorClassName;
 		private String[] nativeCodeStrings;
 		protected BundleActivator activatorInstance;
-		private String[] classpath;
-		private Map<String, String> nativeLibraries;
-		List<Revision> fragments;
+		protected String[] classpath;
+		protected Map<String, String> nativeLibraries;
+		protected List<Revision> fragments;
 		private final String[] classpathStrings;
 		private final short fragmentAttachmentPolicy;
 
-		private ConciergeBundleWiring wiring;
-		private HashMap<String, BundleWire> packageImportWires;
+		protected ConciergeBundleWiring wiring;
+		protected HashMap<String, BundleWire> packageImportWires;
 		protected List<BundleWire> requireBundleWires;
-		private final HashSet<String> exportIndex;
+		protected final HashSet<String> exportIndex;
 
 		protected Revision(final int revId, final Manifest manifest,
 				final String[] classpathStrings) throws BundleException {
@@ -2260,7 +2261,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 			}
 		}
 
-		private Object checkActivationChain(final Object result) {
+		protected Object checkActivationChain(final Object result) {
 			final ArrayList<AbstractBundle> activationList = activationChain
 					.get();
 			if (activationList != null && activationList.size() > 0
@@ -2448,6 +2449,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 			 * @return
 			 * @throws ClassNotFoundException
 			 */
+			@SuppressWarnings("null")
 			private synchronized Object findResource0(final String pkg,
 					final String name, final boolean isClass,
 					final boolean multiple) throws ClassNotFoundException {
@@ -3006,7 +3008,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 
 			private List<String> dynamicImports;
 
-			private List<BundleRequirement> dynamicImportRequirements;
+			protected List<BundleRequirement> dynamicImportRequirements;
 
 			private ProtectionDomain domain;
 
@@ -3158,7 +3160,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 		private static final long serialVersionUID = 6688251578575649710L;
 
 		// lazily initialized
-		private WeakHashMap<Locale, HeaderDictionary> headerCache;
+		protected WeakHashMap<Locale, HeaderDictionary> headerCache;
 
 		private final HashMap<String, String> index = new HashMap<String, String>();
 
@@ -3520,7 +3522,7 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 		return pos > -1 ? classname.substring(0, pos) : "";
 	}
 
-	private static String classOf(final String classname) {
+	protected static String classOf(final String classname) {
 		final int pos = classname.lastIndexOf('.');
 		return pos > -1 ? classname.substring(pos + 1, classname.length())
 				: classname;
@@ -3533,12 +3535,11 @@ public class BundleImpl extends AbstractBundle implements Bundle,
 	 *            the filename.
 	 * @return the pseudo classname.
 	 */
-	private static String pseudoClassname(final String filename) {
+	protected static String pseudoClassname(final String filename) {
 		return filename.replace('.', '-').replace('/', '.').replace('\\', '.');
 	}
 
-	// FIXME: to Util??
-	private static String stripTrailing(final String filename) {
+	protected static String stripTrailing(final String filename) {
 		return filename.startsWith("/") || filename.startsWith("\\") ? filename
 				.substring(1) : filename;
 	}

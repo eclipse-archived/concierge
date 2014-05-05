@@ -33,7 +33,7 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 	/**
 	 * the framework
 	 */
-	private final Concierge framework;
+	protected final Concierge framework;
 
 	/**
 	 * the bundle object.
@@ -43,7 +43,7 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 	/**
 	 * the service object.
 	 */
-	private S service;
+	protected S service;
 
 	/**
 	 * the service properties.
@@ -75,7 +75,7 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 	/**
 	 * these service properties must not be overwritten by property updates.
 	 */
-	private final static HashSet<String> forbidden;
+	protected final static HashSet<String> forbidden;
 	static {
 		forbidden = new HashSet<String>(2);
 		forbidden.add(Constants.SERVICE_ID.toLowerCase());
@@ -446,6 +446,10 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 	 */
 	private final class ServiceRegistrationImpl implements
 			ServiceRegistration<S> {
+
+		protected ServiceRegistrationImpl() {
+
+		}
 
 		/**
 		 * get the service reference.

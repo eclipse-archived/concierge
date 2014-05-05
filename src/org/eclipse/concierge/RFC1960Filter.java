@@ -83,7 +83,7 @@ final class RFC1960Filter implements Filter {
 	/**
 	 * the string presentations of the operators.
 	 */
-	private static final String[] OP = { "=", "=*", "~=", ">=", "<=" };
+	protected static final String[] OP = { "=", "=*", "~=", ">=", "<=" };
 
 	/**
 	 * the empty "null filter" is generated from null filter strings and matches
@@ -560,17 +560,17 @@ final class RFC1960Filter implements Filter {
 		/**
 		 * the id.
 		 */
-		private final String id;
+		protected final String id;
 
 		/**
 		 * the comparator.
 		 */
-		private final int comparator;
+		protected final int comparator;
 
 		/**
 		 * the value.
 		 */
-		private final String value;
+		protected final String value;
 
 		/**
 		 * create a new filter.
@@ -580,7 +580,7 @@ final class RFC1960Filter implements Filter {
 		 * @param comparator
 		 *            the comparator
 		 */
-		private RFC1960SimpleFilter(final String id, final int comparator,
+		protected RFC1960SimpleFilter(final String id, final int comparator,
 				final String value) {
 			this.id = id;
 			this.comparator = comparator;

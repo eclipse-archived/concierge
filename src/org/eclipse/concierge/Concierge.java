@@ -119,7 +119,7 @@ import org.osgi.service.resolver.Resolver;
  * @author Jan S. Rellermeyer
  */
 public final class Concierge extends AbstractBundle implements Framework,
-		Bundle, BundleRevision, FrameworkWiring, FrameworkStartLevel,
+		BundleRevision, FrameworkWiring, FrameworkStartLevel,
 		URLStreamHandlerFactory, BundleActivator {
 
 	// deprecated core framework constants.
@@ -288,21 +288,21 @@ public final class Concierge extends AbstractBundle implements Framework,
 	/**
 	 * bundle listeners.
 	 */
-	private final List<BundleListener> bundleListeners = new ArrayList<BundleListener>(
+	protected final List<BundleListener> bundleListeners = new ArrayList<BundleListener>(
 			1);
 
 	/**
 	 * synchronous bundle listeners.
 	 */
-	private final List<SynchronousBundleListener> syncBundleListeners = new ArrayList<SynchronousBundleListener>(
+	protected final List<SynchronousBundleListener> syncBundleListeners = new ArrayList<SynchronousBundleListener>(
 			1);
 
-	private final MultiMap<BundleContext, BundleListener> bundleListenerMap = new MultiMap<BundleContext, BundleListener>();
+	protected final MultiMap<BundleContext, BundleListener> bundleListenerMap = new MultiMap<BundleContext, BundleListener>();
 
 	/**
 	 * service listeners.
 	 */
-	private final List<ServiceListenerEntry> serviceListeners = new ArrayList<ServiceListenerEntry>(
+	protected final List<ServiceListenerEntry> serviceListeners = new ArrayList<ServiceListenerEntry>(
 			1);
 
 	/**
@@ -314,7 +314,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 	/**
 	 * framework listeners.
 	 */
-	private final List<FrameworkListener> frameworkListeners = new ArrayList<FrameworkListener>(
+	protected final List<FrameworkListener> frameworkListeners = new ArrayList<FrameworkListener>(
 			1);
 
 	CapabilityRegistry capabilityRegistry = new CapabilityRegistry();
@@ -367,7 +367,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 	// bundle hooks
 	private final List<ServiceReferenceImpl<CollisionHook>> bundleCollisionHooks = new ArrayList<ServiceReferenceImpl<CollisionHook>>(0);
 	private final List<ServiceReferenceImpl<org.osgi.framework.hooks.bundle.EventHook>> bundleEventHooks = new ArrayList<ServiceReferenceImpl<org.osgi.framework.hooks.bundle.EventHook>>(0);
-	private final List<ServiceReferenceImpl<org.osgi.framework.hooks.bundle.FindHook>> bundleFindHooks = new ArrayList<ServiceReferenceImpl<org.osgi.framework.hooks.bundle.FindHook>>(0);
+	protected final List<ServiceReferenceImpl<org.osgi.framework.hooks.bundle.FindHook>> bundleFindHooks = new ArrayList<ServiceReferenceImpl<org.osgi.framework.hooks.bundle.FindHook>>(0);
 
 	// resolver hook
 	protected List<ServiceReferenceImpl<ResolverHookFactory>> resolverHookFactories = new ArrayList<ServiceReferenceImpl<ResolverHookFactory>>(0);
@@ -383,7 +383,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 	private final List<ServiceReferenceImpl<WeavingHook>> weavingHooks = new ArrayList<ServiceReferenceImpl<WeavingHook>>(0);
 
 	// "hooks registry"
-	private final HashMap<String, List<?>> hooks = new HashMap<String, List<?>>();
+	protected final HashMap<String, List<?>> hooks = new HashMap<String, List<?>>();
 	// @formatter:on
 
 	static final Dictionary<String, Object> props2Dict(final Properties props) {
@@ -1136,7 +1136,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 		stop();
 	}
 
-	private void stop0(final boolean update) {
+	protected void stop0(final boolean update) {
 		state = Bundle.STOPPING;
 
 		if (!update) {
@@ -1496,7 +1496,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 *            the startlevel.
 	 * 
 	 */
-	private void setLevel(final Bundle[] bundleArray, final int targetLevel,
+	protected void setLevel(final Bundle[] bundleArray, final int targetLevel,
 			final boolean all) {
 		if (startlevel == targetLevel) {
 			return;
@@ -1670,7 +1670,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 									}
 								}
 							}
-						} else if (bundleCollection != null) {
+						} else {
 							// bundleArray has entries which should be
 							// processed anyway
 							toProcess.add(initial[i]);
@@ -1939,7 +1939,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 	}
 
-	private void filterCandidates(final ArrayList<ResolverHook> hooks,
+	protected void filterCandidates(final ArrayList<ResolverHook> hooks,
 			final BundleRequirement requirement,
 			final Collection<Capability> candidates) {
 		// sort candidates by providing resources
@@ -4160,7 +4160,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 		 * @throws InvalidSyntaxException
 		 *             if the filter cannot be parsed.
 		 */
-		private ServiceListenerEntry(final AbstractBundle bundle,
+		protected ServiceListenerEntry(final AbstractBundle bundle,
 				final ServiceListener listener, final String filter)
 				throws InvalidSyntaxException {
 			this.bundle = bundle;
@@ -4247,9 +4247,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 					attributeIndex = new MultiMap<String, Capability>();
 					defaultAttributeIndex.put(namespace, attributeIndex);
 				}
-				if (defaultAttribute != null) {
-					attributeIndex.insert((String) defaultAttribute, cap);
-				}
+				attributeIndex.insert((String) defaultAttribute, cap);
 			}
 		}
 
@@ -4304,9 +4302,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 				final String value) {
 			final MultiMap<String, Capability> caps = defaultAttributeIndex
 					.get(namespace);
-			if (caps == null) {
-				return Collections.emptyList();
-			}
 			return caps == null ? Collections.<Capability> emptyList() : caps
 					.get(value);
 		}

@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.AbstractSet;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -351,9 +350,9 @@ public final class Utils {
 
 	public static class MultiMap<K, V> implements Map<K, List<V>> {
 
-		private final HashMap<K, List<V>> map;
+		protected final HashMap<K, List<V>> map;
 
-		private final LinkedHashSet<V> allValues = new LinkedHashSet<V>();
+		protected final LinkedHashSet<V> allValues = new LinkedHashSet<V>();
 
 		private final Comparator<V> comp;
 
@@ -769,24 +768,6 @@ public final class Utils {
 
 		public List<E> getRemoved() {
 			return removed;
-		}
-
-	}
-
-	// FIXME: remove!
-
-	public static void main(final String... args) {
-
-		final String[] res = "foo,\"bar\",\"foo,bar\",test\\\",test"
-				.split(SPLIT_AT_COMMA);
-
-		// final String[] res =
-		// splitString("foo,\"bar\",\"foo,bar\",test\\\",test", ",");
-
-		System.out.println(Arrays.toString(res));
-
-		for (final String s : res) {
-			System.out.println("'" + s + "'");
 		}
 
 	}

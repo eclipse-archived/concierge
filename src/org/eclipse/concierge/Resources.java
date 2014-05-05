@@ -460,7 +460,7 @@ public class Resources {
 
 	static class ConciergeBundleWiring implements BundleWiring {
 
-		private final BundleRevision revision;
+		protected final BundleRevision revision;
 
 		private final MultiMap<String, BundleCapability> capabilities = new MultiMap<String, BundleCapability>();
 		private final MultiMap<String, BundleRequirement> requirements = new MultiMap<String, BundleRequirement>();
