@@ -1919,13 +1919,16 @@ public final class Concierge extends AbstractBundle implements Framework,
 								cap, filterStr)) {
 					// we have a match
 					// FIXME: cleanup...
-					if ((((BundleCapability) cap)).getRevision().getBundle().getState() == Bundle.INSTALLED) {
+					if ((((BundleCapability) cap)).getRevision().getBundle()
+							.getState() == Bundle.INSTALLED) {
 						// need to resolve first
-						if (!resolve(Collections.singletonList((((BundleCapability) cap)).getRevision()), false)) {
+						if (!resolve(
+								Collections.singletonList((((BundleCapability) cap))
+										.getRevision()), false)) {
 							continue;
 						}
 					}
-					
+
 					matches.add((BundleCapability) cap);
 				}
 
@@ -1944,6 +1947,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 	}
 
+	// TODO: simplify
 	protected void filterCandidates(final ArrayList<ResolverHook> hooks,
 			final BundleRequirement requirement,
 			final Collection<Capability> candidates) {
@@ -1973,6 +1977,31 @@ public final class Concierge extends AbstractBundle implements Framework,
 		}
 
 		candidates.addAll(filteredCandidates);
+	}
+
+	protected void filterResources(final ArrayList<ResolverHook> hooks,
+			final Collection<Resource> resources,
+			final Collection<Resource> removed) {
+		final ArrayList<BundleRevision> revisions = new ArrayList<BundleRevision>();
+		removed.addAll(resources);
+		for (final Iterator<Resource> iter = resources.iterator(); iter
+				.hasNext();) {
+			final Resource res = iter.next();
+			if (res instanceof BundleRevision) {
+				revisions.add((BundleRevision) res);
+				iter.remove();
+			}
+		}
+
+		final RemoveOnlyList<BundleRevision> filteredResources = new RemoveOnlyList<BundleRevision>(
+				revisions);
+
+		for (final ResolverHook hook : resolver.hooks) {
+			hook.filterResolvable(filteredResources);
+		}
+
+		resources.addAll(filteredResources);
+		removed.removeAll(filteredResources);
 	}
 
 	boolean resolve(final Collection<BundleRevision> bundles,
@@ -2294,10 +2323,13 @@ public final class Concierge extends AbstractBundle implements Framework,
 				final MultiMap<Resource, Wire> solution,
 				final ArrayList<Requirement> unresolvedRequirements,
 				final ArrayList<Resource> unresolvedResources) {
+
 			final Collection<Resource> mandatory = context
 					.getMandatoryResources();
 			final Collection<Resource> optional = context
 					.getOptionalResources();
+			
+			filterResources(hooks, mandatory, unresolvedResources);
 
 			if (!(mandatory.isEmpty() && optional.isEmpty())) {
 				final Map<Resource, Wiring> existingWirings = context
