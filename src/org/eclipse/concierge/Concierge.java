@@ -2328,7 +2328,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 					.getMandatoryResources();
 			final Collection<Resource> optional = context
 					.getOptionalResources();
-			
+
 			filterResources(hooks, mandatory, unresolvedResources);
 
 			if (!(mandatory.isEmpty() && optional.isEmpty())) {
@@ -2433,6 +2433,20 @@ public final class Concierge extends AbstractBundle implements Framework,
 					// check which fragments can be attached to the bundles
 					if (revision.allowsFragmentAttachment()) {
 						for (final Revision frag : getFragments(revision)) {
+							final ArrayList<Capability> capList = new ArrayList<Capability>();
+							capList.add(revision
+									.getCapabilities(
+											HostNamespace.HOST_NAMESPACE).get(0));
+							filterCandidates(
+									hooks,
+									(BundleRequirement) frag.getRequirements(
+											HostNamespace.HOST_NAMESPACE)
+											.get(0),
+									capList);
+							if (capList.isEmpty()) {
+								continue;
+							}
+							
 							try {
 								if (!revision.attachFragment(frag)) {
 									continue;
