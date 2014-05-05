@@ -88,6 +88,7 @@ import org.osgi.framework.hooks.service.ListenerHook.ListenerInfo;
 import org.osgi.framework.hooks.weaving.WeavingException;
 import org.osgi.framework.hooks.weaving.WeavingHook;
 import org.osgi.framework.launch.Framework;
+import org.osgi.framework.namespace.BundleNamespace;
 import org.osgi.framework.namespace.HostNamespace;
 import org.osgi.framework.namespace.IdentityNamespace;
 import org.osgi.framework.namespace.PackageNamespace;
@@ -2482,9 +2483,17 @@ public final class Concierge extends AbstractBundle implements Framework,
 					}
 
 					// handling potential uses constraints
-					// FIXME: CLEANUP!!!
+					// FIXME: CLEANUP!!!, OPTIMIZE!!!
 					final ArrayList<BundleCapability> caps = new ArrayList<BundleCapability>();
-					caps.add((BundleCapability) capability);
+
+					if (BundleNamespace.BUNDLE_NAMESPACE.equals(capability
+							.getNamespace())) {
+						caps.addAll(((BundleCapability) capability)
+								.getResource().getDeclaredCapabilities(
+										PackageNamespace.PACKAGE_NAMESPACE));
+					} else {
+						caps.add((BundleCapability) capability);
+					}
 
 					final ArrayList<BundleCapability> impliedConstraints = new ArrayList<BundleCapability>();
 					final HashSet<BundleCapability> seen = new HashSet<BundleCapability>();
@@ -2496,7 +2505,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 						}
 
 						seen.add(cap);
-						
+
 						final String usesStr = cap.getDirectives().get(
 								PackageNamespace.CAPABILITY_USES_DIRECTIVE);
 
