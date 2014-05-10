@@ -2329,7 +2329,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 			final Collection<Resource> optional = context
 					.getOptionalResources();
 
-			filterResources(hooks, mandatory, unresolvedResources);
+			if (!hooks.isEmpty()) {
+				filterResources(hooks, mandatory, unresolvedResources);
+			}
 
 			if (!(mandatory.isEmpty() && optional.isEmpty())) {
 				final Map<Resource, Wiring> existingWirings = context
@@ -2348,8 +2350,17 @@ public final class Concierge extends AbstractBundle implements Framework,
 							continue;
 						}
 					} catch (final BundleException e) {
+						// should not happen for critical==false
 						e.printStackTrace();
 					}
+
+					if (resource instanceof BundleRevision) {
+						if (!checkSingleton((BundleRevision) resource)) {
+							unresolvedResources.add(resource);
+							continue;
+						}
+					}
+
 					final Collection<Requirement> unres = resolveResource(
 							context, resource, existingWirings, solution,
 							new HashSet<Resource>());
@@ -2369,13 +2380,13 @@ public final class Concierge extends AbstractBundle implements Framework,
 			}
 		}
 
-		private void checkSingleton(final BundleRevision resource) {
+		private boolean checkSingleton(final BundleRevision resource) {
 			try {
 				final List<Capability> identities = resource
 						.getCapabilities(IdentityNamespace.IDENTITY_NAMESPACE);
 
 				if (identities == null || identities.isEmpty()) {
-					return;
+					return true;
 				}
 
 				final BundleCapability identity = (BundleCapability) identities
@@ -2383,24 +2394,65 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 				if (!"true".equals(identity.getDirectives().get(
 						IdentityNamespace.CAPABILITY_SINGLETON_DIRECTIVE))) {
-					return;
+					return true;
 				}
 
-				final List<Capability> candidates = capabilityRegistry
-						.getByKey(
-								IdentityNamespace.IDENTITY_NAMESPACE,
-								(String) identity.getAttributes().get(
-										IdentityNamespace.IDENTITY_NAMESPACE));
-				final List<BundleCapability> collisions = new ArrayList<BundleCapability>();
-				for (final Capability candidate : candidates) {
-					if (candidate instanceof BundleCapability) {
-						collisions.add((BundleCapability) candidate);
+				final List<BundleCapability> col = new ArrayList<BundleCapability>();
+
+				final AbstractBundle[] existing = getBundleWithSymbolicName(resource
+						.getSymbolicName());
+
+				System.err.println("RESOLVING " + resource);
+				System.err.println("EXISTING ARE " + Arrays.asList(existing));
+
+				for (int i = 0; i < existing.length; i++) {
+					if (existing[i].state != Bundle.INSTALLED) {
+						final BundleCapability existingIdentity = (BundleCapability) existing[i].currentRevision
+								.getCapabilities(
+										IdentityNamespace.IDENTITY_NAMESPACE)
+								.get(0);
+						if (identity != existingIdentity
+								&& "true"
+										.equals(existingIdentity
+												.getDirectives()
+												.get(IdentityNamespace.CAPABILITY_SINGLETON_DIRECTIVE))) {
+							col.add(existingIdentity);
+						}
 					}
 				}
+
+				System.err.println("AFTER FILTERING IT IS " + col);
+
+				/*
+				 * final List<Capability> candidates = capabilityRegistry
+				 * .getByKey( IdentityNamespace.IDENTITY_NAMESPACE, (String)
+				 * identity.getAttributes().get(
+				 * IdentityNamespace.IDENTITY_NAMESPACE)); final
+				 * List<BundleCapability> col = new
+				 * ArrayList<BundleCapability>(); for (final Capability
+				 * candidate : candidates) { if (candidate instanceof
+				 * BundleCapability) { col.add((BundleCapability) candidate); }
+				 * }
+				 */
+
+				if (hooks.isEmpty()) {
+					return col.isEmpty();
+				}
+
+				final RemoveOnlyList<BundleCapability> collisions = new RemoveOnlyList<BundleCapability>(
+						col);
 
 				for (final ResolverHook hook : hooks) {
 					hook.filterSingletonCollisions(identity, collisions);
 				}
+
+				if (!collisions.isEmpty()) {
+					throw new BundleException("Singleton collision " + identity
+							+ " with existing bundles " + collisions,
+							BundleException.DUPLICATE_BUNDLE_ERROR);
+				}
+
+				return true;
 			} catch (final Throwable t) {
 				t.printStackTrace();
 				throw new RuntimeException(t.getMessage());
@@ -2426,27 +2478,23 @@ public final class Concierge extends AbstractBundle implements Framework,
 			if (resource instanceof Revision) {
 				final Revision revision = (Revision) resource;
 
-				checkSingleton(revision);
-
 				isFragment = revision.isFragment();
 				if (!isFragment) {
 					// check which fragments can be attached to the bundles
 					if (revision.allowsFragmentAttachment()) {
 						for (final Revision frag : getFragments(revision)) {
 							final ArrayList<Capability> capList = new ArrayList<Capability>();
-							capList.add(revision
-									.getCapabilities(
-											HostNamespace.HOST_NAMESPACE).get(0));
+							capList.add(revision.getCapabilities(
+									HostNamespace.HOST_NAMESPACE).get(0));
 							filterCandidates(
 									hooks,
 									(BundleRequirement) frag.getRequirements(
 											HostNamespace.HOST_NAMESPACE)
-											.get(0),
-									capList);
+											.get(0), capList);
 							if (capList.isEmpty()) {
 								continue;
 							}
-							
+
 							try {
 								if (!revision.attachFragment(frag)) {
 									continue;

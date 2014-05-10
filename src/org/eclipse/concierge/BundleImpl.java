@@ -1804,6 +1804,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				// instance
 				// resolved, then abort
 				// see spec 4.2; page 38, section 3.5.2
+				/*
 				if (isSingleton()) {
 					final AbstractBundle[] existing = framework
 							.getBundleWithSymbolicName(getSymbolicName());
@@ -1819,6 +1820,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 						}
 					}
 				}
+				*/
 
 				return true;
 			} catch (final IllegalArgumentException iae) {
