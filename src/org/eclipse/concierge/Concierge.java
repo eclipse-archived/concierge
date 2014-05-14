@@ -3937,13 +3937,17 @@ public final class Concierge extends AbstractBundle implements Framework,
 			ServiceReference<?> winner = null;
 			int maxRanking = -1;
 			long lastServiceID = Long.MAX_VALUE;
-			final List<ServiceReference<?>> list = serviceRegistry.get(clazz);
-			if (list == null) {
-				return null;
+			
+			ServiceReference<?>[] list = null;
+			try {
+				list = getServiceReferences(clazz, null, true);
+			} catch (InvalidSyntaxException e) {
 			}
 
-			final ServiceReference<?>[] candidates = list
-					.toArray(new ServiceReference[list.size()]);
+			if (list == null)
+				return null;
+
+			final ServiceReference<?>[] candidates = list;
 
 			for (int i = 0; i < candidates.length; i++) {
 				final Integer rankProp = (Integer) candidates[i]
