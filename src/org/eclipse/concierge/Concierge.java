@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -120,8 +121,7 @@ import org.osgi.service.resolver.Resolver;
  * @author Jan S. Rellermeyer
  */
 public final class Concierge extends AbstractBundle implements Framework,
-		BundleRevision, FrameworkWiring, FrameworkStartLevel,
-		URLStreamHandlerFactory, BundleActivator {
+		BundleRevision, FrameworkWiring, FrameworkStartLevel, BundleActivator {
 
 	// deprecated core framework constants.
 
@@ -135,6 +135,14 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 	@SuppressWarnings("deprecation")
 	private static Class<?> SERVICE_EVENT_HOOK_CLASS = org.osgi.framework.hooks.service.EventHook.class;
+
+	// URLStreamHandlerFactory
+
+	/**
+	 * This static variable contains a URL stream handler factory, which will be
+	 * dispatched for the current running Concierge instance.
+	 */
+	private static ConciergeURLStreamHandlerFactory conciergeURLStreamHandlerFactory = new ConciergeURLStreamHandlerFactory();
 
 	// the runtime args
 
@@ -936,7 +944,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 		// set the URLStreamHandlerFactory
 		try {
-			URL.setURLStreamHandlerFactory(this);
+			conciergeURLStreamHandlerFactory.setConcierge(this);
+			URL.setURLStreamHandlerFactory(conciergeURLStreamHandlerFactory);
 		} catch (final Error e) {
 			// already set...
 		}
@@ -1162,6 +1171,10 @@ public final class Concierge extends AbstractBundle implements Framework,
 			bundles.clear();
 			bundleID_bundles.clear();
 			serviceRegistry.clear();
+
+			// Reset the used Concierge instance in URL stream handler factory
+			conciergeURLStreamHandlerFactory.setConcierge(null);
+
 			// TODO: more resources to clear?
 
 			stopEvent = new FrameworkEvent(
@@ -1829,9 +1842,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 	private boolean inResolve;
 
-	private ArrayList<ResolverHook> getResolverHooks(
+	private HashMap<ResolverHook, ServiceReferenceImpl<ResolverHookFactory>> getResolverHooks(
 			final Collection<BundleRevision> bundles) throws Throwable {
-		final ArrayList<ResolverHook> hooks = new ArrayList<ResolverHook>();
+		final LinkedHashMap<ResolverHook, ServiceReferenceImpl<ResolverHookFactory>> hooks = new LinkedHashMap<ResolverHook, ServiceReferenceImpl<ResolverHookFactory>>();
 		@SuppressWarnings("unchecked")
 		final ServiceReferenceImpl<ResolverHookFactory>[] factories = resolverHookFactories
 				.toArray(new ServiceReferenceImpl[resolverHookFactories.size()]);
@@ -1844,18 +1857,49 @@ public final class Concierge extends AbstractBundle implements Framework,
 					final ResolverHook hook = factory.begin(Collections
 							.unmodifiableCollection(bundles));
 					if (hook != null) {
-						hooks.add(hook);
+						hooks.put(hook, sref);
 					}
 					sref.ungetService(Concierge.this);
 				}
 			}
 		} catch (final Throwable t) {
-			for (ResolverHook hook : hooks) {
+			for (ResolverHook hook : hooks.keySet()) {
 				hook.end();
 			}
 			throw t;
 		}
 		return hooks;
+	}
+
+	private void endResolverHooks(
+			final HashMap<ResolverHook, ServiceReferenceImpl<ResolverHookFactory>> hooks)
+			throws BundleException {
+		if (hooks == null) {
+			return;
+		}
+
+		Throwable error = null;
+		for (final Map.Entry<ResolverHook, ServiceReferenceImpl<ResolverHookFactory>> entry : hooks
+				.entrySet()) {
+			if (entry.getValue().service == null) {
+				// unregistered...
+				error = new BundleException(
+						"Something unregistered a hook that was in use.",
+						BundleException.REJECTED_BY_HOOK);
+				continue;
+			}
+
+			try {
+				entry.getKey().end();
+			} catch (final Throwable t) {
+				error = t;
+			}
+		}
+
+		if (error != null) {
+			throw new BundleException("Error",
+					BundleException.REJECTED_BY_HOOK, error);
+		}
 	}
 
 	List<BundleCapability> resolveDynamic(final BundleRevision trigger,
@@ -1864,7 +1908,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 		Collection<Capability> candidates = null;
 
 		try {
-			final ArrayList<ResolverHook> hooks = getResolverHooks(Arrays
+			final HashMap<ResolverHook, ServiceReferenceImpl<ResolverHookFactory>> hooks = getResolverHooks(Arrays
 					.asList(trigger));
 
 			final String filterStr = dynImport.getDirectives().get(
@@ -1891,13 +1935,11 @@ public final class Concierge extends AbstractBundle implements Framework,
 			}
 
 			if (candidates == null || candidates.isEmpty()) {
-				for (final ResolverHook hook : hooks) {
-					hook.end();
-				}
+				endResolverHooks(hooks);
 				return null;
 			}
 
-			filterCandidates(hooks, dynImport, candidates);
+			filterCandidates(hooks.keySet(), dynImport, candidates);
 
 			final ArrayList<BundleCapability> matches = new ArrayList<BundleCapability>();
 
@@ -1934,9 +1976,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 			}
 
-			for (final ResolverHook hook : hooks) {
-				hook.end();
-			}
+			endResolverHooks(hooks);
 
 			Collections.sort(matches, Utils.EXPORT_ORDER);
 			return matches;
@@ -1948,7 +1988,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 	}
 
 	// TODO: simplify
-	protected void filterCandidates(final ArrayList<ResolverHook> hooks,
+	protected void filterCandidates(final Collection<ResolverHook> hooks,
 			final BundleRequirement requirement,
 			final Collection<Capability> candidates) {
 		// sort candidates by providing resources
@@ -1979,7 +2019,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 		candidates.addAll(filteredCandidates);
 	}
 
-	protected void filterResources(final ArrayList<ResolverHook> hooks,
+	protected void filterResources(final Collection<ResolverHook> hooks,
 			final Collection<Resource> resources,
 			final Collection<Resource> removed) {
 		final ArrayList<BundleRevision> revisions = new ArrayList<BundleRevision>();
@@ -1996,7 +2036,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 		final RemoveOnlyList<BundleRevision> filteredResources = new RemoveOnlyList<BundleRevision>(
 				revisions);
 
-		for (final ResolverHook hook : resolver.hooks) {
+		for (final ResolverHook hook : resolver.hooks.keySet()) {
 			hook.filterResolvable(filteredResources);
 		}
 
@@ -2180,22 +2220,11 @@ public final class Concierge extends AbstractBundle implements Framework,
 			throw new BundleException("Resolve Error",
 					BundleException.REJECTED_BY_HOOK, t);
 		} finally {
-			Throwable error = null;
-			if (resolver.hooks != null) {
-				for (final ResolverHook hook : resolver.hooks) {
-					try {
-						hook.end();
-					} catch (final Throwable t) {
-						error = t;
-					}
-				}
-			}
-			resolver.hooks = null;
-			inResolve = false;
-
-			if (error != null) {
-				throw new BundleException("Error",
-						BundleException.REJECTED_BY_HOOK, error);
+			try {
+				endResolverHooks(resolver.hooks);
+			} finally {
+				resolver.hooks = null;
+				inResolve = false;
 			}
 		}
 	}
@@ -2295,7 +2324,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 	public class ResolverImpl implements Resolver {
 
-		protected ArrayList<ResolverHook> hooks;
+		protected HashMap<ResolverHook, ServiceReferenceImpl<ResolverHookFactory>> hooks;
 
 		public Map<Resource, List<Wire>> resolve(final ResolveContext context)
 				throws ResolutionException {
@@ -2330,7 +2359,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 					.getOptionalResources();
 
 			if (!hooks.isEmpty()) {
-				filterResources(hooks, mandatory, unresolvedResources);
+				filterResources(hooks.keySet(), mandatory, unresolvedResources);
 			}
 
 			if (!(mandatory.isEmpty() && optional.isEmpty())) {
@@ -2399,57 +2428,63 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 				final List<BundleCapability> col = new ArrayList<BundleCapability>();
 
-				final AbstractBundle[] existing = getBundleWithSymbolicName(resource
-						.getSymbolicName());
+				System.err.println("RESOLVING " + resource.getSymbolicName()
+						+ " - " + resource.getVersion() + " /.//" + resource);
 
-				System.err.println("RESOLVING " + resource);
-				System.err.println("EXISTING ARE " + Arrays.asList(existing));
+				final List<AbstractBundle> existing = new ArrayList<AbstractBundle>(
+						getBundleWithSymbolicName(resource.getSymbolicName()));
+				existing.remove(resource.getBundle());
 
-				for (int i = 0; i < existing.length; i++) {
-					if (existing[i].state != Bundle.INSTALLED) {
-						final BundleCapability existingIdentity = (BundleCapability) existing[i].currentRevision
+				if (existing.isEmpty()) {
+					return true;
+				}
+
+				System.err.println("RAW EXISTING ARE " + existing);
+
+				for (final AbstractBundle bundle : existing) {
+					if (bundle.state != Bundle.INSTALLED) {
+						final BundleCapability existingIdentity = (BundleCapability) bundle.currentRevision
 								.getCapabilities(
 										IdentityNamespace.IDENTITY_NAMESPACE)
 								.get(0);
-						if (identity != existingIdentity
-								&& "true"
-										.equals(existingIdentity
-												.getDirectives()
-												.get(IdentityNamespace.CAPABILITY_SINGLETON_DIRECTIVE))) {
+						if ("true"
+								.equals(existingIdentity
+										.getDirectives()
+										.get(IdentityNamespace.CAPABILITY_SINGLETON_DIRECTIVE))) {
 							col.add(existingIdentity);
 						}
+					} else {
+						System.err.println("\t " + bundle
+								+ " is only INSTALLED");
 					}
 				}
 
-				System.err.println("AFTER FILTERING IT IS " + col);
-
-				/*
-				 * final List<Capability> candidates = capabilityRegistry
-				 * .getByKey( IdentityNamespace.IDENTITY_NAMESPACE, (String)
-				 * identity.getAttributes().get(
-				 * IdentityNamespace.IDENTITY_NAMESPACE)); final
-				 * List<BundleCapability> col = new
-				 * ArrayList<BundleCapability>(); for (final Capability
-				 * candidate : candidates) { if (candidate instanceof
-				 * BundleCapability) { col.add((BundleCapability) candidate); }
-				 * }
-				 */
+				System.err.println("EXISTING ARE " + col);
 
 				if (hooks.isEmpty()) {
+
+					if (!col.isEmpty()) {
+						System.err.println("REJECTED NO HOOKS>>>>>>>>");
+					}
+
 					return col.isEmpty();
 				}
 
 				final RemoveOnlyList<BundleCapability> collisions = new RemoveOnlyList<BundleCapability>(
 						col);
 
-				for (final ResolverHook hook : hooks) {
+				for (final ResolverHook hook : hooks.keySet()) {
 					hook.filterSingletonCollisions(identity, collisions);
 				}
 
 				if (!collisions.isEmpty()) {
-					throw new BundleException("Singleton collision " + identity
-							+ " with existing bundles " + collisions,
-							BundleException.DUPLICATE_BUNDLE_ERROR);
+					System.err.println("REJECTED BY HOOKS>>>>>>>>");
+
+					// throw new BundleException("Singleton collision " +
+					// identity
+					// + " with existing bundles " + collisions,
+					// BundleException.DUPLICATE_BUNDLE_ERROR);
+					return false;
 				}
 
 				return true;
@@ -2487,7 +2522,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 							capList.add(revision.getCapabilities(
 									HostNamespace.HOST_NAMESPACE).get(0));
 							filterCandidates(
-									hooks,
+									hooks.keySet(),
 									(BundleRequirement) frag.getRequirements(
 											HostNamespace.HOST_NAMESPACE)
 											.get(0), capList);
@@ -2548,8 +2583,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 				// filter through the resolver hooks if there are any
 				if (hooks != null && !hooks.isEmpty()
 						&& requirement instanceof BundleRequirement) {
-					filterCandidates(hooks, (BundleRequirement) requirement,
-							candidates);
+					filterCandidates(hooks.keySet(),
+							(BundleRequirement) requirement, candidates);
 				}
 
 				boolean resolved = false;
@@ -2793,59 +2828,81 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 	// URLStreamHandlerFactory
 
-	/**
-	 * @see java.net.URLStreamHandlerFactory#createURLStreamHandler(java.lang.String)
-	 * @category URLStreamHandlerFactory
-	 */
-	public URLStreamHandler createURLStreamHandler(final String protocol) {
-		// check the service registry, java.protocol.handler.pkgs, etc.
-		if ("bundle".equals(protocol)) {
-			return new URLStreamHandler() {
+	protected static class ConciergeURLStreamHandlerFactory implements
+			URLStreamHandlerFactory {
 
-				protected URLConnection openConnection(final URL u)
-						throws IOException {
-					try {
-						final String host = u.getHost();
-						// FIXME: unsafe!
-						final String[] s = Utils.splitString(host, ".");
+		Concierge frameworkInstance = null;
 
-						final Long bundleId = Long.parseLong(s[0]);
-						final int rev = Integer.parseInt(s[1]);
-
-						final BundleImpl bundle = (BundleImpl) bundleID_bundles
-								.get(bundleId);
-						return new URLConnection(u) {
-
-							private InputStream inputStream;
-
-							private boolean isConnected;
-
-							public void connect() throws IOException {
-								inputStream = bundle.getURLResource(u, rev);
-								isConnected = true;
-							}
-
-							/*
-							 * 
-							 * @see java.net.URLConnection#getInputStream()
-							 */
-							public InputStream getInputStream()
-									throws IOException {
-								if (!isConnected) {
-									connect();
-								}
-								return inputStream;
-							}
-
-						};
-					} catch (final NumberFormatException nfe) {
-						throw new IOException("Malformed host " + u.getHost());
-					}
-				}
-			};
+		public void setConcierge(Concierge concierge) {
+			this.frameworkInstance = concierge;
 		}
 
-		return null;
+		/**
+		 * @see java.net.URLStreamHandlerFactory#createURLStreamHandler(java.lang.String)
+		 * @category URLStreamHandlerFactory
+		 */
+		public URLStreamHandler createURLStreamHandler(final String protocol) {
+			// check the service registry, java.protocol.handler.pkgs, etc.
+			if ("bundle".equals(protocol)) {
+				return new URLStreamHandler() {
+
+					protected URLConnection openConnection(final URL u)
+							throws IOException {
+						try {
+							final String host = u.getHost();
+							// FIXME: unsafe!
+							final String[] s = Utils.splitString(host, ".");
+
+							final Long bundleId = Long.parseLong(s[0]);
+							final int rev = Integer.parseInt(s[1]);
+
+							if (ConciergeURLStreamHandlerFactory.this.frameworkInstance == null) {
+								throw new IllegalStateException(
+										"ConciergeURLStreamHandlerFactory "
+												+ "is not linked to a Concierge framework");
+							}
+
+							final BundleImpl bundle = (BundleImpl) ConciergeURLStreamHandlerFactory.this.frameworkInstance.bundleID_bundles
+									.get(bundleId);
+							if (bundle == null) {
+								throw new IllegalStateException(
+										"Bundle for URL " + u
+												+ " can not be found");
+							}
+							return new URLConnection(u) {
+
+								private InputStream inputStream;
+
+								private boolean isConnected;
+
+								public void connect() throws IOException {
+									inputStream = bundle.getURLResource(u, rev);
+									isConnected = true;
+								}
+
+								/*
+								 * 
+								 * @see java.net.URLConnection#getInputStream()
+								 */
+								public InputStream getInputStream()
+										throws IOException {
+									if (!isConnected) {
+										connect();
+									}
+									return inputStream;
+								}
+
+							};
+						} catch (final NumberFormatException nfe) {
+							throw new IOException("Malformed host "
+									+ u.getHost());
+						}
+					}
+				};
+			}
+
+			return null;
+		}
 	}
 
 	// full match
@@ -2961,11 +3018,10 @@ public final class Concierge extends AbstractBundle implements Framework,
 		return 0;
 	}
 
-	AbstractBundle[] getBundleWithSymbolicName(final String symbolicName) {
+	List<AbstractBundle> getBundleWithSymbolicName(final String symbolicName) {
 		final List<AbstractBundle> list = symbolicName_bundles
-				.get(symbolicName);
-		return list == null ? new AbstractBundle[0] : list
-				.toArray(new AbstractBundle[list.size()]);
+				.lookup(symbolicName);
+		return list;
 	}
 
 	/**

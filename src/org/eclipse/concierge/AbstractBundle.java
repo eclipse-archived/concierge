@@ -249,7 +249,7 @@ public abstract class AbstractBundle implements Bundle, BundleRevisions {
 	 * @see java.lang.Comparable#compareTo(java.lang.Object)
 	 * @category Bundle
 	 */
-	public int compareTo(final Bundle o) {
+	public final int compareTo(final Bundle o) {
 		return (int) (o.getBundleId() - bundleId);
 	}
 
@@ -259,7 +259,7 @@ public abstract class AbstractBundle implements Bundle, BundleRevisions {
 	 * @see org.osgi.framework.wiring.BundleRevisions#getRevisions()
 	 * @category BundleRevisions
 	 */
-	public List<BundleRevision> getRevisions() {
+	public final List<BundleRevision> getRevisions() {
 		return Collections.unmodifiableList(revisions);
 	}
 
@@ -269,7 +269,7 @@ public abstract class AbstractBundle implements Bundle, BundleRevisions {
 	 * @see org.osgi.framework.BundleReference#getBundle()
 	 * @category BundleReference
 	 */
-	public Bundle getBundle() {
+	public final Bundle getBundle() {
 		return this;
 	}
 
@@ -277,7 +277,7 @@ public abstract class AbstractBundle implements Bundle, BundleRevisions {
 	 * @see org.osgi.framework.Bundle#getDataFile(java.lang.String)
 	 * @category Bundle
 	 */
-	public File getDataFile(final String filename) {
+	public final File getDataFile(final String filename) {
 		return context.getDataFile(filename);
 	}
 
