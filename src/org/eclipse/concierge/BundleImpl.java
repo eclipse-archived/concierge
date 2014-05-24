@@ -801,6 +801,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 		}
 
 		revisions.clear();
+
 		if (currentRevision != null) {
 			revisions.add(currentRevision);
 
@@ -809,6 +810,18 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 			// remove from framework wirings
 			framework.wirings.remove(currentRevision);
+
+			// clear and restore dynamic imports
+			currentRevision.dynamicImports.clear();
+			for (final BundleRequirement req : currentRevision.requirements
+					.lookup(PackageNamespace.PACKAGE_NAMESPACE)) {
+				if (PackageNamespace.RESOLUTION_DYNAMIC.equals(req
+						.getDirectives().get(
+								Namespace.REQUIREMENT_RESOLUTION_DIRECTIVE))) {
+					currentRevision.dynamicImports.add(req);
+				}
+
+			}
 		}
 	}
 
@@ -1805,22 +1818,15 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				// resolved, then abort
 				// see spec 4.2; page 38, section 3.5.2
 				/*
-				if (isSingleton()) {
-					final AbstractBundle[] existing = framework
-							.getBundleWithSymbolicName(getSymbolicName());
-					for (int i = 0; i < existing.length; i++) {
-						if (existing[i].state != Bundle.INSTALLED) {
-							if (critical) {
-								throw new BundleException(
-										"Bundle is singleton but there is already a resolved bundle with same the symbolic name",
-										BundleException.UNSUPPORTED_OPERATION);
-							} else {
-								return false;
-							}
-						}
-					}
-				}
-				*/
+				 * if (isSingleton()) { final AbstractBundle[] existing =
+				 * framework .getBundleWithSymbolicName(getSymbolicName()); for
+				 * (int i = 0; i < existing.length; i++) { if (existing[i].state
+				 * != Bundle.INSTALLED) { if (critical) { throw new
+				 * BundleException(
+				 * "Bundle is singleton but there is already a resolved bundle with same the symbolic name"
+				 * , BundleException.UNSUPPORTED_OPERATION); } else { return
+				 * false; } } } }
+				 */
 
 				return true;
 			} catch (final IllegalArgumentException iae) {
@@ -2643,7 +2649,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 										Revision.this, null));
 							}
 							wiring.addWire(wire);
-							
+
 							((ConciergeBundleWiring) bundleCap.getRevision()
 									.getWiring()).addWire(wire);
 
@@ -2654,6 +2660,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 											wire);
 
 							if (!wildcard) {
+								// FIXME:
 								iter.remove();
 							}
 

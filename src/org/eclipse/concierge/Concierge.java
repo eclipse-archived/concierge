@@ -1730,15 +1730,17 @@ public final class Concierge extends AbstractBundle implements Framework,
 						try {
 							if (bu.state == ACTIVE) {
 								bu.stop();
+								
 								restartList.add(bu);
 							}
+
 							if (bu.state == RESOLVED) {
 								bu.state = INSTALLED;
 							}
 
 							// bundle needs to be refreshed
 							bu.refresh();
-
+							
 							if (bu.state == UNINSTALLED) {
 								// bundle is uninstalled
 								bundles.remove(bu);
@@ -1774,14 +1776,14 @@ public final class Concierge extends AbstractBundle implements Framework,
 					}
 
 					// restart all bundles regarding their startlevels
-					final AbstractBundle[] restartArray = restartList
-							.toArray(new AbstractBundle[restartList.size()]);
-					for (int i = 0; i < restartArray.length; i++) {
+					System.err.println("RESTART LIST " + restartList);
+					for (final Bundle bu : restartList) {
+						System.err.println("RESTARTING " + bu);
 						try {
-							restartArray[i].start();
+							bu.start();
 						} catch (final Exception e) {
 							notifyListeners(FrameworkEvent.ERROR,
-									restartArray[i], e);
+									bu, e);
 						}
 					}
 
