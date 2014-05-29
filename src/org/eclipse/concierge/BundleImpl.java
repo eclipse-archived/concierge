@@ -1813,33 +1813,12 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					}
 				}
 
-				// if this bundle is a singleton and there is already an
-				// instance
-				// resolved, then abort
-				// see spec 4.2; page 38, section 3.5.2
-				/*
-				 * if (isSingleton()) { final AbstractBundle[] existing =
-				 * framework .getBundleWithSymbolicName(getSymbolicName()); for
-				 * (int i = 0; i < existing.length; i++) { if (existing[i].state
-				 * != Bundle.INSTALLED) { if (critical) { throw new
-				 * BundleException(
-				 * "Bundle is singleton but there is already a resolved bundle with same the symbolic name"
-				 * , BundleException.UNSUPPORTED_OPERATION); } else { return
-				 * false; } } } }
-				 */
-
 				return true;
 			} catch (final IllegalArgumentException iae) {
 				throw new BundleException("Error while resolving bundle "
 						+ currentRevision.getSymbolicName(),
 						BundleException.RESOLVE_ERROR, iae);
 			}
-		}
-
-		private boolean isSingleton() {
-			return identity == null ? false : "true".equals(identity
-					.getDirectives().get(
-							IdentityNamespace.CAPABILITY_SINGLETON_DIRECTIVE));
 		}
 
 		@SuppressWarnings("unused")
@@ -2717,8 +2696,14 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					throw new UnsatisfiedLinkError(libname);
 				}
 
-				final String lib = nativeLibraries.get(System
-						.mapLibraryName(libname));
+				String lib = null;
+				final String[] libnames = framework.getLibraryName(libname);
+				for (int i = 0; i < libnames.length; i++) {
+					lib = nativeLibraries.get(libnames[i]);
+					if (lib != null) {
+						break;
+					}
+				}
 
 				if (framework.DEBUG_CLASSLOADING) {
 					framework.logger.log(LogService.LOG_DEBUG, "Requested "
@@ -2741,6 +2726,9 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					final URL url = (URL) findOwnResources(lib, true, false,
 							null);
 					Utils.storeFile(libfile, url.openStream());
+					
+					framework.execPermission(libfile);
+					
 					// }
 					return libfile.getAbsolutePath();
 				} catch (final IOException ioe) {
@@ -3283,7 +3271,6 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 				JarEntry embeddedEntry;
 				while ((embeddedEntry = embeddedJar.getNextJarEntry()) != null) {
-					// FIXME: handle retrieve
 					if (embeddedEntry.getName().equals(filename)) {
 						return retrieve ? embeddedJar : createURL(
 								entry.getName(), embeddedEntry.getName());

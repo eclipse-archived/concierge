@@ -700,7 +700,37 @@ public class Resources {
 				return null;
 			}
 
-			throw new RuntimeException("not yet implemented");
+			final ArrayList<String> result = new ArrayList<String>();
+
+			final Enumeration<URL> enumeration = ((Revision) revision)
+					.findEntries(path, filePattern,
+							(options & BundleWiring.LISTRESOURCES_RECURSE) != 0);
+			if (enumeration != null) {
+				while (enumeration.hasMoreElements()) {
+					final URL url = enumeration.nextElement();
+					result.add(url.getPath());
+				}
+			}
+			if ((options & BundleWiring.LISTRESOURCES_LOCAL) != 0) {
+				return Collections.unmodifiableList(result);
+			}
+
+			for (final BundleWire wire : requiredWires
+					.lookup(PackageNamespace.PACKAGE_NAMESPACE)) {
+				// TODO: check if it matches...
+
+				final Enumeration<URL> enumeration2 = ((Revision) wire
+						.getProvider()).findEntries(path, filePattern,
+						(options & BundleWiring.LISTRESOURCES_RECURSE) != 0);
+				if (enumeration2 != null) {
+					while (enumeration2.hasMoreElements()) {
+						final URL url = enumeration2.nextElement();
+						result.add(url.getPath());
+					}
+				}
+			}
+
+			return Collections.unmodifiableList(result);
 		}
 
 		public List<Capability> getResourceCapabilities(final String namespace) {

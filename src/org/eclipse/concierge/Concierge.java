@@ -236,6 +236,11 @@ public final class Concierge extends AbstractBundle implements Framework,
 	private final String[] bootdelegationAbs;
 	private final String[] bootdelegationPrefix;
 
+	private String[] libraryExtensions;
+
+	private String execPermission;
+	private Pattern execPermissionPattern;
+
 	private static final int COLLISION_POLICY_SINGLE = -1;
 	private static final int COLLISION_POLICY_NONE = 0;
 	private static final int COLLISION_POLICY_MULTIPLE = 1;
@@ -793,6 +798,11 @@ public final class Concierge extends AbstractBundle implements Framework,
 			SUPPORTED_EE.add(t.nextToken().trim());
 		}
 
+		// set UUID
+		// FIXME: need workaround for Java 1.4
+		properties.setProperty(Constants.FRAMEWORK_UUID, UUID.randomUUID()
+				.toString());
+
 		// TODO: check if there is a security manager set and
 		// Constants.FRAMEWORK_SECURITY; is set
 
@@ -864,6 +874,23 @@ public final class Concierge extends AbstractBundle implements Framework,
 			processor = "x86-64";
 		} else {
 			processor = cpu;
+		}
+
+		// get the library extensions if set
+		final String libExtStr = properties
+				.getProperty(Constants.FRAMEWORK_LIBRARY_EXTENSIONS);
+		if (libExtStr != null) {
+			libraryExtensions = libExtStr.split(Utils.SPLIT_AT_COMMA);
+		}
+
+		// set execpermission if set
+		execPermission = properties
+				.getProperty(Constants.FRAMEWORK_EXECPERMISSION);
+		if (execPermission != null) {
+			execPermissionPattern = Pattern.compile("\\$\\{"
+					+ properties.getProperty(
+							Constants.FRAMEWORK_COMMAND_ABSPATH, "abspath")
+					+ "\\}");
 		}
 
 		// create the system bundle
@@ -1210,13 +1237,16 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 */
 	public void update() throws BundleException {
 		// TODO: check for AdminPermission(this,EXECUTE)
+		final int state = Concierge.this.state;
+
 		new Thread() {
 			public void run() {
-				final int state = Concierge.this.state;
+
 				stop0(true);
 				try {
 					Concierge.this.start();
 				} catch (final BundleException be) {
+					// FIXME: to log
 					be.printStackTrace();
 				}
 				Concierge.this.state = state;
@@ -1705,6 +1735,15 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 					final Collection<Bundle> updateGraph = getDependencyClosure(toProcess);
 
+					/*
+					 * // remove the ones not active for (final Iterator<Bundle>
+					 * iter = updateGraph.iterator(); iter.hasNext(); ) { if
+					 * (iter.next().getState() != Bundle.ACTIVE) {
+					 * iter.remove(); } }
+					 * 
+					 * updateGraph.addAll(Arrays.asList(initial));
+					 */
+
 					System.err.println("UPDATE GRAPH IS " + updateGraph);
 
 					if (LOG_ENABLED && DEBUG_PACKAGES) {
@@ -1730,7 +1769,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 						try {
 							if (bu.state == ACTIVE) {
 								bu.stop();
-								
+
 								restartList.add(bu);
 							}
 
@@ -1740,7 +1779,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 							// bundle needs to be refreshed
 							bu.refresh();
-							
+
 							if (bu.state == UNINSTALLED) {
 								// bundle is uninstalled
 								bundles.remove(bu);
@@ -1782,8 +1821,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 						try {
 							bu.start();
 						} catch (final Exception e) {
-							notifyListeners(FrameworkEvent.ERROR,
-									bu, e);
+							notifyListeners(FrameworkEvent.ERROR, bu, e);
 						}
 					}
 
@@ -1847,6 +1885,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 	private HashMap<ResolverHook, ServiceReferenceImpl<ResolverHookFactory>> getResolverHooks(
 			final Collection<BundleRevision> bundles) throws Throwable {
 		final LinkedHashMap<ResolverHook, ServiceReferenceImpl<ResolverHookFactory>> hooks = new LinkedHashMap<ResolverHook, ServiceReferenceImpl<ResolverHookFactory>>();
+
 		@SuppressWarnings("unchecked")
 		final ServiceReferenceImpl<ResolverHookFactory>[] factories = resolverHookFactories
 				.toArray(new ServiceReferenceImpl[resolverHookFactories.size()]);
@@ -2328,8 +2367,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 		protected HashMap<ResolverHook, ServiceReferenceImpl<ResolverHookFactory>> hooks;
 
-		public Map<Resource, List<Wire>> resolve(final ResolveContext context)
-				throws ResolutionException {
+		public synchronized Map<Resource, List<Wire>> resolve(
+				final ResolveContext context) throws ResolutionException {
 			if (context == null) {
 				throw new IllegalArgumentException("context is null");
 			}
@@ -4084,7 +4123,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 			ServiceReference<?> winner = null;
 			int maxRanking = -1;
 			long lastServiceID = Long.MAX_VALUE;
-			
+
 			ServiceReference<?>[] list = null;
 			try {
 				list = getServiceReferences(clazz, null, true);
@@ -4652,6 +4691,32 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 */
 	public void stop(final BundleContext context) throws Exception {
 
+	}
+
+	String[] getLibraryName(final String libname) {
+		if (libraryExtensions == null) {
+			return new String[] { System.mapLibraryName(libname) };
+		}
+		final String[] result = new String[libraryExtensions.length + 1];
+		result[0] = System.mapLibraryName(libname);
+		for (int i = 0; i < libraryExtensions.length; i++) {
+			result[i + 1] = libname + "." + libraryExtensions[i];
+		}
+		return result;
+	}
+
+	void execPermission(final File libfile) {
+		if (execPermission == null) {
+			return;
+		}
+		final String cmd = execPermissionPattern
+				.matcher(execPermission)
+				.replaceAll(Matcher.quoteReplacement(libfile.getAbsolutePath()));
+		try {
+			Runtime.getRuntime().exec(cmd).waitFor();
+		} catch (final Throwable t) {
+			t.printStackTrace();
+		}
 	}
 
 }
