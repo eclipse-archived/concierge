@@ -591,7 +591,7 @@ public class Resources {
 		 * @see org.osgi.framework.wiring.BundleWiring#isCurrent()
 		 */
 		public boolean isCurrent() {
-			return ((BundleImpl) revision.getBundle()).currentRevision == revision
+			return ((AbstractBundle) revision.getBundle()).currentRevision == revision
 					&& revision.getWiring() == this;
 		}
 
