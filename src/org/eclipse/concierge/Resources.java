@@ -116,7 +116,7 @@ public class Resources {
 
 			return result.substring(0, result.length() - 2);
 		}
-
+		
 	}
 
 	public static class BundleCapabilityImpl extends GenericReqCap implements
@@ -343,7 +343,6 @@ public class Resources {
 			return requirement;
 		}
 
-		/*
 		public boolean equals(final Object other) {
 			if (other instanceof Wire) {
 				final Wire wire = (Wire) other;
@@ -352,7 +351,6 @@ public class Resources {
 			}
 			return false;
 		}
-		*/
 
 		@Override
 		public String toString() {
