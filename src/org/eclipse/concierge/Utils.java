@@ -376,6 +376,10 @@ public final class Utils {
 			this.comp = comp;
 		}
 
+		HashMap<K, List<V>> getFlatMap() {
+			return map;
+		}
+		
 		public void insert(final K key, final V value) {
 			List<V> list = map.get(key);
 			if (list == null) {

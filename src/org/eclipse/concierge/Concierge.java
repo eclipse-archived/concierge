@@ -2194,6 +2194,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 			// FIXME: DEBUG OUTPUT
 			System.err.println("Solution: " + solution);
 
+			final MultiMap<Resource, Wire> reciprocal = new MultiMap<Resource, Wire>();
+
 			// apply solution
 			for (final Resource resource : solution.keySet()) {
 				if (resource instanceof Revision) {
@@ -2230,6 +2232,11 @@ public final class Concierge extends AbstractBundle implements Framework,
 						wiring = revision.addAdditionalWires(wires);
 					}
 
+					for (final Wire wire : wires) {
+						final Resource provider = wire.getProvider();
+						reciprocal.insertUnique(provider, wire);
+					}
+
 					if (!isFragment) {
 						final List<HostedCapability> hostedCaps = hostedCapabilities
 								.lookup(resource);
@@ -2243,6 +2250,23 @@ public final class Concierge extends AbstractBundle implements Framework,
 					wirings.put(resource, wiring);
 				}
 			}
+
+			/*
+			 * // process the reciprocal wires for (final Resource provider :
+			 * reciprocal.keySet()) { final List<Wire> wires =
+			 * reciprocal.get(provider);
+			 * 
+			 * if (provider instanceof Revision) { final Revision revision =
+			 * (Revision) provider;
+			 * 
+			 * final ConciergeBundleWiring wiring; if (revision.getWiring() ==
+			 * null) { // set wiring for this bundle wiring = new
+			 * ConciergeBundleWiring(revision, wires);
+			 * revision.setWiring(wiring); } else { wiring =
+			 * revision.addAdditionalWires(wires); }
+			 * 
+			 * wirings.put(revision, wiring); } }
+			 */
 
 			if (unresolvedRequirements.isEmpty()
 					&& unresolvedResources.isEmpty()) {
@@ -2386,7 +2410,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 						unresolvedRequirements);
 			}
 
-			return solution;
+			return solution.getFlatMap();
 		}
 
 		protected void resolve0(final ResolveContext context,
@@ -2399,7 +2423,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 			final Collection<Resource> optional = context
 					.getOptionalResources();
 
-			if (!hooks.isEmpty()) {
+			if (hooks != null && !hooks.isEmpty()) {
 				filterResources(hooks.keySet(), mandatory, unresolvedResources);
 			}
 
@@ -2502,7 +2526,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 				System.err.println("EXISTING ARE " + col);
 
-				if (hooks.isEmpty()) {
+				if (hooks != null && hooks.isEmpty()) {
 
 					if (!col.isEmpty()) {
 						System.err.println("REJECTED NO HOOKS>>>>>>>>");
@@ -2656,119 +2680,119 @@ public final class Concierge extends AbstractBundle implements Framework,
 					}
 
 					// handling potential uses constraints
-					// FIXME: CLEANUP!!!, OPTIMIZE!!!
-					final ArrayList<BundleCapability> caps = new ArrayList<BundleCapability>();
+					if (capability instanceof BundleCapability) {
+						// FIXME: CLEANUP!!!, OPTIMIZE!!!
+						final ArrayList<BundleCapability> caps = new ArrayList<BundleCapability>();
 
-					if (BundleNamespace.BUNDLE_NAMESPACE.equals(capability
-							.getNamespace())) {
-						caps.addAll(((BundleCapability) capability)
-								.getResource().getDeclaredCapabilities(
-										PackageNamespace.PACKAGE_NAMESPACE));
-					} else {
-						caps.add((BundleCapability) capability);
-					}
-
-					final ArrayList<BundleCapability> impliedConstraints = new ArrayList<BundleCapability>();
-					final HashSet<BundleCapability> seen = new HashSet<BundleCapability>();
-					while (!caps.isEmpty()) {
-						final BundleCapability cap = caps.remove(0);
-
-						if (seen.contains(cap)) {
-							continue;
+						if (BundleNamespace.BUNDLE_NAMESPACE.equals(capability
+								.getNamespace())) {
+							caps.addAll(((BundleCapability) capability)
+									.getResource().getDeclaredCapabilities(
+											PackageNamespace.PACKAGE_NAMESPACE));
+						} else {
+							caps.add((BundleCapability) capability);
 						}
 
-						seen.add(cap);
+						final ArrayList<BundleCapability> impliedConstraints = new ArrayList<BundleCapability>();
+						final HashSet<BundleCapability> seen = new HashSet<BundleCapability>();
+						while (!caps.isEmpty()) {
+							final BundleCapability cap = caps.remove(0);
 
-						final String usesStr = cap.getDirectives().get(
-								PackageNamespace.CAPABILITY_USES_DIRECTIVE);
-
-						if (usesStr != null) {
-							final String[] usesConstraints = usesStr
-									.split(Utils.SPLIT_AT_COMMA);
-							final HashSet<String> usesSet = new HashSet<String>();
-							usesSet.addAll(Arrays.asList(usesConstraints));
-
-							final BundleWiring wiring = cap.getResource()
-									.getWiring();
-							// TODO: what does it mean that wiring is null at
-							// this point???
-							if (wiring != null) {
-								final List<BundleWire> wires = wiring
-										.getRequiredWires(PackageNamespace.PACKAGE_NAMESPACE);
-
-								for (final BundleWire wire : wires) {
-									final Object pkg = wire
-											.getCapability()
-											.getAttributes()
-											.get(PackageNamespace.PACKAGE_NAMESPACE);
-									System.err.println("MATCHES? " + pkg
-											+ " set=" + usesSet);
-
-									if (usesSet.contains(pkg)) {
-										System.err.println("MATCH!!!");
-
-										impliedConstraints.add(wire
-												.getCapability());
-										caps.add(wire.getCapability());
-									}
-								}
-								final List<BundleCapability> caps2 = wiring
-										.getCapabilities(PackageNamespace.PACKAGE_NAMESPACE);
-
-								System.err.println("CHECKING " + caps2);
-
-								for (final Capability cap2 : caps2) {
-									final Object pkg = cap2
-											.getAttributes()
-											.get(PackageNamespace.PACKAGE_NAMESPACE);
-									System.err.println("MATCHES? " + pkg
-											+ " set=" + usesSet);
-
-									if (usesSet.contains(pkg)) {
-										System.err.println("MATCH!!!");
-
-										impliedConstraints
-												.add((BundleCapability) cap2);
-										caps.add((BundleCapability) cap2);
-									}
-								}
+							if (seen.contains(cap)) {
+								continue;
 							}
-						}
-					}
 
-					if (!impliedConstraints.isEmpty()) {
-						// go over implied constraints
+							seen.add(cap);
 
-						for (final BundleCapability implied : impliedConstraints) {
-							for (final Requirement req : requirements) {
-								if (matches(req, implied)) {
-									System.err.println("MATCH MATCH");
+							final String usesStr = cap.getDirectives().get(
+									PackageNamespace.CAPABILITY_USES_DIRECTIVE);
 
-									for (final Map.Entry<Resource, List<Wire>> entry : newWires
-											.entrySet()) {
-										for (final Iterator<Wire> iter = entry
-												.getValue().iterator(); iter
-												.hasNext();) {
-											final Wire wire = iter.next();
-											if (wire.getRequirement() == req) {
-												iter.remove();
-											}
+							if (usesStr != null) {
+								final String[] usesConstraints = usesStr
+										.split(Utils.SPLIT_AT_COMMA);
+								final HashSet<String> usesSet = new HashSet<String>();
+								usesSet.addAll(Arrays.asList(usesConstraints));
+
+								final BundleWiring wiring = cap.getResource()
+										.getWiring();
+								// TODO: what does it mean that wiring is null
+								// at
+								// this point???
+								if (wiring != null) {
+									final List<BundleWire> wires = wiring
+											.getRequiredWires(PackageNamespace.PACKAGE_NAMESPACE);
+
+									for (final BundleWire wire : wires) {
+										final Object pkg = wire
+												.getCapability()
+												.getAttributes()
+												.get(PackageNamespace.PACKAGE_NAMESPACE);
+										System.err.println("MATCHES? " + pkg
+												+ " set=" + usesSet);
+
+										if (usesSet.contains(pkg)) {
+											System.err.println("MATCH!!!");
+
+											impliedConstraints.add(wire
+													.getCapability());
+											caps.add(wire.getCapability());
 										}
 									}
+									final List<BundleCapability> caps2 = wiring
+											.getCapabilities(PackageNamespace.PACKAGE_NAMESPACE);
 
-									skip.add(req);
+									System.err.println("CHECKING " + caps2);
 
-									final Wire wire = Resources.createWire(
-											implied, req);
-									newWires.insert(resource, wire);
+									for (final Capability cap2 : caps2) {
+										final Object pkg = cap2
+												.getAttributes()
+												.get(PackageNamespace.PACKAGE_NAMESPACE);
+										System.err.println("MATCHES? " + pkg
+												+ " set=" + usesSet);
 
+										if (usesSet.contains(pkg)) {
+											System.err.println("MATCH!!!");
+
+											impliedConstraints
+													.add((BundleCapability) cap2);
+											caps.add((BundleCapability) cap2);
+										}
+									}
 								}
 							}
-
 						}
 
-						// throw new RuntimeException("IGNORING USES "
-						// + impliedConstraints);
+						if (!impliedConstraints.isEmpty()) {
+							// go over implied constraints
+
+							for (final BundleCapability implied : impliedConstraints) {
+								for (final Requirement req : requirements) {
+									if (matches(req, implied)) {
+										System.err.println("MATCH MATCH");
+
+										for (final Map.Entry<Resource, List<Wire>> entry : newWires
+												.entrySet()) {
+											for (final Iterator<Wire> iter = entry
+													.getValue().iterator(); iter
+													.hasNext();) {
+												final Wire wire = iter.next();
+												if (wire.getRequirement() == req) {
+													iter.remove();
+												}
+											}
+										}
+
+										skip.add(req);
+
+										final Wire wire = Resources.createWire(
+												implied, req);
+										newWires.insert(resource, wire);
+
+									}
+								}
+
+							}
+						}
 					}
 
 					// check if the provider is already resolved
@@ -3779,7 +3803,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 		private void informListenerHooks(
 				final Collection<ServiceReferenceImpl<ListenerHook>> hooks,
 				final ServiceListenerEntry[] entries, final boolean added) {
-			if (hooks.isEmpty()) {
+			if (hooks == null || hooks.isEmpty()) {
 				return;
 			}
 

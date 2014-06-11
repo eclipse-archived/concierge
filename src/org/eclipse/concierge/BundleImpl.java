@@ -1571,19 +1571,24 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 			final List<BundleCapability> hosts = capabilities
 					.get(HostNamespace.HOST_NAMESPACE);
-			final String policy = hosts == null ? null : hosts.get(0)
-					.getDirectives()
-					.get(Constants.FRAGMENT_ATTACHMENT_DIRECTIVE);
 
-			if (identity == null || policy == null
-					|| Constants.FRAGMENT_ATTACHMENT_ALWAYS.equals(policy)) {
-				fragmentAttachmentPolicy = FRAGMENT_ATTACHMENT_ALWAYS;
-			} else if (Constants.FRAGMENT_ATTACHMENT_RESOLVETIME.equals(policy)) {
-				fragmentAttachmentPolicy = FRAGMENT_ATTACHMENT_RESOLVETIME;
-			} else if (Constants.FRAGMENT_ATTACHMENT_NEVER.equals(policy)) {
+			if (hosts == null) {
 				fragmentAttachmentPolicy = FRAGMENT_ATTACHMENT_NEVER;
 			} else {
-				fragmentAttachmentPolicy = FRAGMENT_ATTACHMENT_ALWAYS;
+				final String policy = hosts.get(0).getDirectives()
+						.get(Constants.FRAGMENT_ATTACHMENT_DIRECTIVE);
+
+				if (identity == null || policy == null
+						|| Constants.FRAGMENT_ATTACHMENT_ALWAYS.equals(policy)) {
+					fragmentAttachmentPolicy = FRAGMENT_ATTACHMENT_ALWAYS;
+				} else if (Constants.FRAGMENT_ATTACHMENT_RESOLVETIME
+						.equals(policy)) {
+					fragmentAttachmentPolicy = FRAGMENT_ATTACHMENT_RESOLVETIME;
+				} else if (Constants.FRAGMENT_ATTACHMENT_NEVER.equals(policy)) {
+					fragmentAttachmentPolicy = FRAGMENT_ATTACHMENT_NEVER;
+				} else {
+					fragmentAttachmentPolicy = FRAGMENT_ATTACHMENT_ALWAYS;
+				}
 			}
 
 			if (isFragment()) {
@@ -2726,9 +2731,9 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					final URL url = (URL) findOwnResources(lib, true, false,
 							null);
 					Utils.storeFile(libfile, url.openStream());
-					
+
 					framework.execPermission(libfile);
-					
+
 					// }
 					return libfile.getAbsolutePath();
 				} catch (final IOException ioe) {

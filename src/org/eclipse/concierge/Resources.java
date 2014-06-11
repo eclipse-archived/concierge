@@ -343,6 +343,17 @@ public class Resources {
 			return requirement;
 		}
 
+		/*
+		public boolean equals(final Object other) {
+			if (other instanceof Wire) {
+				final Wire wire = (Wire) other;
+				return wire.getCapability().equals(capability)
+						&& wire.getRequirement().equals(requirement);
+			}
+			return false;
+		}
+		*/
+
 		@Override
 		public String toString() {
 			return "{" + requirement + "->" + capability + "}";
