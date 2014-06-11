@@ -39,7 +39,6 @@ import org.osgi.resource.Namespace;
 import org.osgi.resource.Requirement;
 import org.osgi.resource.Resource;
 import org.osgi.resource.Wire;
-import org.osgi.resource.Wiring;
 import org.osgi.service.resolver.HostedCapability;
 
 public class Resources {
@@ -49,10 +48,6 @@ public class Resources {
 				&& req instanceof BundleRequirement ? new ConciergeBundleWire(
 				(BundleCapability) cap, (BundleRequirement) req)
 				: new ConciergeWire(cap, req);
-	}
-
-	static Wiring createWiring() {
-		return null;
 	}
 
 	static abstract class GenericReqCap implements Requirement, Capability {
@@ -353,13 +348,6 @@ public class Resources {
 			return (S) requirement.getResource();
 		}
 
-		/*
-		 * public boolean equals(final Object other) { if (other instanceof
-		 * Wire) { final Wire wire = (Wire) other; return
-		 * wire.getCapability().equals(capability) &&
-		 * wire.getRequirement().equals(requirement); } return false; }
-		 */
-
 		@Override
 		public String toString() {
 			return "{" + requirement + "->" + capability + "}";
@@ -374,6 +362,14 @@ public class Resources {
 			super(capability, requirement);
 		}
 
+		public boolean equals(final Object other) {
+			if (other instanceof Wire) {
+				final Wire wire = (Wire) other;
+				return wire.getCapability().equals(capability)
+						&& wire.getRequirement().equals(requirement);
+			}
+			return false;
+		}
 	}
 
 	static class ConciergeBundleWire
@@ -398,13 +394,11 @@ public class Resources {
 		}
 
 		public BundleWiring getRequirerWiring() {
-			// final BundleWiring wiring = getRequirer().getWiring();
-			// return wiring != null && wiring.isCurrent() ? wiring : null;
 			return requirerWiring;
 		}
 
 	}
-	
+
 	static class ConciergeBundleWiring implements BundleWiring {
 
 		protected final BundleRevision revision;
