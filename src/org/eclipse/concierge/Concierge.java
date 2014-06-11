@@ -2527,7 +2527,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 									.getWiring();
 							// TODO: what does it mean that wiring is null at
 							// this point???
-							if (wiring != null) {
+							if (wiring != null && wiring.isInUse()) {
 								final List<BundleWire> wires = wiring
 										.getRequiredWires(PackageNamespace.PACKAGE_NAMESPACE);
 
