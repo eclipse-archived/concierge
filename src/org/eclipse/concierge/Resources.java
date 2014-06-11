@@ -116,7 +116,7 @@ public class Resources {
 
 			return result.substring(0, result.length() - 2);
 		}
-		
+
 	}
 
 	public static class BundleCapabilityImpl extends GenericReqCap implements
@@ -317,7 +317,7 @@ public class Resources {
 
 	}
 
-	private static abstract class AbstractWireImpl<C extends Capability, R extends Requirement> {
+	private static abstract class AbstractWireImpl<C extends Capability, R extends Requirement, S extends Resource> {
 
 		protected final C capability;
 
@@ -343,14 +343,22 @@ public class Resources {
 			return requirement;
 		}
 
-		public boolean equals(final Object other) {
-			if (other instanceof Wire) {
-				final Wire wire = (Wire) other;
-				return wire.getCapability().equals(capability)
-						&& wire.getRequirement().equals(requirement);
-			}
-			return false;
+		@SuppressWarnings("unchecked")
+		public S getProvider() {
+			return (S) capability.getResource();
 		}
+
+		@SuppressWarnings("unchecked")
+		public S getRequirer() {
+			return (S) requirement.getResource();
+		}
+
+		/*
+		 * public boolean equals(final Object other) { if (other instanceof
+		 * Wire) { final Wire wire = (Wire) other; return
+		 * wire.getCapability().equals(capability) &&
+		 * wire.getRequirement().equals(requirement); } return false; }
+		 */
 
 		@Override
 		public String toString() {
@@ -359,26 +367,19 @@ public class Resources {
 	}
 
 	static class ConciergeWire extends
-			AbstractWireImpl<Capability, Requirement> implements Wire {
+			AbstractWireImpl<Capability, Requirement, Resource> implements Wire {
 
 		protected ConciergeWire(final Capability capability,
 				final Requirement requirement) {
 			super(capability, requirement);
 		}
 
-		public Resource getProvider() {
-			return capability.getResource();
-		}
-
-		public Resource getRequirer() {
-			return requirement.getResource();
-		}
-
 	}
 
-	static class ConciergeBundleWire extends
-			AbstractWireImpl<BundleCapability, BundleRequirement> implements
-			BundleWire {
+	static class ConciergeBundleWire
+			extends
+			AbstractWireImpl<BundleCapability, BundleRequirement, BundleRevision>
+			implements BundleWire {
 
 		ConciergeBundleWiring providerWiring;
 		ConciergeBundleWiring requirerWiring;
@@ -402,71 +403,8 @@ public class Resources {
 			return requirerWiring;
 		}
 
-		public BundleRevision getProvider() {
-			return capability.getResource();
-		}
-
-		public BundleRevision getRequirer() {
-			return requirement.getResource();
-		}
-
 	}
-
-	static class ConciergeWiring implements Wiring {
-
-		private final Resource resource;
-
-		private final MultiMap<String, Capability> capabilities = new MultiMap<String, Capability>();
-		private final MultiMap<String, Requirement> requirements = new MultiMap<String, Requirement>();
-
-		private final MultiMap<String, Wire> providedWires = new MultiMap<String, Wire>();
-		private final MultiMap<String, Wire> requiredWires = new MultiMap<String, Wire>();
-
-		ConciergeWiring(final Resource resource, final List<Wire> wires) {
-			this.resource = resource;
-			for (final Wire wire : wires) {
-				addWire(wire);
-			}
-		}
-
-		private void addWire(final Wire wire) {
-			if (wire.getProvider() == resource) {
-				final Capability cap = wire.getCapability();
-				capabilities.insertUnique(cap.getNamespace(), cap);
-				providedWires.insert(cap.getNamespace(), wire);
-			} else {
-				final Requirement req = wire.getRequirement();
-				requirements.insertUnique(req.getNamespace(), req);
-				requiredWires.insert(req.getNamespace(), wire);
-			}
-		}
-
-		public List<Capability> getResourceCapabilities(final String namespace) {
-			return namespace == null ? capabilities.getAllValues()
-					: capabilities.lookup(namespace);
-		}
-
-		public List<Requirement> getResourceRequirements(final String namespace) {
-			return namespace == null ? requirements.getAllValues()
-					: requirements.lookup(namespace);
-		}
-
-		public List<Wire> getProvidedResourceWires(final String namespace) {
-			return namespace == null ? providedWires.getAllValues()
-					: providedWires.lookup(namespace);
-		}
-
-		public List<Wire> getRequiredResourceWires(final String namespace) {
-			return namespace == null ? requiredWires.getAllValues()
-					: requiredWires.lookup(namespace);
-		}
-
-		public Resource getResource() {
-			return resource;
-		}
-
-	}
-
+	
 	static class ConciergeBundleWiring implements BundleWiring {
 
 		protected final BundleRevision revision;
