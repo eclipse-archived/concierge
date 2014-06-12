@@ -17,9 +17,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.net.URLConnection;
@@ -645,13 +643,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 		Method m = null;
 		if (getClass().getClassLoader() instanceof URLClassLoader) {
 			try {
-				final URLClassLoader cl = (URLClassLoader) getClass()
-						.getClassLoader();
 				m = URLClassLoader.class.getDeclaredMethod("addURL",
 						new Class[] { URL.class });
 				m.setAccessible(true);
-				// m.invoke(cl, new URL("concierge://extensions"));
-
 				properties.setProperty(Constants.SUPPORTS_FRAMEWORK_EXTENSION,
 						"true");
 				SUPPORTS_EXTENSIONS = true;
