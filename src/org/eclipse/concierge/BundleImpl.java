@@ -1592,7 +1592,6 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			}
 
 			if (isFragment()) {
-				System.out.println(getFragmentHost());
 				framework.addFragment(this);
 			} else {
 				framework.publishCapabilities(capabilities.getAllValues());
@@ -2021,15 +2020,18 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			return wiring;
 		}
 
-		Tuple<String, String> getFragmentHost() {
+		// Tuple<String, String> getFragmentHost() {
+		String getFragmentHost() {
 			final BundleRequirement fragReqs = requirements.get(
 					HostNamespace.HOST_NAMESPACE).get(0);
 			final String fragmentHost = fragReqs.getDirectives().get(
 					HostNamespace.HOST_NAMESPACE);
-			final String versionRange = fragReqs.getDirectives().get(
-					Constants.BUNDLE_VERSION_ATTRIBUTE);
 
-			return new Tuple<String, String>(fragmentHost, versionRange);
+			return fragmentHost;
+			// final String versionRange = fragReqs.getDirectives().get(
+			// Constants.BUNDLE_VERSION_ATTRIBUTE);
+
+			// return new Tuple<String, String>(fragmentHost, versionRange);
 		}
 
 		final boolean allowsFragmentAttachment() {

@@ -214,6 +214,42 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 								versionRange);
 					}
 
+					final boolean extension = parts2[0]
+							.equals(Constants.SYSTEM_BUNDLE_SYMBOLICNAME)
+							|| parts2[0]
+									.equals(Concierge.FRAMEWORK_SYMBOLIC_NAME);
+
+					// check if fragment is a framework extension
+					if (HostNamespace.EXTENSION_FRAMEWORK
+							.equals(dirs2
+									.get(HostNamespace.REQUIREMENT_EXTENSION_DIRECTIVE))
+							|| extension) {
+						// host must be the system bundle
+						if (!extension) {
+							throw new BundleException("wrong host " + parts2[0]
+									+ " for an extension bundle");
+						}
+
+						// cannot have package imports
+						if (mfAttrs.getValue(Constants.IMPORT_PACKAGE) != null) {
+							throw new BundleException(
+									"Framework extension bundle must not declare package imports");
+						}
+
+						// cannot have require bundle
+						if (mfAttrs.getValue(Constants.REQUIRE_BUNDLE) != null) {
+							throw new BundleException(
+									"Framework extension bundle must not declare require bundle");
+						}
+
+						// cannot have native code
+						if (mfAttrs.getValue(Constants.BUNDLE_NATIVECODE) != null) {
+							throw new BundleException(
+									"Framework extension bundle must not declare native code");
+						}
+
+					}
+
 					final BundleRequirement hostReq = new BundleRequirementImpl(
 							revision,
 							HostNamespace.HOST_NAMESPACE,

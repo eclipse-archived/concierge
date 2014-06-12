@@ -326,6 +326,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 	private final MultiMap<String, Revision> fragmentIndex = new MultiMap<String, Revision>(
 			1);
 
+	private ArrayList<BundleImpl> extensionBundles = new ArrayList<BundleImpl>(0);
+	
 	/**
 	 * framework listeners.
 	 */
@@ -358,7 +360,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 	/**
 	 * the symbolicName of the system bundle
 	 */
-	private static final String FRAMEWORK_SYMBOLIC_NAME = "org.eclipse.concierge";
+	public static final String FRAMEWORK_SYMBOLIC_NAME = "org.eclipse.concierge";
 
 	private final List<BundleCapability> systemBundleCapabilities = new ArrayList<BundleCapability>();
 
@@ -1060,9 +1062,14 @@ public final class Concierge extends AbstractBundle implements Framework,
 					+ "--------------------------------------");
 			final long time = System.currentTimeMillis();
 
+			// resolve all extension bundles
+			for (final BundleImpl ext : extensionBundles) {
+				ext.state = Bundle.RESOLVED;
+			}
+			
 			// start System bundle
 			start(context);
-
+			
 			// set startlevel and start all bundles that are marked to be
 			// started up to the intended startlevel
 			setLevel(bundles.toArray(new Bundle[bundles.size()]),
@@ -1320,6 +1327,10 @@ public final class Concierge extends AbstractBundle implements Framework,
 	public <A> A adapt(final Class<A> type) {
 		if (type == BundleStartLevel.class) {
 			return (A) systemBundleStartLevel;
+		}
+
+		if (type == BundleWiring.class) {
+			return (A) wirings.get(this);
 		}
 
 		if (type.isInstance(this)) {
@@ -1940,8 +1951,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 		Collection<Capability> candidates = null;
 
 		try {
-			final HashMap<ResolverHook, ServiceReferenceImpl<ResolverHookFactory>> hooks = getResolverHooks(Arrays
-					.asList(trigger));
+			if (resolver.hooks == null) {
+				resolver.hooks = getResolverHooks(Arrays.asList(trigger));
+			}
 
 			final String filterStr = dynImport.getDirectives().get(
 					Namespace.REQUIREMENT_FILTER_DIRECTIVE);
@@ -1967,11 +1979,11 @@ public final class Concierge extends AbstractBundle implements Framework,
 			}
 
 			if (candidates == null || candidates.isEmpty()) {
-				endResolverHooks(hooks);
+				endResolverHooks(resolver.hooks);
 				return null;
 			}
 
-			filterCandidates(hooks.keySet(), dynImport, candidates);
+			filterCandidates(resolver.hooks.keySet(), dynImport, candidates);
 
 			final ArrayList<BundleCapability> matches = new ArrayList<BundleCapability>();
 
@@ -2008,13 +2020,15 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 			}
 
-			endResolverHooks(hooks);
+			endResolverHooks(resolver.hooks);
 
 			Collections.sort(matches, Utils.EXPORT_ORDER);
 			return matches;
 		} catch (final Throwable t) {
 			// TODO: handle
 			return null;
+		} finally {
+			resolver.hooks = null;
 		}
 
 	}
@@ -2083,12 +2097,16 @@ public final class Concierge extends AbstractBundle implements Framework,
 		}
 
 		inResolve = true;
+		boolean cleanup = false;
 
 		try {
 
 			final MultiMap<Resource, HostedCapability> hostedCapabilities = new MultiMap<Resource, HostedCapability>();
 
-			resolver.hooks = getResolverHooks(bundles);
+			if (resolver.hooks == null) {
+				resolver.hooks = getResolverHooks(bundles);
+				cleanup = true;
+			}
 
 			final MultiMap<Resource, Wire> solution = new MultiMap<Resource, Wire>();
 			final ArrayList<Requirement> unresolvedRequirements = new ArrayList<Requirement>();
@@ -2279,7 +2297,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 			try {
 				endResolverHooks(resolver.hooks);
 			} finally {
-				resolver.hooks = null;
+				if (cleanup) {
+					resolver.hooks = null;
+				}
 				inResolve = false;
 			}
 		}
@@ -3100,10 +3120,12 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 *            the fragment's class paths
 	 */
 	void addFragment(final Revision fragment) throws BundleException {
-		final String fragmentHostName = fragment.getFragmentHost().getFormer();
+		final String fragmentHostName = fragment.getFragmentHost();
 		if (fragmentHostName.equals(Constants.SYSTEM_BUNDLE_SYMBOLICNAME)
 				|| fragmentHostName.equals(FRAMEWORK_SYMBOLIC_NAME)) {
 			// TODO: process framework extensions fragments
+			
+			extensionBundles.add((BundleImpl) fragment.getBundle());
 		}
 
 		fragmentIndex.insert(fragmentHostName, fragment);
@@ -3116,7 +3138,13 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 *            the fragment bundle to remove
 	 */
 	void removeFragment(final Revision fragment) {
-		fragmentIndex.remove(fragment.getFragmentHost().getFormer(), fragment);
+		fragmentIndex.remove(fragment.getFragmentHost(), fragment);
+		
+		final String fragmentHostName = fragment.getFragmentHost();
+		if (fragmentHostName.equals(Constants.SYSTEM_BUNDLE_SYMBOLICNAME)
+				|| fragmentHostName.equals(FRAMEWORK_SYMBOLIC_NAME)) {			
+			extensionBundles.remove((BundleImpl) fragment.getBundle());
+		}
 	}
 
 	/**
