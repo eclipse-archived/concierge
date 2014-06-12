@@ -3006,18 +3006,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 				};
 			}
 
-			if ("concierge".equals(protocol)) {
-				return new URLStreamHandler() {
-
-					@Override
-					protected URLConnection openConnection(final URL url)
-							throws IOException {
-						throw new RuntimeException("HAS BEEN ASKING FOR " + url);
-						// return null;
-					}
-				};
-			}
-
 			return null;
 		}
 	}

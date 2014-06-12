@@ -2419,7 +2419,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			 */
 			protected Enumeration<URL> findResources(final String name) {
 				final Enumeration<URL> result = findResources0(name);
-				return result == null ? Collections.<URL> emptyEnumeration()
+				return result == null ? Collections.enumeration(Collections.<URL>emptyList())
 						: result;
 			}
 
