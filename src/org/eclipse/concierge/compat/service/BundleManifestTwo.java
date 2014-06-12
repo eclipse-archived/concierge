@@ -219,6 +219,12 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 							|| parts2[0]
 									.equals(Concierge.FRAMEWORK_SYMBOLIC_NAME);
 
+					// check if the framework supports extensions at all
+					if (!Concierge.SUPPORTS_EXTENSIONS) {
+						throw new BundleException(
+								"Framework does not support extensions");
+					}
+
 					// check if fragment is a framework extension
 					if (HostNamespace.EXTENSION_FRAMEWORK
 							.equals(dirs2

@@ -17,7 +17,11 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.net.URLStreamHandlerFactory;
@@ -145,6 +149,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 	private static ConciergeURLStreamHandlerFactory conciergeURLStreamHandlerFactory = new ConciergeURLStreamHandlerFactory();
 
 	// the runtime args
+
+	public static boolean SUPPORTS_EXTENSIONS;
 
 	/**
 	 * framework basedir.
@@ -326,8 +332,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 	private final MultiMap<String, Revision> fragmentIndex = new MultiMap<String, Revision>(
 			1);
 
-	private ArrayList<BundleImpl> extensionBundles = new ArrayList<BundleImpl>(0);
-	
+	private ArrayList<BundleImpl> extensionBundles = new ArrayList<BundleImpl>(
+			0);
+
 	/**
 	 * framework listeners.
 	 */
@@ -418,6 +425,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 	private final BundleStartLevel systemBundleStartLevel = new SystemBundleStartLevel();
 
 	private final ResolverImpl resolver = new ResolverImpl();
+
+	private final Method addURL;
 
 	/**
 	 * start method.
@@ -632,7 +641,27 @@ public final class Concierge extends AbstractBundle implements Framework,
 		properties.setProperty(Constants.FRAMEWORK_VERSION, "1.5");
 		properties
 				.setProperty(Constants.FRAMEWORK_VENDOR, "Jan S. Rellermeyer");
-		properties.setProperty(Constants.SUPPORTS_FRAMEWORK_EXTENSION, "true");
+
+		Method m = null;
+		if (getClass().getClassLoader() instanceof URLClassLoader) {
+			try {
+				final URLClassLoader cl = (URLClassLoader) getClass()
+						.getClassLoader();
+				m = URLClassLoader.class.getDeclaredMethod("addURL",
+						new Class[] { URL.class });
+				m.setAccessible(true);
+				// m.invoke(cl, new URL("concierge://extensions"));
+
+				properties.setProperty(Constants.SUPPORTS_FRAMEWORK_EXTENSION,
+						"true");
+				SUPPORTS_EXTENSIONS = true;
+			} catch (final Exception e) {
+				e.printStackTrace();
+				// ignore
+			}
+		}
+		addURL = m;
+
 		properties.setProperty(Constants.SUPPORTS_BOOTCLASSPATH_EXTENSION,
 				"false");
 		properties.setProperty(Constants.SUPPORTS_FRAMEWORK_FRAGMENT, "true");
@@ -1066,10 +1095,10 @@ public final class Concierge extends AbstractBundle implements Framework,
 			for (final BundleImpl ext : extensionBundles) {
 				ext.state = Bundle.RESOLVED;
 			}
-			
+
 			// start System bundle
 			start(context);
-			
+
 			// set startlevel and start all bundles that are marked to be
 			// started up to the intended startlevel
 			setLevel(bundles.toArray(new Bundle[bundles.size()]),
@@ -2977,6 +3006,18 @@ public final class Concierge extends AbstractBundle implements Framework,
 				};
 			}
 
+			if ("concierge".equals(protocol)) {
+				return new URLStreamHandler() {
+
+					@Override
+					protected URLConnection openConnection(final URL url)
+							throws IOException {
+						throw new RuntimeException("HAS BEEN ASKING FOR " + url);
+						// return null;
+					}
+				};
+			}
+
 			return null;
 		}
 	}
@@ -3120,14 +3161,19 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 *            the fragment's class paths
 	 */
 	void addFragment(final Revision fragment) throws BundleException {
-		final String fragmentHostName = fragment.getFragmentHost();
-		if (fragmentHostName.equals(Constants.SYSTEM_BUNDLE_SYMBOLICNAME)
-				|| fragmentHostName.equals(FRAMEWORK_SYMBOLIC_NAME)) {
-			// TODO: process framework extensions fragments
-			
+		if (fragment.isExtensionBundle()) {
+			try {
+				addURL.invoke(Concierge.class.getClassLoader(),
+						fragment.createURL("/", null));
+			} catch (final Exception e) {
+				// FIXME: to log
+				e.printStackTrace();
+			}
+
 			extensionBundles.add((BundleImpl) fragment.getBundle());
 		}
 
+		final String fragmentHostName = fragment.getFragmentHost();
 		fragmentIndex.insert(fragmentHostName, fragment);
 	}
 
@@ -3139,10 +3185,10 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 */
 	void removeFragment(final Revision fragment) {
 		fragmentIndex.remove(fragment.getFragmentHost(), fragment);
-		
+
 		final String fragmentHostName = fragment.getFragmentHost();
 		if (fragmentHostName.equals(Constants.SYSTEM_BUNDLE_SYMBOLICNAME)
-				|| fragmentHostName.equals(FRAMEWORK_SYMBOLIC_NAME)) {			
+				|| fragmentHostName.equals(FRAMEWORK_SYMBOLIC_NAME)) {
 			extensionBundles.remove((BundleImpl) fragment.getBundle());
 		}
 	}

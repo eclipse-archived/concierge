@@ -1661,6 +1661,14 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			return requirements.get(HostNamespace.HOST_NAMESPACE) != null;
 		}
 
+		boolean isExtensionBundle() {
+			final String fragmentHostName = getFragmentHost();
+			return fragmentHostName
+					.equals(Constants.SYSTEM_BUNDLE_SYMBOLICNAME)
+					|| fragmentHostName
+							.equals(Concierge.FRAMEWORK_SYMBOLIC_NAME);
+		}
+
 		protected boolean isCurrent() {
 			return BundleImpl.this.currentRevision == this;
 		}
@@ -2020,18 +2028,15 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			return wiring;
 		}
 
-		// Tuple<String, String> getFragmentHost() {
 		String getFragmentHost() {
-			final BundleRequirement fragReqs = requirements.get(
-					HostNamespace.HOST_NAMESPACE).get(0);
-			final String fragmentHost = fragReqs.getDirectives().get(
-					HostNamespace.HOST_NAMESPACE);
+			final List<BundleRequirement> hostReqs = requirements
+					.get(HostNamespace.HOST_NAMESPACE);
+			if (hostReqs == null) {
+				return null;
+			}
 
-			return fragmentHost;
-			// final String versionRange = fragReqs.getDirectives().get(
-			// Constants.BUNDLE_VERSION_ATTRIBUTE);
-
-			// return new Tuple<String, String>(fragmentHost, versionRange);
+			return hostReqs.get(0).getDirectives()
+					.get(HostNamespace.HOST_NAMESPACE);
 		}
 
 		final boolean allowsFragmentAttachment() {
