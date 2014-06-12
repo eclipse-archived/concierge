@@ -1735,15 +1735,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 					final Collection<Bundle> updateGraph = getDependencyClosure(toProcess);
 
-					/*
-					 * // remove the ones not active for (final Iterator<Bundle>
-					 * iter = updateGraph.iterator(); iter.hasNext(); ) { if
-					 * (iter.next().getState() != Bundle.ACTIVE) {
-					 * iter.remove(); } }
-					 * 
-					 * updateGraph.addAll(Arrays.asList(initial));
-					 */
-
 					System.err.println("UPDATE GRAPH IS " + updateGraph);
 
 					if (LOG_ENABLED && DEBUG_PACKAGES) {
@@ -2718,7 +2709,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 								// TODO: what does it mean that wiring is null
 								// at
 								// this point???
-								if (wiring != null) {
+								if (wiring != null && wiring.isInUse()) {
 									final List<BundleWire> wires = wiring
 											.getRequiredWires(PackageNamespace.PACKAGE_NAMESPACE);
 

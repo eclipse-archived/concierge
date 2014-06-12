@@ -39,6 +39,7 @@ import org.osgi.resource.Namespace;
 import org.osgi.resource.Requirement;
 import org.osgi.resource.Resource;
 import org.osgi.resource.Wire;
+import org.osgi.resource.Wiring;
 import org.osgi.service.resolver.HostedCapability;
 
 public class Resources {
@@ -48,6 +49,10 @@ public class Resources {
 				&& req instanceof BundleRequirement ? new ConciergeBundleWire(
 				(BundleCapability) cap, (BundleRequirement) req)
 				: new ConciergeWire(cap, req);
+	}
+
+	static Wiring createWiring() {
+		return null;
 	}
 
 	static abstract class GenericReqCap implements Requirement, Capability {
@@ -312,7 +317,7 @@ public class Resources {
 
 	}
 
-	private static abstract class AbstractWireImpl<C extends Capability, R extends Requirement, S extends Resource> {
+	private static abstract class AbstractWireImpl<C extends Capability, R extends Requirement> {
 
 		protected final C capability;
 
@@ -338,16 +343,6 @@ public class Resources {
 			return requirement;
 		}
 
-		@SuppressWarnings("unchecked")
-		public S getProvider() {
-			return (S) capability.getResource();
-		}
-
-		@SuppressWarnings("unchecked")
-		public S getRequirer() {
-			return (S) requirement.getResource();
-		}
-
 		@Override
 		public String toString() {
 			return "{" + requirement + "->" + capability + "}";
@@ -355,27 +350,26 @@ public class Resources {
 	}
 
 	static class ConciergeWire extends
-			AbstractWireImpl<Capability, Requirement, Resource> implements Wire {
+			AbstractWireImpl<Capability, Requirement> implements Wire {
 
 		protected ConciergeWire(final Capability capability,
 				final Requirement requirement) {
 			super(capability, requirement);
 		}
 
-		public boolean equals(final Object other) {
-			if (other instanceof Wire) {
-				final Wire wire = (Wire) other;
-				return wire.getCapability().equals(capability)
-						&& wire.getRequirement().equals(requirement);
-			}
-			return false;
+		public Resource getProvider() {
+			return capability.getResource();
 		}
+
+		public Resource getRequirer() {
+			return requirement.getResource();
+		}
+
 	}
 
-	static class ConciergeBundleWire
-			extends
-			AbstractWireImpl<BundleCapability, BundleRequirement, BundleRevision>
-			implements BundleWire {
+	static class ConciergeBundleWire extends
+			AbstractWireImpl<BundleCapability, BundleRequirement> implements
+			BundleWire {
 
 		ConciergeBundleWiring providerWiring;
 		ConciergeBundleWiring requirerWiring;
@@ -394,7 +388,72 @@ public class Resources {
 		}
 
 		public BundleWiring getRequirerWiring() {
+			// final BundleWiring wiring = getRequirer().getWiring();
+			// return wiring != null && wiring.isCurrent() ? wiring : null;
 			return requirerWiring;
+		}
+
+		public BundleRevision getProvider() {
+			return capability.getResource();
+		}
+
+		public BundleRevision getRequirer() {
+			return requirement.getResource();
+		}
+
+	}
+
+	static class ConciergeWiring implements Wiring {
+
+		private final Resource resource;
+
+		private final MultiMap<String, Capability> capabilities = new MultiMap<String, Capability>();
+		private final MultiMap<String, Requirement> requirements = new MultiMap<String, Requirement>();
+
+		private final MultiMap<String, Wire> providedWires = new MultiMap<String, Wire>();
+		private final MultiMap<String, Wire> requiredWires = new MultiMap<String, Wire>();
+
+		ConciergeWiring(final Resource resource, final List<Wire> wires) {
+			this.resource = resource;
+			for (final Wire wire : wires) {
+				addWire(wire);
+			}
+		}
+
+		private void addWire(final Wire wire) {
+			if (wire.getProvider() == resource) {
+				final Capability cap = wire.getCapability();
+				capabilities.insertUnique(cap.getNamespace(), cap);
+				providedWires.insert(cap.getNamespace(), wire);
+			} else {
+				final Requirement req = wire.getRequirement();
+				requirements.insertUnique(req.getNamespace(), req);
+				requiredWires.insert(req.getNamespace(), wire);
+			}
+		}
+
+		public List<Capability> getResourceCapabilities(final String namespace) {
+			return namespace == null ? capabilities.getAllValues()
+					: capabilities.lookup(namespace);
+		}
+
+		public List<Requirement> getResourceRequirements(final String namespace) {
+			return namespace == null ? requirements.getAllValues()
+					: requirements.lookup(namespace);
+		}
+
+		public List<Wire> getProvidedResourceWires(final String namespace) {
+			return namespace == null ? providedWires.getAllValues()
+					: providedWires.lookup(namespace);
+		}
+
+		public List<Wire> getRequiredResourceWires(final String namespace) {
+			return namespace == null ? requiredWires.getAllValues()
+					: requiredWires.lookup(namespace);
+		}
+
+		public Resource getResource() {
+			return resource;
 		}
 
 	}
@@ -532,7 +591,7 @@ public class Resources {
 		 * @see org.osgi.framework.wiring.BundleWiring#isCurrent()
 		 */
 		public boolean isCurrent() {
-			return ((BundleImpl) revision.getBundle()).currentRevision == revision
+			return ((AbstractBundle) revision.getBundle()).currentRevision == revision
 					&& revision.getWiring() == this;
 		}
 
@@ -641,37 +700,7 @@ public class Resources {
 				return null;
 			}
 
-			final ArrayList<String> result = new ArrayList<String>();
-
-			final Enumeration<URL> enumeration = ((Revision) revision)
-					.findEntries(path, filePattern,
-							(options & BundleWiring.LISTRESOURCES_RECURSE) != 0);
-			if (enumeration != null) {
-				while (enumeration.hasMoreElements()) {
-					final URL url = enumeration.nextElement();
-					result.add(url.getPath());
-				}
-			}
-			if ((options & BundleWiring.LISTRESOURCES_LOCAL) != 0) {
-				return Collections.unmodifiableList(result);
-			}
-
-			for (final BundleWire wire : requiredWires
-					.lookup(PackageNamespace.PACKAGE_NAMESPACE)) {
-				// TODO: check if it matches...
-
-				final Enumeration<URL> enumeration2 = ((Revision) wire
-						.getProvider()).findEntries(path, filePattern,
-						(options & BundleWiring.LISTRESOURCES_RECURSE) != 0);
-				if (enumeration2 != null) {
-					while (enumeration2.hasMoreElements()) {
-						final URL url = enumeration2.nextElement();
-						result.add(url.getPath());
-					}
-				}
-			}
-
-			return Collections.unmodifiableList(result);
+			throw new RuntimeException("not yet implemented");
 		}
 
 		public List<Capability> getResourceCapabilities(final String namespace) {
