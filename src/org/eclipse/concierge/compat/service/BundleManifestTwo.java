@@ -80,7 +80,7 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 						+ Constants.BUNDLE_SYMBOLICNAME);
 			}
 
-			final String[] parts = Utils.SPLIT_AT_SEMICOLON.split(symNameStr);
+			final String[] parts = Utils.splitAtSemicolon(symNameStr);
 			if (parts[0].contains(";")) {
 				throw new IllegalArgumentException(symNameStr);
 			}
@@ -176,8 +176,7 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 				if (fragHostStr != null) {
 					final Map<String, String> dirs2 = new HashMap<String, String>();
 
-					final String[] parts2 = Utils.SPLIT_AT_SEMICOLON
-							.split(fragHostStr);
+					final String[] parts2 = Utils.splitAtSemicolon(fragHostStr);
 					if (parts2[0].contains(";")) {
 						throw new IllegalArgumentException(fragHostStr);
 					}
@@ -398,8 +397,7 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 			if (importStr != null) {
 				final String[] imports = Utils.splitAtComma(importStr);
 				for (int i = 0; i < imports.length; i++) {
-					final String[] literals = Utils.SPLIT_AT_SEMICOLON
-							.split(imports[i]);
+					final String[] literals = Utils.splitAtSemicolon(imports[i]);
 
 					if (literals[0].startsWith("java.")) {
 						throw new BundleException(
@@ -436,8 +434,7 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 			if (dynImportStr != null) {
 				final String[] dynImports = Utils.splitAtComma(dynImportStr);
 				for (int i = 0; i < dynImports.length; i++) {
-					final String[] literals = Utils.SPLIT_AT_SEMICOLON
-							.split(dynImports[i]);
+					final String[] literals = Utils.splitAtSemicolon(dynImports[i]);
 
 					final Tuple.ParseResult parseResult = Utils.parseLiterals(
 							literals, 1);
@@ -479,8 +476,7 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 			if (exportStr != null) {
 				final String[] exports = Utils.splitAtComma(exportStr);
 				for (int i = 0; i < exports.length; i++) {
-					final String[] literals = Utils.SPLIT_AT_SEMICOLON
-							.split(exports[i]);
+					final String[] literals = Utils.splitAtSemicolon(exports[i]);
 
 					final Tuple.ParseResult parseResult = Utils.parseLiterals(
 							literals, 1);
@@ -545,8 +541,7 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 				final String[] requires = Utils.splitAtComma
 						(requireBundleStr);
 				for (int i = 0; i < requires.length; i++) {
-					final String[] literals = Utils.SPLIT_AT_SEMICOLON
-							.split(requires[i]);
+					final String[] literals = Utils.splitAtSemicolon(requires[i]);
 
 					final String requiredBundle = literals[0].trim();
 

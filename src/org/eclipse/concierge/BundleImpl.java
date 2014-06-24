@@ -1505,7 +1505,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			final String activationPolicy = readProperty(attrs,
 					Constants.BUNDLE_ACTIVATIONPOLICY);
 			if (activationPolicy != null) {
-				final String[] literals = Utils.SPLIT_AT_SEMICOLON.split(activationPolicy);
+				final String[] literals = Utils.splitAtSemicolon(activationPolicy);
 				if (Constants.ACTIVATION_LAZY.equals(literals[0])) {
 					lazyActivation = true;
 				}
@@ -3047,7 +3047,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					private void checkDynamicImport(final String dynImport)
 							throws IllegalArgumentException {
 						try {
-							final String[] literals = Utils.SPLIT_AT_SEMICOLON.split(dynImport);
+							final String[] literals = Utils.splitAtSemicolon(dynImport);
 
 							if (literals[0].contains(";")) {
 								throw new IllegalArgumentException(dynImport);

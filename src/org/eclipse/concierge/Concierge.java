@@ -1008,7 +1008,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 	private void exportSystemBundlePackages(final String[] pkgs)
 			throws BundleException {
 		for (final String pkg : pkgs) {
-			final String[] literals = Utils.SPLIT_AT_SEMICOLON.split(pkg);
+			final String[] literals = Utils.splitAtSemicolon(pkg);
 
 			final Tuple.ParseResult parseResult = Utils.parseLiterals(literals,
 					1);

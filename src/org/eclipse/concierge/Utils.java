@@ -39,12 +39,6 @@ import org.osgi.resource.Capability;
 
 public final class Utils {
 
-	//public static final Pattern SPLIT_AT_COMMA = Pattern
-	//		.compile(",\\s*(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
-
-
-	public static final Pattern SPLIT_AT_SEMICOLON = Pattern
-			.compile(";\\s*(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
 	static final Pattern SPLIT_AT_SEMICOLON_PLUS = Pattern
 			.compile("(?<!\\\\);(?=(([^\"\\\\]|\\\\.)*\"([^\"\\\\]|\\\\.)*\")*([^\"\\\\]|\\\\.)*$)");
 	private static final Pattern SPLIT_AT_EQUALS = Pattern.compile("=");
@@ -214,6 +208,10 @@ public final class Utils {
 
 	public static String[] splitAtComma(final String str) {
 		return splitString(str, ",");
+	}
+	
+	public static String[] splitAtSemicolon(final String str) {
+		return splitString(str, ";");
 	}
 	
 	private static short getType(final String type) {
