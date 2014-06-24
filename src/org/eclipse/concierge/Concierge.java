@@ -905,7 +905,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 		final String libExtStr = properties
 				.getProperty(Constants.FRAMEWORK_LIBRARY_EXTENSIONS);
 		if (libExtStr != null) {
-			libraryExtensions = libExtStr.split(Utils.SPLIT_AT_COMMA);
+			libraryExtensions = Utils.splitAtComma(libExtStr);
 		}
 
 		// set execpermission if set
@@ -934,7 +934,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 				+ extraPkgs;
 
 		// initialize the system bundle capabilities
-		final String[] framework_pkgs = sysPkgs.split(Utils.SPLIT_AT_COMMA);
+		final String[] framework_pkgs = Utils.splitAtComma(sysPkgs);
 		exportSystemBundlePackages(framework_pkgs);
 
 		headers.put(Constants.EXPORT_PACKAGE, sysPkgs);
@@ -947,7 +947,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 		final String extraCaps = properties
 				.getProperty(Constants.FRAMEWORK_SYSTEMCAPABILITIES_EXTRA);
 		if (extraCaps != null) {
-			final String[] capStrs = extraCaps.split(Utils.SPLIT_AT_COMMA_PLUS);
+			final String[] capStrs = Utils.splitAtCommaPlus(extraCaps);
 			for (final String capStr : capStrs) {
 				try {
 					final BundleCapabilityImpl cap = new BundleCapabilityImpl(
@@ -1008,7 +1008,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 	private void exportSystemBundlePackages(final String[] pkgs)
 			throws BundleException {
 		for (final String pkg : pkgs) {
-			final String[] literals = pkg.split(Utils.SPLIT_AT_SEMICOLON);
+			final String[] literals = Utils.SPLIT_AT_SEMICOLON.split(pkg);
 
 			final Tuple.ParseResult parseResult = Utils.parseLiterals(literals,
 					1);
@@ -2742,8 +2742,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 									PackageNamespace.CAPABILITY_USES_DIRECTIVE);
 
 							if (usesStr != null) {
-								final String[] usesConstraints = usesStr
-										.split(Utils.SPLIT_AT_COMMA);
+								final String[] usesConstraints = Utils.splitAtComma(usesStr);
 								final HashSet<String> usesSet = new HashSet<String>();
 								usesSet.addAll(Arrays.asList(usesConstraints));
 
@@ -3051,8 +3050,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 		}
 
 		final Set<String> mandatoryAttributes = new HashSet<String>(
-				Arrays.asList(Utils.unQuote(mandatory).toLowerCase()
-						.split(Utils.SPLIT_AT_COMMA)));
+				Arrays.asList(Utils.splitAtComma(Utils.unQuote(mandatory).toLowerCase())));
 		final Matcher matcher = FILTER_ASSERT_MATCHER
 				.matcher(filterStr == null ? "" : filterStr);
 		while (matcher.find()) {

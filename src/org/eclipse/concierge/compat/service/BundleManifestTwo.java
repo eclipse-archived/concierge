@@ -80,7 +80,7 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 						+ Constants.BUNDLE_SYMBOLICNAME);
 			}
 
-			final String[] parts = symNameStr.split(Utils.SPLIT_AT_SEMICOLON);
+			final String[] parts = Utils.SPLIT_AT_SEMICOLON.split(symNameStr);
 			if (parts[0].contains(";")) {
 				throw new IllegalArgumentException(symNameStr);
 			}
@@ -176,8 +176,8 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 				if (fragHostStr != null) {
 					final Map<String, String> dirs2 = new HashMap<String, String>();
 
-					final String[] parts2 = fragHostStr
-							.split(Utils.SPLIT_AT_SEMICOLON);
+					final String[] parts2 = Utils.SPLIT_AT_SEMICOLON
+							.split(fragHostStr);
 					if (parts2[0].contains(";")) {
 						throw new IllegalArgumentException(fragHostStr);
 					}
@@ -396,10 +396,10 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 			// package imports
 			final String importStr = mfAttrs.getValue(Constants.IMPORT_PACKAGE);
 			if (importStr != null) {
-				final String[] imports = importStr.split(Utils.SPLIT_AT_COMMA);
+				final String[] imports = Utils.splitAtComma(importStr);
 				for (int i = 0; i < imports.length; i++) {
-					final String[] literals = imports[i]
-							.split(Utils.SPLIT_AT_SEMICOLON);
+					final String[] literals = Utils.SPLIT_AT_SEMICOLON
+							.split(imports[i]);
 
 					if (literals[0].startsWith("java.")) {
 						throw new BundleException(
@@ -434,11 +434,10 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 			final String dynImportStr = mfAttrs
 					.getValue(Constants.DYNAMICIMPORT_PACKAGE);
 			if (dynImportStr != null) {
-				final String[] dynImports = dynImportStr
-						.split(Utils.SPLIT_AT_COMMA);
+				final String[] dynImports = Utils.splitAtComma(dynImportStr);
 				for (int i = 0; i < dynImports.length; i++) {
-					final String[] literals = dynImports[i]
-							.split(Utils.SPLIT_AT_SEMICOLON);
+					final String[] literals = Utils.SPLIT_AT_SEMICOLON
+							.split(dynImports[i]);
 
 					final Tuple.ParseResult parseResult = Utils.parseLiterals(
 							literals, 1);
@@ -478,10 +477,10 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 
 			final String exportStr = mfAttrs.getValue(Constants.EXPORT_PACKAGE);
 			if (exportStr != null) {
-				final String[] exports = exportStr.split(Utils.SPLIT_AT_COMMA);
+				final String[] exports = Utils.splitAtComma(exportStr);
 				for (int i = 0; i < exports.length; i++) {
-					final String[] literals = exports[i]
-							.split(Utils.SPLIT_AT_SEMICOLON);
+					final String[] literals = Utils.SPLIT_AT_SEMICOLON
+							.split(exports[i]);
 
 					final Tuple.ParseResult parseResult = Utils.parseLiterals(
 							literals, 1);
@@ -543,11 +542,11 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 
 			// require bundle
 			if (requireBundleStr != null) {
-				final String[] requires = requireBundleStr
-						.split(Utils.SPLIT_AT_COMMA);
+				final String[] requires = Utils.splitAtComma
+						(requireBundleStr);
 				for (int i = 0; i < requires.length; i++) {
-					final String[] literals = requires[i]
-							.split(Utils.SPLIT_AT_SEMICOLON);
+					final String[] literals = Utils.SPLIT_AT_SEMICOLON
+							.split(requires[i]);
 
 					final String requiredBundle = literals[0].trim();
 
@@ -687,7 +686,7 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 			final Concierge framework, final String attributeName,
 			final String valueStr) {
 		if (FRAMEWORK_EXECUTIONENVIRONMENT.equals(attributeName)) {
-			final String[] fees = valueStr.split(Utils.SPLIT_AT_COMMA);
+			final String[] fees = Utils.splitAtComma(valueStr);
 			final List<BundleCapability> caps = new ArrayList<BundleCapability>();
 
 			for (final String fee : fees) {

@@ -368,6 +368,7 @@ final class RFC1960Filter implements Filter {
 					.size()]);
 			for (int i = 0; i < operandArray.length; i++) {
 				if (!operandArray[i].match(values)) {
+					System.err.println("NOT MATCHING " + operandArray[i] + " against " + values);
 					return false;
 				}
 			}
@@ -694,7 +695,8 @@ final class RFC1960Filter implements Filter {
 				} else if (attr instanceof Collection) {
 					final Collection<?> col = (Collection<?>) attr;
 					final Object[] obj = col.toArray();
-					return compareArray(value, comparator, obj);
+					// FIXME: there is possibly a better and more consistent way of doing that
+					return compareArray(value.trim(), comparator, obj);
 				} else if (attr instanceof Object[]) {
 					return compareArray(value, comparator, (Object[]) attr);
 				} else if (attr.getClass().isArray()) {

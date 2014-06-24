@@ -62,7 +62,8 @@ public class Resources {
 		private final Map<String, Object> attributes;
 
 		protected GenericReqCap(final String str) throws BundleException {
-			final String[] literals = str.split(Utils.SPLIT_AT_SEMICOLON_PLUS);
+			System.err.println("DEALING WITH " + str);
+			final String[] literals = Utils.SPLIT_AT_SEMICOLON_PLUS.split(str);
 
 			this.namespace = literals[0].trim();
 
@@ -143,8 +144,7 @@ public class Resources {
 				excludes[0] = "";
 				hasExcludes = false;
 			} else {
-				excludes = Utils.unQuote(excludeStr)
-						.split(Utils.SPLIT_AT_COMMA);
+				excludes = Utils.splitAtComma(Utils.unQuote(excludeStr));
 				hasExcludes = true;
 			}
 
@@ -154,8 +154,7 @@ public class Resources {
 				includes = new String[1];
 				includes[0] = "*";
 			} else {
-				includes = Utils.unQuote(includeStr)
-						.split(Utils.SPLIT_AT_COMMA);
+				includes = Utils.splitAtComma(Utils.unQuote(includeStr));
 			}
 		}
 
@@ -174,8 +173,7 @@ public class Resources {
 				excludes[0] = "";
 				hasExcludes = false;
 			} else {
-				excludes = Utils.unQuote(excludeStr)
-						.split(Utils.SPLIT_AT_COMMA);
+				excludes = Utils.splitAtComma(Utils.unQuote(excludeStr));
 				hasExcludes = true;
 			}
 
@@ -185,8 +183,7 @@ public class Resources {
 				includes = new String[1];
 				includes[0] = "*";
 			} else {
-				includes = Utils.unQuote(includeStr)
-						.split(Utils.SPLIT_AT_COMMA);
+				includes = Utils.splitAtComma(Utils.unQuote(includeStr));
 			}
 		}
 

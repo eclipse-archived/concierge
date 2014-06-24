@@ -1307,8 +1307,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			final String property, final String[] defaultValue)
 			throws BundleException {
 		final String propString = readProperty(attrs, property);
-		return propString == null ? defaultValue : propString
-				.split(Utils.SPLIT_AT_COMMA);
+		return propString == null ? defaultValue : Utils.splitAtComma(propString);
 	}
 
 	protected static String readProperty(final Attributes attrs,
@@ -1505,8 +1504,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			final String activationPolicy = readProperty(attrs,
 					Constants.BUNDLE_ACTIVATIONPOLICY);
 			if (activationPolicy != null) {
-				final String[] literals = activationPolicy
-						.split(Utils.SPLIT_AT_SEMICOLON);
+				final String[] literals = Utils.SPLIT_AT_SEMICOLON.split(activationPolicy);
 				if (Constants.ACTIVATION_LAZY.equals(literals[0])) {
 					lazyActivation = true;
 				}
@@ -1516,7 +1514,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					if (matcher.matches()) {
 						final String directive = matcher.group(1);
 						final String list = matcher.group(2);
-						final String[] elems = list.split(Utils.SPLIT_AT_COMMA);
+						final String[] elems = Utils.splitAtComma(list);
 
 						if (Constants.INCLUDE_DIRECTIVE.equals(directive)) {
 							activationIncludes = elems;
@@ -1614,7 +1612,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				return result;
 			}
 
-			final String[] reqStrs = str.split(Utils.SPLIT_AT_COMMA_PLUS);
+			final String[] reqStrs = Utils.splitAtCommaPlus(str);
 			for (int i = 0; i < reqStrs.length; i++) {
 				final BundleRequirementImpl req = new BundleRequirementImpl(
 						this, reqStrs[i]);
@@ -1632,7 +1630,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				return result;
 			}
 
-			final String[] reqStrs = str.split(Utils.SPLIT_AT_COMMA_PLUS);
+			final String[] reqStrs = Utils.splitAtCommaPlus(str);
 			for (int i = 0; i < reqStrs.length; i++) {
 				final BundleCapabilityImpl cap = new BundleCapabilityImpl(this,
 						reqStrs[i]);
@@ -3049,8 +3047,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					private void checkDynamicImport(final String dynImport)
 							throws IllegalArgumentException {
 						try {
-							final String[] literals = dynImport
-									.split(Utils.SPLIT_AT_SEMICOLON);
+							final String[] literals = Utils.SPLIT_AT_SEMICOLON.split(dynImport);
 
 							if (literals[0].contains(";")) {
 								throw new IllegalArgumentException(dynImport);

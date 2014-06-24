@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.AbstractSet;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -38,18 +39,56 @@ import org.osgi.resource.Capability;
 
 public final class Utils {
 
-	public static final String SPLIT_AT_COMMA = ",\\s*(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)";
-	static final String SPLIT_AT_COMMA_PLUS = "(?<!\\\\),(?=(([^\"\\\\]|\\\\.)*\"([^\"\\\\]|\\\\.)*\")*([^\"\\\\]|\\\\.)*$)";
-	public static final String SPLIT_AT_SEMICOLON = ";\\s*(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)";
-	static final String SPLIT_AT_SEMICOLON_PLUS = "(?<!\\\\);(?=(([^\"\\\\]|\\\\.)*\"([^\"\\\\]|\\\\.)*\")*([^\"\\\\]|\\\\.)*$)";
-	static final String SPLIT_AT_COLON = ":\\s*(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)";
+	// public static final String SPLIT_AT_COMMA =
+	// ",\\s*(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)";
+	//public static final Pattern SPLIT_AT_COMMA = Pattern
+	//		.compile(",\\s*(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
 
-	private static final String SPLIT_AT_EQUALS = "=";
+	// static final String SPLIT_AT_COMMA_PLUS =
+	// "(?<!\\\\),(?=(([^\"\\\\]|\\\\.)*\"([^\"\\\\]|\\\\.)*\")*([^\"\\\\]|\\\\.)*$)";
+	static final Pattern SPLIT_AT_COMMA_PLUS =
+	Pattern.compile("(?<!\\\\),(?=(([^\"\\\\]|\\\\.)*\"([^\"\\\\]|\\\\.)*\")*([^\"\\\\]|\\\\.)*$)");
+
+	//static final Pattern SPLIT_AT_COMMA_PLUS = Pattern
+	//		.compile("(?<!\\\\),\\s*(?=(?:[^\"]*((?<!\\\\)\")[^\"]*((?<!\\\\)\"))*[^\"]*$)");
+
+	// Pattern.compile("(?<!\\\\),(?=(([^\"\\\\]|\\\\.)*\"([^\"\\\\]|\\\\.)*\")*([^\"\\\\]|\\\\.)*$)");
+
+	// public static final String SPLIT_AT_SEMICOLON =
+	// ";\\s*(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)";
+	public static final Pattern SPLIT_AT_SEMICOLON = Pattern
+			.compile(";\\s*(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
+	// static final String SPLIT_AT_SEMICOLON_PLUS =
+	// "(?<!\\\\);(?=(([^\"\\\\]|\\\\.)*\"([^\"\\\\]|\\\\.)*\")*([^\"\\\\]|\\\\.)*$)";
+	// static final Pattern SPLIT_AT_SEMICOLON_PLUS =
+	// Pattern.compile("(?<!\\\\);(?=(([^\"\\\\]|\\\\.)*\"([^\"\\\\]|\\\\.)*\")*([^\"\\\\]|\\\\.)*$)");
+
+	static final Pattern SPLIT_AT_SEMICOLON_PLUS = Pattern
+			.compile("(?<!\\\\);(?=(([^\"\\\\]|\\\\.)*\"([^\"\\\\]|\\\\.)*\")*([^\"\\\\]|\\\\.)*$)");
+	// static final String SPLIT_AT_COLON =
+	// ":\\s*(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)";
+	// static final Pattern SPLIT_AT_COLON =
+	// Pattern.compile("?<!\\\\);\\s*(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
+
+	// private static final String SPLIT_AT_EQUALS = "=";
+	private static final Pattern SPLIT_AT_EQUALS = Pattern.compile("=");
 	private static final Pattern LIST_TYPE_PATTERN = Pattern
 			.compile("List\\s*<\\s*([^\\s]*)\\s*>");
 
 	@SuppressWarnings("deprecation")
 	private static final String SPECIFICATION_VERSION = Constants.PACKAGE_SPECIFICATION_VERSION;
+
+	public static void main(String... args) {
+		final String s = "test; filter:=\"(&(test=aName)(version>=1.1.0))\", test; filter:=\"(&(version>=1.1)(string~=astring))\", test; filter:=\"(&(version>=1.1)(long>=99))\", test; filter:=\"(&(version>=1.1)(double>=1.0))\", test; filter:=\"(&(version>=1.1)(version.list=1.0)(version.list=1.1)(version.list=1.2))\", test; filter:=\"(&(version>=1.1)(long.list=1)(long.list=2)(long.list=3)(long.list=4))\", test; filter:=\"(&(version>=1.1)(double.list=1.001)(double.list=1.002)(double.list=1.003)(double.list<=1.3))\", test; filter:=\"(&(version>=1.1)(string.list~=astring)(string.list~=bstring)(string.list=cString))\"";
+		// final String s =
+		// "foo, test; filter:=\"(&(version>=1.1)(string.list2=a\\\"quote)(string.list2=a\\,comma)(string.list2= aSpace )(string.list2=\\\"start)(string.list2=\\,start)(string.list2=end\\\")(string.list2=end\\,))\"";
+		// final String s = "foo, test=\\\"2";
+		// final String[] res = SPLIT_AT_COMMA_PLUS.split(s);
+		final String[] res = splitAtCommaPlus(s);
+		for (int i = 0; i < res.length; i++) {
+			System.out.println(res[i]);
+		}
+	}
 
 	public static final Comparator<? super Capability> EXPORT_ORDER = new Comparator<Capability>() {
 
@@ -104,12 +143,14 @@ public final class Utils {
 	public static Tuple.ParseResult parseLiterals(final String[] literals,
 			final int start) throws BundleException {
 
+		System.err.println("LITERALS ARE " + Arrays.asList(literals));
+
 		final HashMap<String, String> directives = new HashMap<String, String>();
 		final HashMap<String, Object> attributes = new HashMap<String, Object>();
 
 		for (int i = start; i < literals.length; i++) {
 
-			final String[] parts = literals[i].split(SPLIT_AT_EQUALS, 2);
+			final String[] parts = SPLIT_AT_EQUALS.split(literals[i], 2);
 			final String name = parts[0].trim();
 			final int e = name.length() - 1;
 			if (name.charAt(e) == ':') {
@@ -117,8 +158,12 @@ public final class Utils {
 				final String directive = name.substring(0, e).trim();
 
 				if (directives.containsKey(directive)) {
-					throw new BundleException("Duplicate directive "
-							+ directive);
+					System.err.println("LITERAL PARSER STACK DUMP:");
+					for (int x = 0; x < literals.length; x++) {
+						System.err.println(literals[x]);
+					}
+					throw new BundleException("Duplicate directive '"
+							+ directive + "'");
 				}
 
 				directives.put(directive, unQuote(parts[1].trim()));
@@ -135,6 +180,8 @@ public final class Utils {
 						throw new BundleException("Illegal attribute name "
 								+ name);
 					}
+
+					System.err.println("HERE: " + Arrays.asList(nameParts));
 
 					attributes
 							.put(nameParts[0],
@@ -166,7 +213,13 @@ public final class Utils {
 			final short elementType = matcher.matches() ? getType(matcher
 					.group(1)) : STRING_TYPE;
 			final List<Object> list = new ArrayList<Object>();
-			final String[] valueStrs = valueStr.split(SPLIT_AT_COMMA_PLUS);
+
+			final String[] valueStrs = Utils.splitAtCommaPlus(valueStr);
+
+			System.err.println("VALUE STRING IS ");
+			for (int i=0; i<valueStrs.length; i++) {
+				System.err.println("\t" + valueStrs[i]);
+			}
 
 			for (int i = 0; i < valueStrs.length; i++) {
 				list.add(createValue0(elementType, valueStrs[i]));
@@ -178,6 +231,15 @@ public final class Utils {
 		}
 	}
 
+	static String[] splitAtCommaPlus(final String str) {
+		//return Utils.SPLIT_AT_COMMA_PLUS.split(str);
+		return splitString(str, ",");
+	}
+
+	public static String[] splitAtComma(final String str) {
+		return splitString(str, ",");
+	}
+	
 	private static short getType(final String type) {
 		if ("String".equals(type)) {
 			return STRING_TYPE;
@@ -248,11 +310,14 @@ public final class Utils {
 				.substring(start, end);
 	}
 
-	static String[] splitString(final String values, final String delimiter)
+	static String[] splitString(String values, final String delimiter)
 			throws IllegalArgumentException {
 		if (values == null) {
 			return new String[0];
 		}
+
+		values = values.replaceAll("\\\\\"", "`");
+		// values = values.replaceAll("\\\\,", "@");
 
 		final List<String> tokens = new ArrayList<String>(values.length() / 10);
 		int pointer = 0;
@@ -260,8 +325,13 @@ public final class Utils {
 		int tokenStart = 0;
 		int nextDelimiter;
 		while ((nextDelimiter = values.indexOf(delimiter, pointer)) > -1) {
+			if (nextDelimiter > 0 && values.charAt(nextDelimiter - 1) == '\\') {
+				pointer = ++nextDelimiter;
+				continue;
+			}
 			final int openingQuote = values.indexOf("\"", quotePointer);
 			int closingQuote = values.indexOf("\"", openingQuote + 1);
+
 			if (openingQuote > closingQuote) {
 				throw new IllegalArgumentException(
 						"Missing closing quotation mark.");
@@ -276,7 +346,8 @@ public final class Utils {
 				continue;
 			}
 			// TODO: for performance, fold the trim into the splitting
-			tokens.add(values.substring(tokenStart, nextDelimiter).trim());
+			tokens.add(values.substring(tokenStart, nextDelimiter).trim()
+					.replace("`", "\\\""));
 			pointer = ++nextDelimiter;
 			quotePointer = pointer;
 			tokenStart = pointer;
@@ -379,7 +450,7 @@ public final class Utils {
 		HashMap<K, List<V>> getFlatMap() {
 			return map;
 		}
-		
+
 		public void insert(final K key, final V value) {
 			List<V> list = map.get(key);
 			if (list == null) {
