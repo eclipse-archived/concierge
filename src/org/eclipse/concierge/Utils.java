@@ -39,38 +39,14 @@ import org.osgi.resource.Capability;
 
 public final class Utils {
 
-	// public static final String SPLIT_AT_COMMA =
-	// ",\\s*(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)";
 	//public static final Pattern SPLIT_AT_COMMA = Pattern
 	//		.compile(",\\s*(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
 
-	// static final String SPLIT_AT_COMMA_PLUS =
-	// "(?<!\\\\),(?=(([^\"\\\\]|\\\\.)*\"([^\"\\\\]|\\\\.)*\")*([^\"\\\\]|\\\\.)*$)";
-	static final Pattern SPLIT_AT_COMMA_PLUS =
-	Pattern.compile("(?<!\\\\),(?=(([^\"\\\\]|\\\\.)*\"([^\"\\\\]|\\\\.)*\")*([^\"\\\\]|\\\\.)*$)");
 
-	//static final Pattern SPLIT_AT_COMMA_PLUS = Pattern
-	//		.compile("(?<!\\\\),\\s*(?=(?:[^\"]*((?<!\\\\)\")[^\"]*((?<!\\\\)\"))*[^\"]*$)");
-
-	// Pattern.compile("(?<!\\\\),(?=(([^\"\\\\]|\\\\.)*\"([^\"\\\\]|\\\\.)*\")*([^\"\\\\]|\\\\.)*$)");
-
-	// public static final String SPLIT_AT_SEMICOLON =
-	// ";\\s*(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)";
 	public static final Pattern SPLIT_AT_SEMICOLON = Pattern
 			.compile(";\\s*(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
-	// static final String SPLIT_AT_SEMICOLON_PLUS =
-	// "(?<!\\\\);(?=(([^\"\\\\]|\\\\.)*\"([^\"\\\\]|\\\\.)*\")*([^\"\\\\]|\\\\.)*$)";
-	// static final Pattern SPLIT_AT_SEMICOLON_PLUS =
-	// Pattern.compile("(?<!\\\\);(?=(([^\"\\\\]|\\\\.)*\"([^\"\\\\]|\\\\.)*\")*([^\"\\\\]|\\\\.)*$)");
-
 	static final Pattern SPLIT_AT_SEMICOLON_PLUS = Pattern
 			.compile("(?<!\\\\);(?=(([^\"\\\\]|\\\\.)*\"([^\"\\\\]|\\\\.)*\")*([^\"\\\\]|\\\\.)*$)");
-	// static final String SPLIT_AT_COLON =
-	// ":\\s*(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)";
-	// static final Pattern SPLIT_AT_COLON =
-	// Pattern.compile("?<!\\\\);\\s*(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
-
-	// private static final String SPLIT_AT_EQUALS = "=";
 	private static final Pattern SPLIT_AT_EQUALS = Pattern.compile("=");
 	private static final Pattern LIST_TYPE_PATTERN = Pattern
 			.compile("List\\s*<\\s*([^\\s]*)\\s*>");

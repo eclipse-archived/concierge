@@ -76,6 +76,7 @@ import org.osgi.framework.FrameworkEvent;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.Version;
+import org.osgi.framework.VersionRange;
 import org.osgi.framework.hooks.bundle.CollisionHook;
 import org.osgi.framework.hooks.weaving.WovenClass;
 import org.osgi.framework.namespace.BundleNamespace;
@@ -1902,8 +1903,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 								}
 								no_n = false;
 							} else if (criterium == Constants.BUNDLE_NATIVECODE_OSVERSION) {
-								v |= Utils.isVersionInRange(
-										framework.osversion, value);
+								v |= new VersionRange(Utils.unQuote(value)).includes(framework.osversion);
 								no_v = false;
 							} else if (criterium == Constants.BUNDLE_NATIVECODE_LANGUAGE) {
 								l |= new Locale(value, "").getLanguage()
