@@ -578,7 +578,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 					.translateToCapability(this,
 							FRAMEWORK_EXECUTIONENVIRONMENT, feeStr);
 			systemBundleCapabilities.addAll(feeCaps);
-			System.out.println("NEW CAPABILITIES " + feeCaps);
 		}
 
 		// TODO: use "reasonable defaults"...
@@ -1759,17 +1758,12 @@ public final class Concierge extends AbstractBundle implements Framework,
 						return;
 					}
 
-					System.err.println("REFRESHING PACKAGES FROM BUNDLES "
-							+ toProcess);
-
 					if (LOG_ENABLED && DEBUG_PACKAGES) {
 						logger.log(LogService.LOG_DEBUG,
 								"REFRESHING PACKAGES FROM BUNDLES " + toProcess);
 					}
 
 					final Collection<Bundle> updateGraph = getDependencyClosure(toProcess);
-
-					System.err.println("UPDATE GRAPH IS " + updateGraph);
 
 					if (LOG_ENABLED && DEBUG_PACKAGES) {
 						logger.log(LogService.LOG_DEBUG, "UPDATE GRAPH IS "
@@ -1826,7 +1820,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 						final BundleImpl bu = (BundleImpl) resolveIter.next();
 						try {
 							if (bu.state == Bundle.INSTALLED) {
-								System.err.println("UPDATE RESOLVING " + bu);
 								final boolean success = bu.currentRevision
 										.resolve(false);
 								if (!success) {
@@ -1840,9 +1833,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 					}
 
 					// restart all bundles regarding their startlevels
-					System.err.println("RESTART LIST " + restartList);
 					for (final Bundle bu : restartList) {
-						System.err.println("RESTARTING " + bu);
 						try {
 							bu.start();
 						} catch (final Exception e) {
@@ -1859,10 +1850,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 					final Exception e) {
 				switch (type) {
 				case FrameworkEvent.PACKAGES_REFRESHED:
-					System.out.println("PACKAGES_REFRESHED");
 					break;
 				case FrameworkEvent.ERROR:
-					System.out.println("ERROR ");
 					e.printStackTrace();
 					break;
 				default:
@@ -2874,9 +2863,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 								.equals(requirement
 										.getDirectives()
 										.get(Namespace.REQUIREMENT_RESOLUTION_DIRECTIVE))) {
-					System.err.println("COULD NOT RESOLVE REQUIREMENT "
-							+ requirement + " CANDIDATES WERE " + candidates);
-					unresolvedRequirements.add(requirement);
+					unresolvedRequirements.add(requirement);					
 				}
 			}
 
@@ -3372,8 +3359,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 		for (final HostedCapability hosted : resource.getHostedCapabilities()) {
 			capabilityRegistry.remove(hosted);
 		}
-
-		System.out.println("CAPABILITIES AFTER " + capabilityRegistry);
 	}
 
 	void checkForCollision(final int operation, final Bundle contextOwner,

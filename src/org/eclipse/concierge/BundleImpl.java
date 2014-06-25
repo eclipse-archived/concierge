@@ -1563,11 +1563,6 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 						IdentityNamespace.IDENTITY_NAMESPACE).get(0);
 			}
 
-			if (this.identity != null) {
-				System.err.println(this.identity.getAttributes().get(
-						IdentityNamespace.IDENTITY_NAMESPACE));
-			}
-
 			final List<BundleCapability> hosts = capabilities
 					.get(HostNamespace.HOST_NAMESPACE);
 
@@ -2058,8 +2053,6 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				}
 			}
 
-			System.err.println("ATTACHING FRAGMENT ... " + fragment);
-
 			if (state == Bundle.ACTIVE || state == Bundle.STARTING) {
 				// attaching fragment at runtime
 				// test if host allows attaching at runtime:
@@ -2149,14 +2142,11 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			final BundleImpl fragmentBundle = (BundleImpl) fragment.getBundle();
 
 			if (newImports != null) {
-				System.out.println("ADDING NEW IMPORTS " + newImports);
 				requirements.insertAll(PackageNamespace.PACKAGE_NAMESPACE,
 						newImports);
 			}
 
 			if (newRequiredBundle != null) {
-				System.out.println("ADDING NEW REQUIRED BUNDLES "
-						+ newRequiredBundle);
 				requirements.insertAll(BundleNamespace.BUNDLE_NAMESPACE,
 						newRequiredBundle);
 			}
@@ -2209,10 +2199,12 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				processNativeLibraries(newNativeStrings);
 			}
 
+			/**
 			System.err.println("~~~~~~~~~~~~~~~~~~~~~~~~~ATTACHED FRAGMENT "
 					+ fragment.getSymbolicName() + "~~~~~TO~~~~~"
 					+ getSymbolicName() + "(revision=" + this
 					+ " FRAGMENTS IS NOW " + fragments);
+			*/
 
 			return true;
 		}

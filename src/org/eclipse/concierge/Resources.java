@@ -62,10 +62,8 @@ public class Resources {
 		private final Map<String, Object> attributes;
 
 		protected GenericReqCap(final String str) throws BundleException {
-			System.err.println("DEALING WITH '" + str + "'");
 			final String[] literals = Utils.splitAtSemicolonPlus(str);
-			//final String[] literals = Utils.splitString(str, ";");
-			
+
 			this.namespace = literals[0].trim();
 
 			final Tuple.ParseResult parseResult = Utils.parseLiterals(literals,

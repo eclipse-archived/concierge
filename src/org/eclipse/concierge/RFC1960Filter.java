@@ -19,7 +19,6 @@ import java.util.Collections;
 import java.util.Dictionary;
 import java.util.EmptyStackException;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
@@ -32,7 +31,6 @@ import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 import org.osgi.resource.Capability;
 import org.osgi.resource.Requirement;
-import org.osgi.resource.Resource;
 
 /**
  * The RFC1960 LDAP Filter implementation class.
@@ -368,10 +366,8 @@ final class RFC1960Filter implements Filter {
 					.size()]);
 			for (int i = 0; i < operandArray.length; i++) {
 				if (!operandArray[i].match(values)) {
-					System.err.println("NOT MATCHING " + operandArray[i] + " against " + values);
 					return false;
 				}
-				System.err.println("MATCHING "  + operandArray[i] + " against " + values);
 			}
 			return true;
 		} else if (operator == OR_OPERATOR) {
@@ -1133,56 +1129,6 @@ final class RFC1960Filter implements Filter {
 		public int hashCode() {
 			return toString().hashCode();
 		}
-
-	}
-
-	// FIXME: remove
-	public static void main(final String[] args) throws Exception {
-		final Filter foo = RFC1960Filter.fromString("(version>=1.0)");
-		System.out.println(foo);
-		final Filter filter = RFC1960Filter.fromString("(space= )");
-		final Hashtable<String, Object> ht = new Hashtable<String, Object>();
-		ht.put("space", new Character(' '));
-		System.out.println(filter.match(ht));
-
-		// @formatter:off
-		//Filter filter2 = RFC1960Filter.fromString("(|(version<=1.0)(|(&(osgi.wiring=pkg.foo)(version=1.0))(osgi.wiring=pkg.bar)))");
-		// Filter filter2 = RFC1960Filter.fromString("(|(&(osgi.wiring=pkg.foo)(version=1.0))(osgi.wiring=pkg.bar))");
-		final Filter filter2 = RFC1960Filter.fromString("(osgi.wiring=pkg.bar)");
-		// Filter filter2 = RFC1960Filter.fromString("(&(osgi.wiring=pkg.foo)(version=1.0))");
-		// Filter filter2 = RFC1960Filter.fromString("(|(&(osgi.wiring=pkg.foo)(version=pkg.foo))(osgi.wiring=1.0))");
-		// Filter filter2 = RFC1960Filter.fromString("(&(osgi.wiring=pkg.foo)(osgi.wiring=pkg.foo))");
-		// Filter filter2 = RFC1960Filter.fromString("(|(osgi.wiring=pkg.foo))");
-		// Filter filter2 = RFC1960Filter.fromString("(&(osgi.wiring=pkg.foo)(version=1.0.0))");
-		// @formatter:on
-
-		final Concierge.CapabilityRegistry registry = new Concierge.CapabilityRegistry();
-		registry.add(new Capability() {
-
-			public String getNamespace() {
-				return "osgi.wiring";
-			}
-
-			public Map<String, String> getDirectives() {
-				return Collections.emptyMap();
-			}
-
-			public Map<String, Object> getAttributes() {
-				final HashMap<String, Object> attrs = new HashMap<String, Object>();
-				attrs.put("osgi.wiring", "pkg.foo");
-				attrs.put("version", "1.0.0");
-				return attrs;
-			}
-
-			public Resource getResource() {
-				return null;
-			}
-
-		});
-		final Set<String> values = new HashSet<String>();
-		System.out.println(RFC1960Filter.prefilter("osgi.wiring", filter2,
-				registry, REQUIRED, false, values));
-		System.out.println(values);
 	}
 
 	private static short INSUFFICIENT = 0;

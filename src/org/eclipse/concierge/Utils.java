@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.AbstractSet;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -39,28 +38,12 @@ import org.osgi.resource.Capability;
 
 public final class Utils {
 
-	private static final Pattern SPLIT_AT_SEMICOLON_PLUS = Pattern
-			.compile("(?<!\\\\);(?=(([^\"\\\\]|\\\\.)*\"([^\"\\\\]|\\\\.)*\")*([^\"\\\\]|\\\\.)*$)");
 	private static final Pattern LIST_TYPE_PATTERN = Pattern
 			.compile("List\\s*<\\s*([^\\s]*)\\s*>");
 
 	@SuppressWarnings("deprecation")
 	private static final String SPECIFICATION_VERSION = Constants.PACKAGE_SPECIFICATION_VERSION;
 
-	public static void main(String... args) {
-		//final String s = "test; filter:=\"(&(test=aName)(version>=1.1.0))\", test; filter:=\"(&(version>=1.1)(string~=astring))\", test; filter:=\"(&(version>=1.1)(long>=99))\", test; filter:=\"(&(version>=1.1)(double>=1.0))\", test; filter:=\"(&(version>=1.1)(version.list=1.0)(version.list=1.1)(version.list=1.2))\", test; filter:=\"(&(version>=1.1)(long.list=1)(long.list=2)(long.list=3)(long.list=4))\", test; filter:=\"(&(version>=1.1)(double.list=1.001)(double.list=1.002)(double.list=1.003)(double.list<=1.3))\", test; filter:=\"(&(version>=1.1)(string.list~=astring)(string.list~=bstring)(string.list=cString))\"";
-		//final String s = "foo, test; filter:=\"(&(version>=1.1)(string.list2=a\\\"quote)(string.list2=a\\,comma)(string.list2= aSpace )(string.list2=\\\"start)(string.list2=\\,start)(string.list2=end\\\")(string.list2=end\\,))\"";
-		
-		final String s = " foo , test; filter:=\"(&(version>=1.1)(string.list2=a\\\"quote)(string.list2=a\\,comma)(string.list2= aSpace )(string.list2=\\\"start)(string.list2=\\,start)(string.list2=end\\\")(string.list2=end\\,))\" , bar ";
-		
-		// final String s = "foo, test=\\\"2";
-		// final String[] res = SPLIT_AT_COMMA_PLUS.split(s);
-		final String[] res = splitString2(s, ',');
-		for (int i = 0; i < res.length; i++) {
-			System.out.println(res[i]);
-		}
-	}
-	
 	static String[] splitString2(String values, final char delimiter) {
 		return splitString2(values, delimiter, Integer.MAX_VALUE);
 	}
@@ -88,12 +71,7 @@ public final class Utils {
 		}
 		
 		do  {
-			System.out.println(chars[curr]);
-			
 			if (chars[curr] == delimiter && last != '\\' && openingQuote < 0) {
-				
-				System.out.println("DELIMITER " + curr);
-				
 				matches++;
 				
 				// scan back to skip whitepspaces
@@ -101,8 +79,6 @@ public final class Utils {
 				while (endPointer > 0 && Character.isWhitespace(chars[endPointer])) {
 					endPointer--;
 				}
-				
-				System.out.println("END POINTER " + endPointer);
 				
 				// copy from pointer to current - 1
 				tokens.add(new String(chars, pointer, endPointer - pointer + 1));
@@ -118,10 +94,8 @@ public final class Utils {
 			if (chars[curr] == '"' && last != '\\') {				
 				if (openingQuote < 0) {
 					openingQuote = curr;
-					System.out.println("OPEN QUOTE " + openingQuote);
 				} else {
 					openingQuote = -1;
-					System.out.println("CLOSING QUOTE " + openingQuote);
 				}
 			}
 
@@ -191,12 +165,6 @@ public final class Utils {
 
 	public static Tuple.ParseResult parseLiterals(final String[] literals,
 			final int start) throws BundleException {
-
-		System.err.println("LITERALS ARE");
-		for (int i=0; i<literals.length; i++) {
-			System.err.println("\t'" + literals[i] + "'");
-		}
-
 		final HashMap<String, String> directives = new HashMap<String, String>();
 		final HashMap<String, Object> attributes = new HashMap<String, Object>();
 
@@ -210,10 +178,6 @@ public final class Utils {
 				final String directive = name.substring(0, e).trim();
 
 				if (directives.containsKey(directive)) {
-					System.err.println("LITERAL PARSER STACK DUMP:");
-					for (int x = 0; x < literals.length; x++) {
-						System.err.println(literals[x]);
-					}
 					throw new BundleException("Duplicate directive '"
 							+ directive + "'");
 				}
@@ -232,8 +196,6 @@ public final class Utils {
 						throw new BundleException("Illegal attribute name "
 								+ name);
 					}
-
-					System.err.println("HERE: " + Arrays.asList(nameParts));
 
 					attributes
 							.put(nameParts[0],
@@ -268,11 +230,6 @@ public final class Utils {
 
 			final String[] valueStrs = Utils.splitAtCommaPlus(valueStr);
 
-			System.err.println("VALUE STRING IS ");
-			for (int i=0; i<valueStrs.length; i++) {
-				System.err.println("\t" + valueStrs[i]);
-			}
-
 			for (int i = 0; i < valueStrs.length; i++) {
 				list.add(createValue0(elementType, valueStrs[i]));
 			}
@@ -298,8 +255,8 @@ public final class Utils {
 	}
 	
 	public static String[] splitAtSemicolonPlus(final String str) {
-		return SPLIT_AT_SEMICOLON_PLUS.split(str);
-		//return splitString2(str, ';');
+		//return SPLIT_AT_SEMICOLON_PLUS.split(str);
+		return splitString2(str, ';');
 	}
 	
 	private static short getType(final String type) {
