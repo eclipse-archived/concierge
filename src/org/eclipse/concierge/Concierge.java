@@ -711,8 +711,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 		// sort out the boot delegations
 		final String[] bds = Utils
-				.splitString(properties
-						.getProperty(Constants.FRAMEWORK_BOOTDELEGATION), ",");
+				.splitString2(properties
+						.getProperty(Constants.FRAMEWORK_BOOTDELEGATION), ',');
 		final ArrayList<String> bdsAbs = new ArrayList<String>();
 		final ArrayList<String> bdsRel = new ArrayList<String>();
 		int pos;

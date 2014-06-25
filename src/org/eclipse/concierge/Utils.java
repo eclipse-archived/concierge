@@ -333,52 +333,6 @@ public final class Utils {
 	
 	
 
-	static String[] splitString(String values, final String delimiter)
-			throws IllegalArgumentException {
-		if (values == null) {
-			return new String[0];
-		}
-
-		//values = values.replaceAll("\\\\\"", "`");
-		// values = values.replaceAll("\\\\,", "@");
-
-		final List<String> tokens = new ArrayList<String>(values.length() / 10);
-		int pointer = 0;
-		int quotePointer = 0;
-		int tokenStart = 0;
-		int nextDelimiter;
-		while ((nextDelimiter = values.indexOf(delimiter, pointer)) > -1) {
-			if (nextDelimiter > 0 && values.charAt(nextDelimiter - 1) == '\\') {
-				pointer = ++nextDelimiter;
-				continue;
-			}
-			
-			final int openingQuote = values.indexOf("\"", quotePointer);
-			int closingQuote = values.indexOf("\"", openingQuote + 1);
-
-			if (openingQuote > closingQuote) {
-				throw new IllegalArgumentException(
-						"Missing closing quotation mark.");
-			}
-			if (openingQuote > -1 && openingQuote < nextDelimiter
-					&& closingQuote < nextDelimiter) {
-				quotePointer = ++closingQuote;
-				continue;
-			}
-			if (openingQuote < nextDelimiter && nextDelimiter < closingQuote) {
-				pointer = ++closingQuote;
-				continue;
-			}
-			// TODO: for performance, fold the trim into the splitting
-			tokens.add(values.substring(tokenStart, nextDelimiter).trim()
-					.replace("`", "\\\""));
-			pointer = ++nextDelimiter;
-			quotePointer = pointer;
-			tokenStart = pointer;
-		}
-		tokens.add(values.substring(tokenStart).trim());
-		return tokens.toArray(new String[tokens.size()]);
-	}
 
 	public static class MultiMap<K, V> implements Map<K, List<V>> {
 
