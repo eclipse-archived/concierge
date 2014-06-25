@@ -697,15 +697,12 @@ public final class Utils {
 
 	}
 
-	// FIXME: separate concerns... (delta tracking and remove only)
 	static class RemoveOnlyList<E> extends ArrayList<E> {
 
 		/**
 		 * 
 		 */
 		private static final long serialVersionUID = -2126964539821583131L;
-
-		private final ArrayList<E> removed = new ArrayList<E>();
 
 		public RemoveOnlyList(final Collection<? extends E> result) {
 			super(result);
@@ -717,6 +714,21 @@ public final class Utils {
 
 		public boolean addAll(final Collection<? extends E> c) {
 			throw new UnsupportedOperationException("addAll");
+		}
+
+	}
+
+	static class DeltaTrackingRemoveOnlyList<E> extends RemoveOnlyList<E> {
+
+		private final ArrayList<E> removed = new ArrayList<E>();
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 2467542232248099702L;
+
+		public DeltaTrackingRemoveOnlyList(Collection<E> result) {
+			super(result);
 		}
 
 		@SuppressWarnings("unchecked")

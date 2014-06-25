@@ -54,6 +54,7 @@ import org.eclipse.concierge.BundleImpl.Revision.WovenClassImpl;
 import org.eclipse.concierge.Resources.BundleCapabilityImpl;
 import org.eclipse.concierge.Resources.ConciergeBundleWiring;
 import org.eclipse.concierge.Resources.HostedBundleCapability;
+import org.eclipse.concierge.Utils.DeltaTrackingRemoveOnlyList;
 import org.eclipse.concierge.Utils.MultiMap;
 import org.eclipse.concierge.Utils.RemoveOnlyList;
 import org.eclipse.concierge.Utils.RemoveOnlyMap;
@@ -3282,7 +3283,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 			final ArrayList<BundleListener> asyncListeners = new ArrayList<BundleListener>(
 					bundleListeners);
 
-			final RemoveOnlyList<BundleContext> contexts = new RemoveOnlyList<BundleContext>(
+			final DeltaTrackingRemoveOnlyList<BundleContext> contexts = new DeltaTrackingRemoveOnlyList<BundleContext>(
 					bundleListenerMap.keySet());
 
 			for (final ServiceReferenceImpl<org.osgi.framework.hooks.bundle.EventHook> sref : bundleEventHooks) {
