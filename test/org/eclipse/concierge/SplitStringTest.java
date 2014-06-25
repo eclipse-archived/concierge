@@ -51,6 +51,39 @@ public class SplitStringTest {
 				"test; filter:=\"(&(version>=10.1)(strings~=aaa)(strings~=bbb)(strings=ccc))\"");
 	}
 
+	@Test
+	public void testCorrectness2() {
+		final String s = "one,two,three,four,five";
+		final String[] res = Utils.splitString2(s, ',');
+
+		assertEquals(res.length, 5);
+
+		assertEquals(res[0], "one");
+		assertEquals(res[1],
+				"two");
+		assertEquals(res[2], "three");
+		assertEquals(res[3], "four");
+		assertEquals(res[4],
+				"five");
+	}
+	
+	@Test
+	public void testCorrectness3() {
+		final String s = "   one      , two         ,        three,   four ,     five   ";
+		final String[] res = Utils.splitString2(s, ',');
+
+		assertEquals(res.length, 5);
+
+		assertEquals(res[0], "one");
+		assertEquals(res[1],
+				"two");
+		assertEquals(res[2], "three");
+		assertEquals(res[3], "four");
+		assertEquals(res[4],
+				"five");
+	}
+
+	
 	// simple test against String.split which does not support quotes and
 	// escaping
 	@Test
@@ -60,7 +93,7 @@ public class SplitStringTest {
 
 		long time = System.nanoTime();
 		String[] foo = null;
-		for (int i = 0; i < 1000; i++) {
+		for (int i = 0; i < 100000; i++) {
 			foo = longTest.split(",");
 			compare = foo.length;
 		}
@@ -69,7 +102,7 @@ public class SplitStringTest {
 		System.out.println("String.split: " + time1);
 
 		time = System.nanoTime();
-		for (int i = 0; i < 1000; i++) {
+		for (int i = 0; i < 100000; i++) {
 			foo = Utils.splitString2(longTest, ',');
 			compare2 = foo.length;
 		}
@@ -126,7 +159,7 @@ public class SplitStringTest {
 		int compare=-1;
 		int compare2=0;
 
-		for (int i = 0; i < 1000; i++) {
+		for (int i = 0; i < 500; i++) {
 			foo = SPLIT_AT_COMMA_PLUS.split(longTest);
 			compare = foo.length;
 		}
@@ -136,7 +169,7 @@ public class SplitStringTest {
 
 		compare2 = 0;
 		time = System.nanoTime();
-		for (int i = 0; i < 1000; i++) {
+		for (int i = 0; i < 500; i++) {
 			foo = Utils.splitAtComma(longTest);
 			compare2 = foo.length;
 		}

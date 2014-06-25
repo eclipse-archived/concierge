@@ -61,18 +61,33 @@ public final class Utils {
 		int openingQuote = -1;
 		int pointer = 0;
 		int curr = 0;
-		char last = '\0';
 		int matches = 0;
 		
 		// skip trailing whitespaces
-		while (Character.isWhitespace(chars[pointer])) {
+		while (Character.isWhitespace(chars[curr])) {
 			curr++;
-			pointer++;
 		}
 		
+		pointer = curr;
+
 		do  {
-			if (chars[curr] == delimiter && last != '\\' && openingQuote < 0) {
+			if (chars[curr] == '\\') {
+				curr+=2; 
+				continue;
+			} else if (chars[curr] == '"') {				
+				if (openingQuote < 0) {
+					openingQuote = curr;
+				} else {
+					openingQuote = -1;
+				}
+				
+				curr++;
+				continue;				
+			} else if (chars[curr] == delimiter && openingQuote < 0) {
 				matches++;
+				if (matches > limit) {
+					break;
+				}
 				
 				// scan back to skip whitepspaces
 				int endPointer = curr-1;
@@ -82,33 +97,33 @@ public final class Utils {
 				
 				// copy from pointer to current - 1
 				tokens.add(new String(chars, pointer, endPointer - pointer + 1));
-				pointer = curr+1;
+
+				curr++;
 				
 				// scan forward to skip whitespaces
-				while (curr < len && Character.isWhitespace(chars[pointer])) {
+				while (curr < len && Character.isWhitespace(chars[curr])) {
 					curr++;
-					pointer++;
-				}				
+				}			
+				
+				pointer = curr;				
+				continue;
 			}
 			
-			if (chars[curr] == '"' && last != '\\') {				
-				if (openingQuote < 0) {
-					openingQuote = curr;
-				} else {
-					openingQuote = -1;
-				}
-			}
-
-			last = chars[curr];
 			curr++;
-		} while (matches < limit && curr < len);
+		} while (curr < len);
 		
 		if (openingQuote > -1) {
 			throw new IllegalArgumentException(
 					"Unmatched quotation mark at position " + openingQuote);			
 		}
 		
-		tokens.add(new String(chars, pointer, len-pointer));
+		// scan back to skip whitepspaces
+		int endPointer = len-1;
+		while (endPointer > 0 && Character.isWhitespace(chars[endPointer])) {
+			endPointer--;
+		}
+
+		tokens.add(new String(chars, pointer, endPointer - pointer + 1));
 		
 		return tokens.toArray(new String[tokens.size()]);
 	}
