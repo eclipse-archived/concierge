@@ -371,6 +371,7 @@ final class RFC1960Filter implements Filter {
 					System.err.println("NOT MATCHING " + operandArray[i] + " against " + values);
 					return false;
 				}
+				System.err.println("MATCHING "  + operandArray[i] + " against " + values);
 			}
 			return true;
 		} else if (operator == OR_OPERATOR) {
@@ -695,8 +696,7 @@ final class RFC1960Filter implements Filter {
 				} else if (attr instanceof Collection) {
 					final Collection<?> col = (Collection<?>) attr;
 					final Object[] obj = col.toArray();
-					// FIXME: there is possibly a better and more consistent way of doing that
-					return compareArray(value.trim(), comparator, obj);
+					return compareArray(value, comparator, obj);
 				} else if (attr instanceof Object[]) {
 					return compareArray(value, comparator, (Object[]) attr);
 				} else if (attr.getClass().isArray()) {
@@ -1004,7 +1004,7 @@ final class RFC1960Filter implements Filter {
 			for (int i = 0; i < array.length; i++) {
 				final Object obj = array[i];
 				if (obj instanceof String) {
-					if (compareString(value, comparator, (String) obj)) {
+					if (compareString(value.trim(), comparator, ((String) obj).trim())) {
 						return true;
 					}
 				} else if (obj instanceof Number) {

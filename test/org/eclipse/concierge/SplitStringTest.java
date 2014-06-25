@@ -26,11 +26,19 @@ public class SplitStringTest {
 	public void testPerformance() {
 		int compare = 0;
 
+		// simple test
 		long time = System.nanoTime();
+		final String purged = longTest.replace("\\\"", "@");
+		String[] foo = null;
 		for (int i = 0; i < 1000; i++) {
-			String[] foo = SPLIT_AT_COMMA.split(longTest);
+			foo = purged.split(",");
 			compare = foo.length;
 		}
+
+		for (int i=0; i<foo.length; i++) {
+			foo[i] = foo[i].replace("@", "\\\"");
+		}
+		
 		long time1 = System.nanoTime() - time;
 
 		System.out.println("String.split: " + time1);
@@ -38,7 +46,7 @@ public class SplitStringTest {
 		int compare2 = 0;
 		time = System.nanoTime();
 		for (int i = 0; i < 1000; i++) {
-			String[] foo = Utils.splitAtComma(longTest);
+			foo = Utils.splitString2(longTest, ',');
 			compare2 = foo.length;
 		}
 		long time2 = System.nanoTime() - time;
@@ -50,6 +58,36 @@ public class SplitStringTest {
 		assertTrue(time2 < time1);
 		
 		System.out.println("difference: " + (time2-time1));
+		
+		
+		
+		// test with quote support
+		time = System.nanoTime();
+		for (int i = 0; i < 1000; i++) {
+			foo = SPLIT_AT_COMMA.split(longTest);
+			compare = foo.length;
+		}
+		time1 = System.nanoTime() - time;
+
+		System.out.println("Pattern split: " + time1);
+
+		compare2 = 0;
+		time = System.nanoTime();
+		for (int i = 0; i < 1000; i++) {
+			foo = Utils.splitAtComma(longTest);
+			compare2 = foo.length;
+		}
+		time2 = System.nanoTime() - time;
+
+		assertEquals(compare, compare2);
+
+		System.out.println("Utils.splitString: " + time2);
+
+		assertTrue(time2 < time1);
+		
+		System.out.println("difference: " + (time2-time1));
+		
+		
 	}
 	
 }

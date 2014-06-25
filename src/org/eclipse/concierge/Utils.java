@@ -39,9 +39,8 @@ import org.osgi.resource.Capability;
 
 public final class Utils {
 
-	static final Pattern SPLIT_AT_SEMICOLON_PLUS = Pattern
+	private static final Pattern SPLIT_AT_SEMICOLON_PLUS = Pattern
 			.compile("(?<!\\\\);(?=(([^\"\\\\]|\\\\.)*\"([^\"\\\\]|\\\\.)*\")*([^\"\\\\]|\\\\.)*$)");
-	private static final Pattern SPLIT_AT_EQUALS = Pattern.compile("=");
 	private static final Pattern LIST_TYPE_PATTERN = Pattern
 			.compile("List\\s*<\\s*([^\\s]*)\\s*>");
 
@@ -49,15 +48,95 @@ public final class Utils {
 	private static final String SPECIFICATION_VERSION = Constants.PACKAGE_SPECIFICATION_VERSION;
 
 	public static void main(String... args) {
-		final String s = "test; filter:=\"(&(test=aName)(version>=1.1.0))\", test; filter:=\"(&(version>=1.1)(string~=astring))\", test; filter:=\"(&(version>=1.1)(long>=99))\", test; filter:=\"(&(version>=1.1)(double>=1.0))\", test; filter:=\"(&(version>=1.1)(version.list=1.0)(version.list=1.1)(version.list=1.2))\", test; filter:=\"(&(version>=1.1)(long.list=1)(long.list=2)(long.list=3)(long.list=4))\", test; filter:=\"(&(version>=1.1)(double.list=1.001)(double.list=1.002)(double.list=1.003)(double.list<=1.3))\", test; filter:=\"(&(version>=1.1)(string.list~=astring)(string.list~=bstring)(string.list=cString))\"";
-		// final String s =
-		// "foo, test; filter:=\"(&(version>=1.1)(string.list2=a\\\"quote)(string.list2=a\\,comma)(string.list2= aSpace )(string.list2=\\\"start)(string.list2=\\,start)(string.list2=end\\\")(string.list2=end\\,))\"";
+		//final String s = "test; filter:=\"(&(test=aName)(version>=1.1.0))\", test; filter:=\"(&(version>=1.1)(string~=astring))\", test; filter:=\"(&(version>=1.1)(long>=99))\", test; filter:=\"(&(version>=1.1)(double>=1.0))\", test; filter:=\"(&(version>=1.1)(version.list=1.0)(version.list=1.1)(version.list=1.2))\", test; filter:=\"(&(version>=1.1)(long.list=1)(long.list=2)(long.list=3)(long.list=4))\", test; filter:=\"(&(version>=1.1)(double.list=1.001)(double.list=1.002)(double.list=1.003)(double.list<=1.3))\", test; filter:=\"(&(version>=1.1)(string.list~=astring)(string.list~=bstring)(string.list=cString))\"";
+		//final String s = "foo, test; filter:=\"(&(version>=1.1)(string.list2=a\\\"quote)(string.list2=a\\,comma)(string.list2= aSpace )(string.list2=\\\"start)(string.list2=\\,start)(string.list2=end\\\")(string.list2=end\\,))\"";
+		
+		final String s = " foo , test; filter:=\"(&(version>=1.1)(string.list2=a\\\"quote)(string.list2=a\\,comma)(string.list2= aSpace )(string.list2=\\\"start)(string.list2=\\,start)(string.list2=end\\\")(string.list2=end\\,))\" , bar ";
+		
 		// final String s = "foo, test=\\\"2";
 		// final String[] res = SPLIT_AT_COMMA_PLUS.split(s);
-		final String[] res = splitAtCommaPlus(s);
+		final String[] res = splitString2(s, ',');
 		for (int i = 0; i < res.length; i++) {
 			System.out.println(res[i]);
 		}
+	}
+	
+	static String[] splitString2(String values, final char delimiter) {
+		return splitString2(values, delimiter, Integer.MAX_VALUE);
+	}
+	
+	static String[] splitString2(String values, final char delimiter, final int limit) {
+		if (values == null) {
+			return EMPTY_STRING_ARRAY;
+		}
+		
+		final List<String> tokens = new ArrayList<String>(values.length() / 10);
+		
+		final char[] chars = values.toCharArray();
+		
+		final int len = chars.length;
+		int openingQuote = -1;
+		int pointer = 0;
+		int curr = 0;
+		char last = '\0';
+		int matches = 0;
+		
+		// skip trailing whitespaces
+		while (Character.isWhitespace(chars[pointer])) {
+			curr++;
+			pointer++;
+		}
+		
+		do  {
+			System.out.println(chars[curr]);
+			
+			if (chars[curr] == delimiter && last != '\\' && openingQuote < 0) {
+				
+				System.out.println("DELIMITER " + curr);
+				
+				matches++;
+				
+				// scan back to skip whitepspaces
+				int endPointer = curr-1;
+				while (endPointer > 0 && Character.isWhitespace(chars[endPointer])) {
+					endPointer--;
+				}
+				
+				System.out.println("END POINTER " + endPointer);
+				
+				// copy from pointer to current - 1
+				tokens.add(new String(chars, pointer, endPointer - pointer + 1));
+				pointer = curr+1;
+				
+				// scan forward to skip whitespaces
+				while (curr < len && Character.isWhitespace(chars[pointer])) {
+					curr++;
+					pointer++;
+				}				
+			}
+			
+			if (chars[curr] == '"' && last != '\\') {				
+				if (openingQuote < 0) {
+					openingQuote = curr;
+					System.out.println("OPEN QUOTE " + openingQuote);
+				} else {
+					openingQuote = -1;
+					System.out.println("CLOSING QUOTE " + openingQuote);
+				}
+			}
+
+			last = chars[curr];
+			curr++;
+		} while (matches < limit && curr < len);
+		
+		if (openingQuote > -1) {
+			throw new IllegalArgumentException(
+					"Unmatched quotation mark at position " + openingQuote);			
+		}
+		
+		tokens.add(new String(chars, pointer, len-pointer));
+		
+		return tokens.toArray(new String[tokens.size()]);
 	}
 
 	public static final Comparator<? super Capability> EXPORT_ORDER = new Comparator<Capability>() {
@@ -113,14 +192,17 @@ public final class Utils {
 	public static Tuple.ParseResult parseLiterals(final String[] literals,
 			final int start) throws BundleException {
 
-		System.err.println("LITERALS ARE " + Arrays.asList(literals));
+		System.err.println("LITERALS ARE");
+		for (int i=0; i<literals.length; i++) {
+			System.err.println("\t'" + literals[i] + "'");
+		}
 
 		final HashMap<String, String> directives = new HashMap<String, String>();
 		final HashMap<String, Object> attributes = new HashMap<String, Object>();
 
 		for (int i = start; i < literals.length; i++) {
 
-			final String[] parts = SPLIT_AT_EQUALS.split(literals[i], 2);
+			final String[] parts = splitString2(literals[i], '=', 1);
 			final String name = parts[0].trim();
 			final int e = name.length() - 1;
 			if (name.charAt(e) == ':') {
@@ -144,7 +226,7 @@ public final class Utils {
 					throw new BundleException("Duplicate attribute " + name);
 				}
 
-				final String[] nameParts = splitString(name, ":");
+				final String[] nameParts = splitString2(name, ':');
 				if (nameParts.length > 1) {
 					if (nameParts.length != 2) {
 						throw new BundleException("Illegal attribute name "
@@ -203,15 +285,21 @@ public final class Utils {
 
 	static String[] splitAtCommaPlus(final String str) {
 		//return Utils.SPLIT_AT_COMMA_PLUS.split(str);
-		return splitString(str, ",");
+		//return splitString(str, ",");
+		return splitString2(str, ',');
 	}
 
 	public static String[] splitAtComma(final String str) {
-		return splitString(str, ",");
+		return splitString2(str, ',');
 	}
 	
 	public static String[] splitAtSemicolon(final String str) {
-		return splitString(str, ";");
+		return splitString2(str, ';');
+	}
+	
+	public static String[] splitAtSemicolonPlus(final String str) {
+		return SPLIT_AT_SEMICOLON_PLUS.split(str);
+		//return splitString2(str, ';');
 	}
 	
 	private static short getType(final String type) {
@@ -283,6 +371,10 @@ public final class Utils {
 		return start == 0 && end == len ? quoted : quoted1
 				.substring(start, end);
 	}
+	
+	private static String[] EMPTY_STRING_ARRAY = new String[0];
+	
+	
 
 	static String[] splitString(String values, final String delimiter)
 			throws IllegalArgumentException {
@@ -290,7 +382,7 @@ public final class Utils {
 			return new String[0];
 		}
 
-		values = values.replaceAll("\\\\\"", "`");
+		//values = values.replaceAll("\\\\\"", "`");
 		// values = values.replaceAll("\\\\,", "@");
 
 		final List<String> tokens = new ArrayList<String>(values.length() / 10);
@@ -303,6 +395,7 @@ public final class Utils {
 				pointer = ++nextDelimiter;
 				continue;
 			}
+			
 			final int openingQuote = values.indexOf("\"", quotePointer);
 			int closingQuote = values.indexOf("\"", openingQuote + 1);
 
@@ -328,69 +421,6 @@ public final class Utils {
 		}
 		tokens.add(values.substring(tokenStart).trim());
 		return tokens.toArray(new String[tokens.size()]);
-	}
-
-	/**
-	 * check, if the version is in the range of the version range specified by
-	 * str
-	 * 
-	 * @param version
-	 *            the Version to compare against the range
-	 * @param str
-	 *            String, that describes the version range
-	 * @return true, if version in range
-	 */
-	static boolean isVersionInRange(final Version version, String str) {
-		// parse range
-		if (str == null || str.length() < 1) {
-			return version.compareTo(Version.emptyVersion) > -1;
-		}
-
-		// remove "
-		if (str.startsWith("\"")) {
-			str = str.substring(1, str.length());
-		}
-		if (str.endsWith("\"")) {
-			str = str.substring(0, str.length() - 1);
-		}
-
-		final String[] bounds = splitString(str, ",");
-		if (bounds.length <= 1) {
-			// range is lower bound to infinity
-			final Version v2 = new Version(str);
-			if (version.compareTo(v2) < 0) {
-				return false;
-			}
-		} else {
-			// range has lower and upper bound
-			final Version lower = new Version(bounds[0].substring(1).trim());
-			final Version upper = new Version(bounds[1].substring(0,
-					bounds[1].length() - 1).trim());
-			// check lower bound
-			if (bounds[0].startsWith("[")) {
-				if (version.compareTo(lower) < 0) {
-					return false;
-				}
-			} else {
-				// assume "("
-				if (version.compareTo(lower) <= 0) {
-					return false;
-				}
-			}
-			// check upper bound
-			if (bounds[1].endsWith("]")) {
-				if (version.compareTo(upper) > 0) {
-					return false;
-				}
-			} else {
-				// assume ")"
-				if (version.compareTo(upper) >= 0) {
-					return false;
-				}
-			}
-
-		}
-		return true;
 	}
 
 	public static class MultiMap<K, V> implements Map<K, List<V>> {

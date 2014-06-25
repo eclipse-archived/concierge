@@ -2949,7 +2949,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 						try {
 							final String host = u.getHost();
 							// FIXME: unsafe!
-							final String[] s = Utils.splitString(host, ".");
+							final String[] s = Utils.splitString2(host, '.');
 
 							final Long bundleId = Long.parseLong(s[0]);
 							final int rev = Integer.parseInt(s[1]);
