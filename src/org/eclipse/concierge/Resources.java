@@ -22,7 +22,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.concierge.BundleImpl.Revision;
-import org.eclipse.concierge.Utils.MultiMap;
+import org.eclipse.concierge.ConciergeCollections.MultiMap;
+import org.eclipse.concierge.ConciergeCollections.ParseResult;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.namespace.BundleNamespace;
@@ -66,7 +67,7 @@ public class Resources {
 
 			this.namespace = literals[0].trim();
 
-			final Tuple.ParseResult parseResult = Utils.parseLiterals(literals,
+			final ParseResult parseResult = Utils.parseLiterals(literals,
 					1);
 
 			this.directives = parseResult.getDirectives() == null ? Collections

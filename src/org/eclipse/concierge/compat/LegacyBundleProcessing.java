@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.jar.Manifest;
 
 import org.eclipse.concierge.Concierge;
-import org.eclipse.concierge.Tuple;
+import org.eclipse.concierge.ConciergeCollections.Tuple;
 import org.eclipse.concierge.BundleImpl.Revision;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.wiring.BundleCapability;

@@ -58,11 +58,13 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import org.eclipse.concierge.ConciergeCollections.MultiMap;
+import org.eclipse.concierge.ConciergeCollections.ParseResult;
+import org.eclipse.concierge.ConciergeCollections.Tuple;
 import org.eclipse.concierge.Resources.BundleCapabilityImpl;
 import org.eclipse.concierge.Resources.BundleRequirementImpl;
 import org.eclipse.concierge.Resources.ConciergeBundleWire;
 import org.eclipse.concierge.Resources.ConciergeBundleWiring;
-import org.eclipse.concierge.Utils.MultiMap;
 import org.eclipse.concierge.compat.service.BundleManifestOne;
 import org.eclipse.concierge.compat.service.BundleManifestTwo;
 import org.osgi.framework.Bundle;
@@ -265,7 +267,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			final File file = new File(storageLocation, BUNDLE_FILE_NAME
 					+ revisionNumber);
 
-			Utils.storeFile(file, inStream);
+			storeFile(file, inStream);
 
 			// and open a JarFile
 			// TODO: check when verification is really required...
@@ -292,7 +294,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					}
 					final File embeddedJar = new File(contentDir,
 							entry.getName());
-					Utils.storeFile(embeddedJar, jar.getInputStream(entry));
+					storeFile(embeddedJar, jar.getInputStream(entry));
 				}
 				// delete the bundle jar
 				jar.close();
@@ -1308,7 +1310,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			final String property, final String[] defaultValue)
 			throws BundleException {
 		final String propString = readProperty(attrs, property);
-		return propString == null ? defaultValue : Utils.splitString(propString, ',');
+		return propString == null ? defaultValue : Utils.splitString(
+				propString, ',');
 	}
 
 	protected static String readProperty(final Attributes attrs,
@@ -1505,7 +1508,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			final String activationPolicy = readProperty(attrs,
 					Constants.BUNDLE_ACTIVATIONPOLICY);
 			if (activationPolicy != null) {
-				final String[] literals = Utils.splitString(activationPolicy, ';');
+				final String[] literals = Utils.splitString(activationPolicy,
+						';');
 				if (Constants.ACTIVATION_LAZY.equals(literals[0])) {
 					lazyActivation = true;
 				}
@@ -1898,7 +1902,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 								}
 								no_n = false;
 							} else if (criterium == Constants.BUNDLE_NATIVECODE_OSVERSION) {
-								v |= new VersionRange(Utils.unQuote(value)).includes(framework.osversion);
+								v |= new VersionRange(Utils.unQuote(value))
+										.includes(framework.osversion);
 								no_v = false;
 							} else if (criterium == Constants.BUNDLE_NATIVECODE_LANGUAGE) {
 								l |= new Locale(value, "").getLanguage()
@@ -2200,11 +2205,10 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			}
 
 			/**
-			System.err.println("~~~~~~~~~~~~~~~~~~~~~~~~~ATTACHED FRAGMENT "
-					+ fragment.getSymbolicName() + "~~~~~TO~~~~~"
-					+ getSymbolicName() + "(revision=" + this
-					+ " FRAGMENTS IS NOW " + fragments);
-			*/
+			 * System.err.println("~~~~~~~~~~~~~~~~~~~~~~~~~ATTACHED FRAGMENT "
+			 * + fragment.getSymbolicName() + "~~~~~TO~~~~~" + getSymbolicName()
+			 * + "(revision=" + this + " FRAGMENTS IS NOW " + fragments);
+			 */
 
 			return true;
 		}
@@ -2409,8 +2413,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			 */
 			protected Enumeration<URL> findResources(final String name) {
 				final Enumeration<URL> result = findResources0(name);
-				return result == null ? Collections.enumeration(Collections.<URL>emptyList())
-						: result;
+				return result == null ? Collections.enumeration(Collections
+						.<URL> emptyList()) : result;
 			}
 
 			protected Enumeration<URL> findResources0(final String name) {
@@ -2727,7 +2731,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					// if (!libfile.exists()) {
 					final URL url = (URL) findOwnResources(lib, true, false,
 							null);
-					Utils.storeFile(libfile, url.openStream());
+					storeFile(libfile, url.openStream());
 
 					framework.execPermission(libfile);
 
@@ -2758,7 +2762,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					return clazz;
 				}
 				try {
-					final String filename = Utils.classToFile(classname);
+					final String filename = classToFile(classname);
 					for (int i = 0; i < classpath.length; i++) {
 						final InputStream input = retrieveFile(classpath[i],
 								filename);
@@ -3039,13 +3043,14 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					private void checkDynamicImport(final String dynImport)
 							throws IllegalArgumentException {
 						try {
-							final String[] literals = Utils.splitString(dynImport, ';');
+							final String[] literals = Utils.splitString(
+									dynImport, ';');
 
 							if (literals[0].contains(";")) {
 								throw new IllegalArgumentException(dynImport);
 							}
 
-							final Tuple.ParseResult parseResult = Utils
+							final ParseResult parseResult = Utils
 									.parseLiterals(literals, 1);
 							final HashMap<String, String> dirs = parseResult
 									.getDirectives();
@@ -3536,6 +3541,43 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 	protected static String stripTrailing(final String filename) {
 		return filename.startsWith("/") || filename.startsWith("\\") ? filename
 				.substring(1) : filename;
+	}
+
+	/**
+	 * get a file from a class name.
+	 * 
+	 * @param fqc
+	 *            the fully qualified class name.
+	 * @return the file name.
+	 */
+	protected static String classToFile(final String fqc) {
+		return fqc.replace('.', '/') + ".class";
+	}
+	
+	/**
+	 * store a file on the storage.
+	 * 
+	 * @param file
+	 *            the file.
+	 * @param input
+	 *            the input stream.
+	 */
+	static void storeFile(final File file, final InputStream input) {
+		try {
+			file.getParentFile().mkdirs();
+			final FileOutputStream fos = new FileOutputStream(file);
+
+			final byte[] buffer = new byte[Concierge.CLASSLOADER_BUFFER_SIZE];
+			int read;
+			while ((read = input.read(buffer, 0,
+					Concierge.CLASSLOADER_BUFFER_SIZE)) > -1) {
+				fos.write(buffer, 0, read);
+			}
+			input.close();
+			fos.close();
+		} catch (final IOException ioe) {
+			ioe.printStackTrace();
+		}
 	}
 
 	// FIXME: for debugging only

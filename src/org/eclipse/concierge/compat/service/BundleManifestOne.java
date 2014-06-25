@@ -19,9 +19,10 @@ import java.util.jar.Manifest;
 
 import org.eclipse.concierge.BundleImpl.Revision;
 import org.eclipse.concierge.Concierge;
+import org.eclipse.concierge.ConciergeCollections.ParseResult;
+import org.eclipse.concierge.ConciergeCollections.Tuple;
 import org.eclipse.concierge.Resources.BundleCapabilityImpl;
 import org.eclipse.concierge.Resources.BundleRequirementImpl;
-import org.eclipse.concierge.Tuple;
 import org.eclipse.concierge.Utils;
 import org.eclipse.concierge.compat.LegacyBundleProcessing;
 import org.osgi.framework.BundleException;
@@ -54,7 +55,7 @@ public class BundleManifestOne implements LegacyBundleProcessing {
 					final String[] literals = imports[i]
 							.split(SPLIT_AT_SEMICOLON);
 
-					final Tuple.ParseResult parseResult = Utils.parseLiterals(
+					final ParseResult parseResult = Utils.parseLiterals(
 							literals, 1);
 					final HashMap<String, String> dirs = parseResult
 							.getDirectives();
@@ -91,7 +92,7 @@ public class BundleManifestOne implements LegacyBundleProcessing {
 					final String[] literals = dynImports[i]
 							.split(SPLIT_AT_SEMICOLON);
 
-					final Tuple.ParseResult parseResult = Utils.parseLiterals(
+					final ParseResult parseResult = Utils.parseLiterals(
 							literals, 1);
 					final HashMap<String, String> dirs = parseResult
 							.getDirectives();
@@ -126,7 +127,7 @@ public class BundleManifestOne implements LegacyBundleProcessing {
 					final String[] literals = exports[i]
 							.split(SPLIT_AT_SEMICOLON);
 
-					final Tuple.ParseResult parseResult = Utils.parseLiterals(
+					final ParseResult parseResult = Utils.parseLiterals(
 							literals, 1);
 					final HashMap<String, Object> attrs = parseResult
 							.getAttributes();

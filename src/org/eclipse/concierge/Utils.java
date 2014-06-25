@@ -10,31 +10,19 @@
  *******************************************************************************/
 package org.eclipse.concierge;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.AbstractSet;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.eclipse.concierge.ConciergeCollections.ParseResult;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
 import org.osgi.framework.Version;
 import org.osgi.framework.VersionRange;
 import org.osgi.framework.namespace.PackageNamespace;
-import org.osgi.framework.wiring.BundleCapability;
-import org.osgi.resource.Capability;
 
 public final class Utils {
 
@@ -132,7 +120,7 @@ public final class Utils {
 		return tokens.toArray(new String[tokens.size()]);
 	}
 
-	public static Tuple.ParseResult parseLiterals(final String[] literals,
+	public static ParseResult parseLiterals(final String[] literals,
 			final int start) throws BundleException {
 		final HashMap<String, String> directives = new HashMap<String, String>();
 		final HashMap<String, Object> attributes = new HashMap<String, Object>();
@@ -181,7 +169,7 @@ public final class Utils {
 				}
 			}
 		}
-		return new Tuple.ParseResult(directives, attributes);
+		return new ParseResult(directives, attributes);
 	}
 
 	private static final short STRING_TYPE = 0;
@@ -243,32 +231,7 @@ public final class Utils {
 		throw new IllegalStateException("invalid type " + type);
 	}
 
-	/**
-	 * store a file on the storage.
-	 * 
-	 * @param file
-	 *            the file.
-	 * @param input
-	 *            the input stream.
-	 */
-	static void storeFile(final File file, final InputStream input) {
-		try {
-			file.getParentFile().mkdirs();
-			final FileOutputStream fos = new FileOutputStream(file);
-
-			final byte[] buffer = new byte[Concierge.CLASSLOADER_BUFFER_SIZE];
-			int read;
-			while ((read = input.read(buffer, 0,
-					Concierge.CLASSLOADER_BUFFER_SIZE)) > -1) {
-				fos.write(buffer, 0, read);
-			}
-			input.close();
-			fos.close();
-		} catch (final IOException ioe) {
-			ioe.printStackTrace();
-		}
-	}
-
+	// TODO: fold into splitString?
 	public static String unQuote(final String quoted) {
 		final String quoted1 = quoted.trim();
 		final int len = quoted1.length();
@@ -277,314 +240,6 @@ public final class Utils {
 				: len;
 		return start == 0 && end == len ? quoted : quoted1
 				.substring(start, end);
-	}
-
-	public static final Comparator<? super Capability> EXPORT_ORDER = new Comparator<Capability>() {
-
-		// reverts the order so that we can
-		// retrieve the 0st item to get the best
-		// match
-		public int compare(final Capability c1, final Capability c2) {
-			if (!(c1 instanceof BundleCapability && c2 instanceof BundleCapability)) {
-				return 0;
-			}
-
-			final BundleCapability cap1 = (BundleCapability) c1;
-			final BundleCapability cap2 = (BundleCapability) c2;
-
-			final int cap1Resolved = cap1.getResource().getWiring() == null ? 0
-					: 1;
-			final int cap2Resolved = cap2.getResource().getWiring() == null ? 0
-					: 1;
-			int score = cap1Resolved - cap2Resolved;
-			if (score != 0) {
-				return score;
-			}
-
-			Version cap1Version = (Version) cap1.getAttributes().get(
-					PackageNamespace.CAPABILITY_VERSION_ATTRIBUTE);
-			Version cap2Version = (Version) cap2.getAttributes().get(
-					PackageNamespace.CAPABILITY_VERSION_ATTRIBUTE);
-
-			if (cap1Version == null) {
-				cap1Version = Version.emptyVersion;
-			}
-			if (cap2Version == null) {
-				cap2Version = Version.emptyVersion;
-			}
-
-			score = cap2Version.compareTo(cap1Version);
-
-			if (score != 0) {
-				return score;
-			}
-
-			final long cap1BundleId = cap1.getRevision().getBundle()
-					.getBundleId();
-			final long cap2BundleId = cap2.getRevision().getBundle()
-					.getBundleId();
-
-			return (int) (cap1BundleId - cap2BundleId);
-		}
-
-	};
-
-	public static class MultiMap<K, V> implements Map<K, List<V>> {
-
-		protected final HashMap<K, List<V>> map;
-
-		protected final LinkedHashSet<V> allValues = new LinkedHashSet<V>();
-
-		private final Comparator<V> comp;
-
-		public MultiMap() {
-			this.map = new HashMap<K, List<V>>();
-			this.comp = null;
-		}
-
-		public MultiMap(final int initialSize) {
-			this.map = new HashMap<K, List<V>>(initialSize);
-			this.comp = null;
-		}
-
-		public MultiMap(final MultiMap<K, ? extends V> existing) {
-			this();
-			insertMap(existing);
-		}
-
-		public MultiMap(final Comparator<V> comp) {
-			map = new HashMap<K, List<V>>();
-			this.comp = comp;
-		}
-
-		HashMap<K, List<V>> getFlatMap() {
-			return map;
-		}
-
-		public void insert(final K key, final V value) {
-			List<V> list = map.get(key);
-			if (list == null) {
-				list = new ArrayList<V>();
-				map.put(key, list);
-			}
-			list.add(value);
-			if (comp != null) {
-				Collections.sort(list, comp);
-			}
-			allValues.add(value);
-		}
-
-		public void insertEmpty(final K key) {
-			List<V> list = map.get(key);
-			if (list == null) {
-				list = new ArrayList<V>();
-				map.put(key, list);
-			}
-		}
-
-		public void insertUnique(final K key, final V value) {
-			List<V> list = map.get(key);
-			if (list == null) {
-				list = new ArrayList<V>();
-				map.put(key, list);
-			}
-			if (!list.contains(value)) {
-				list.add(value);
-				if (comp != null) {
-					Collections.sort(list, comp);
-				}
-				allValues.add(value);
-			}
-		}
-
-		public void insertAll(final K key, final Collection<? extends V> values) {
-			List<V> list = map.get(key);
-			if (list == null) {
-				list = new ArrayList<V>();
-				map.put(key, list);
-			}
-			list.addAll(values);
-			if (comp != null) {
-				Collections.sort(list, comp);
-			}
-			allValues.addAll(values);
-		}
-
-		public void insertMap(final MultiMap<K, ? extends V> existing) {
-			for (final K key : existing.keySet()) {
-				final List<? extends V> vals = existing.get(key);
-				insertAll(key, vals);
-			}
-		}
-
-		public List<V> get(final Object key) {
-			return map.get(key);
-		}
-
-		public int indexOf(final K key, final V value) {
-			final List<V> list = get(key);
-			return list == null ? -1 : list.indexOf(value);
-		}
-
-		public boolean remove(final K key, final V value) {
-			final List<V> list = get(key);
-			if (list != null) {
-				final boolean result = list.remove(value);
-				if (result) {
-					redoAllValues();
-				}
-				return result;
-			}
-			return false;
-		}
-
-		public List<V> remove(final Object key) {
-			final List<V> values = map.remove(key);
-			if (values == null) {
-				return null;
-			}
-
-			redoAllValues();
-			return values;
-		}
-
-		public List<V> lookup(final K key) {
-			final List<V> result = get(key);
-			return result == null ? Collections.<V> emptyList() : result;
-		}
-
-		protected void redoAllValues() {
-			allValues.clear();
-			for (final List<V> valueList : values()) {
-				allValues.addAll(valueList);
-			}
-		}
-
-		public List<V> getAllValues() {
-			return new ArrayList<V>(allValues);
-		}
-
-		public void removeAll(final K[] keys, final V value) {
-			for (int i = 0; i < keys.length; i++) {
-				final List<V> list = get(keys[i]);
-				if (list != null) {
-					list.remove(value);
-				}
-			}
-
-			redoAllValues();
-		}
-
-		public Set<K> keySet() {
-			return new KeySet();
-		}
-
-		public String toString() {
-			return "MultiMap " + map.toString();
-		}
-
-		private final class KeySet extends AbstractSet<K> {
-
-			private final Set<K> keySet;
-
-			protected KeySet() {
-				keySet = map.keySet();
-			}
-
-			public Iterator<K> iterator() {
-				final Iterator<K> inner = keySet.iterator();
-				return new Iterator<K>() {
-
-					private K element;
-
-					public boolean hasNext() {
-						return inner.hasNext();
-					}
-
-					public K next() {
-						element = inner.next();
-						return element;
-					}
-
-					public void remove() {
-						MultiMap.this.remove(element);
-					}
-
-				};
-			}
-
-			public int size() {
-				return map.size();
-			}
-
-			public boolean contains(final Object key) {
-				return containsKey(key);
-			}
-
-			public boolean remove(final Object key) {
-				final boolean result = MultiMap.this.remove(key) != null;
-
-				if (result) {
-					redoAllValues();
-				}
-
-				return result;
-			}
-
-			public void clear() {
-				MultiMap.this.clear();
-				allValues.clear();
-			}
-		}
-
-		public int size() {
-			return map.size();
-		}
-
-		public boolean isEmpty() {
-			return map.isEmpty();
-		}
-
-		public boolean containsKey(final Object key) {
-			return map.containsKey(key);
-		}
-
-		public boolean containsValue(final Object value) {
-			return allValues.contains(value);
-		}
-
-		public List<V> put(final K key, final List<V> value) {
-			throw new UnsupportedOperationException("put");
-		}
-
-		public void putAll(final Map<? extends K, ? extends List<V>> m) {
-			throw new UnsupportedOperationException("putAll");
-		}
-
-		public void clear() {
-			map.clear();
-			allValues.clear();
-		}
-
-		public Collection<List<V>> values() {
-			return map.values();
-		}
-
-		public Set<java.util.Map.Entry<K, List<V>>> entrySet() {
-			return map.entrySet();
-		}
-
-	}
-
-	/**
-	 * get a file from a class name.
-	 * 
-	 * @param fqc
-	 *            the fully qualified class name.
-	 * @return the file name.
-	 */
-	static String classToFile(final String fqc) {
-		return fqc.replace('.', '/') + ".class";
 	}
 
 	public static String createFilter(final String namespace, final String req,
@@ -668,107 +323,6 @@ public final class Utils {
 		buffer.append(")");
 
 		return buffer.toString();
-	}
-
-	static class RemoveOnlyMap<K, V> extends HashMap<K, V> {
-
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = -3743325895136799794L;
-
-		private boolean sealed;
-
-		@Override
-		public V put(final K key, final V value) {
-			if (sealed) {
-				throw new UnsupportedOperationException("put");
-			}
-			return super.put(key, value);
-		}
-
-		public void putAll(final Map<? extends K, ? extends V> m) {
-			throw new UnsupportedOperationException("putAll");
-		}
-
-		void seal() {
-			sealed = true;
-		}
-
-	}
-
-	static class RemoveOnlyList<E> extends ArrayList<E> {
-
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = -2126964539821583131L;
-
-		public RemoveOnlyList(final Collection<? extends E> result) {
-			super(result);
-		}
-
-		public boolean add(final Object o) {
-			throw new UnsupportedOperationException("add");
-		}
-
-		public boolean addAll(final Collection<? extends E> c) {
-			throw new UnsupportedOperationException("addAll");
-		}
-
-	}
-
-	static class DeltaTrackingRemoveOnlyList<E> extends RemoveOnlyList<E> {
-
-		private final ArrayList<E> removed = new ArrayList<E>();
-
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 2467542232248099702L;
-
-		public DeltaTrackingRemoveOnlyList(Collection<E> result) {
-			super(result);
-		}
-
-		@SuppressWarnings("unchecked")
-		@Override
-		public boolean remove(final Object o) {
-			final boolean modified = super.remove(o);
-
-			if (modified) {
-				removed.add((E) o);
-			}
-
-			return modified;
-		}
-
-		@Override
-		public boolean removeAll(final Collection<?> c) {
-			boolean modified = false;
-			for (final Object o : c) {
-				modified |= remove(o);
-			}
-			return modified;
-		}
-
-		@Override
-		public boolean retainAll(final Collection<?> c) {
-			boolean modified = false;
-			for (final E e : this) {
-				if (!c.contains(e)) {
-					remove(e);
-					modified = true;
-				}
-			}
-
-			return modified;
-		}
-
-		public List<E> getRemoved() {
-			return removed;
-		}
-
 	}
 
 }

@@ -51,13 +51,11 @@ import java.util.regex.Pattern;
 
 import org.eclipse.concierge.BundleImpl.Revision;
 import org.eclipse.concierge.BundleImpl.Revision.WovenClassImpl;
+import org.eclipse.concierge.ConciergeCollections.MultiMap;
+import org.eclipse.concierge.ConciergeCollections.ParseResult;
 import org.eclipse.concierge.Resources.BundleCapabilityImpl;
 import org.eclipse.concierge.Resources.ConciergeBundleWiring;
 import org.eclipse.concierge.Resources.HostedBundleCapability;
-import org.eclipse.concierge.Utils.DeltaTrackingRemoveOnlyList;
-import org.eclipse.concierge.Utils.MultiMap;
-import org.eclipse.concierge.Utils.RemoveOnlyList;
-import org.eclipse.concierge.Utils.RemoveOnlyMap;
 import org.eclipse.concierge.compat.service.BundleManifestTwo;
 import org.eclipse.concierge.compat.service.XargsFileLauncher;
 import org.eclipse.concierge.service.log.LogServiceImpl;
@@ -426,6 +424,57 @@ public final class Concierge extends AbstractBundle implements Framework,
 	private final ResolverImpl resolver = new ResolverImpl();
 
 	private final Method addURL;
+	
+	protected static final Comparator<? super Capability> EXPORT_ORDER = new Comparator<Capability>() {
+
+		// reverts the order so that we can
+		// retrieve the 0st item to get the best
+		// match
+		public int compare(final Capability c1, final Capability c2) {
+			if (!(c1 instanceof BundleCapability && c2 instanceof BundleCapability)) {
+				return 0;
+			}
+
+			final BundleCapability cap1 = (BundleCapability) c1;
+			final BundleCapability cap2 = (BundleCapability) c2;
+
+			final int cap1Resolved = cap1.getResource().getWiring() == null ? 0
+					: 1;
+			final int cap2Resolved = cap2.getResource().getWiring() == null ? 0
+					: 1;
+			int score = cap1Resolved - cap2Resolved;
+			if (score != 0) {
+				return score;
+			}
+
+			Version cap1Version = (Version) cap1.getAttributes().get(
+					PackageNamespace.CAPABILITY_VERSION_ATTRIBUTE);
+			Version cap2Version = (Version) cap2.getAttributes().get(
+					PackageNamespace.CAPABILITY_VERSION_ATTRIBUTE);
+
+			if (cap1Version == null) {
+				cap1Version = Version.emptyVersion;
+			}
+			if (cap2Version == null) {
+				cap2Version = Version.emptyVersion;
+			}
+
+			score = cap2Version.compareTo(cap1Version);
+
+			if (score != 0) {
+				return score;
+			}
+
+			final long cap1BundleId = cap1.getRevision().getBundle()
+					.getBundleId();
+			final long cap2BundleId = cap2.getRevision().getBundle()
+					.getBundleId();
+
+			return (int) (cap1BundleId - cap2BundleId);
+		}
+
+	};
+
 
 	/**
 	 * start method.
@@ -1008,10 +1057,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 	private void exportSystemBundlePackages(final String[] pkgs)
 			throws BundleException {
 		for (final String pkg : pkgs) {
-			final String[] literals = Utils.splitString(pkg,';');
+			final String[] literals = Utils.splitString(pkg, ';');
 
-			final Tuple.ParseResult parseResult = Utils.parseLiterals(literals,
-					1);
+			final ParseResult parseResult = Utils.parseLiterals(literals, 1);
 			final HashMap<String, Object> attrs = parseResult.getAttributes();
 			attrs.put(PackageNamespace.PACKAGE_NAMESPACE, literals[0].trim());
 			systemBundleCapabilities.add(new BundleCapabilityImpl(this,
@@ -2035,7 +2083,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 			endResolverHooks(resolver.hooks);
 
-			Collections.sort(matches, Utils.EXPORT_ORDER);
+			Collections.sort(matches, EXPORT_ORDER);
 			return matches;
 		} catch (final Throwable t) {
 			// TODO: handle
@@ -2068,7 +2116,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 			hook.filterResolvable(mmap.keySet());
 		}
 
-		final RemoveOnlyList<BundleCapability> filteredCandidates = new RemoveOnlyList<BundleCapability>(
+		final ConciergeCollections.RemoveOnlyList<BundleCapability> filteredCandidates = new ConciergeCollections.RemoveOnlyList<BundleCapability>(
 				mmap.getAllValues());
 
 		for (final ResolverHook hook : hooks) {
@@ -2092,7 +2140,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 			}
 		}
 
-		final RemoveOnlyList<BundleRevision> filteredResources = new RemoveOnlyList<BundleRevision>(
+		final ConciergeCollections.RemoveOnlyList<BundleRevision> filteredResources = new ConciergeCollections.RemoveOnlyList<BundleRevision>(
 				revisions);
 
 		for (final ResolverHook hook : resolver.hooks.keySet()) {
@@ -2144,7 +2192,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 					if (filterStr == null) {
 						final List<Capability> providers = capabilityRegistry
 								.getAll(requirement.getNamespace());
-						Collections.sort(providers, Utils.EXPORT_ORDER);
+						Collections.sort(providers, EXPORT_ORDER);
 						return providers;
 					}
 
@@ -2155,7 +2203,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 						if (!providers.isEmpty()) {
 							if (PackageNamespace.PACKAGE_NAMESPACE
 									.equals(requirement.getNamespace())) {
-								Collections.sort(providers, Utils.EXPORT_ORDER);
+								Collections.sort(providers, EXPORT_ORDER);
 							}
 							return providers;
 						}
@@ -2192,7 +2240,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 					if (PackageNamespace.PACKAGE_NAMESPACE
 							.equals(hostedCapability.getNamespace())) {
-						Collections.sort(capabilities, Utils.EXPORT_ORDER);
+						Collections.sort(capabilities, EXPORT_ORDER);
 						return capabilities.indexOf(hostedCapability);
 					}
 					return capabilities.size();
@@ -2559,7 +2607,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 					return col.isEmpty();
 				}
 
-				final RemoveOnlyList<BundleCapability> collisions = new RemoveOnlyList<BundleCapability>(
+				final ConciergeCollections.RemoveOnlyList<BundleCapability> collisions = new ConciergeCollections.RemoveOnlyList<BundleCapability>(
 						col);
 
 				for (final ResolverHook hook : hooks.keySet()) {
@@ -2732,7 +2780,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 									PackageNamespace.CAPABILITY_USES_DIRECTIVE);
 
 							if (usesStr != null) {
-								final String[] usesConstraints = Utils.splitString(usesStr, ',');
+								final String[] usesConstraints = Utils
+										.splitString(usesStr, ',');
 								final HashSet<String> usesSet = new HashSet<String>();
 								usesSet.addAll(Arrays.asList(usesConstraints));
 
@@ -2864,7 +2913,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 								.equals(requirement
 										.getDirectives()
 										.get(Namespace.REQUIREMENT_RESOLUTION_DIRECTIVE))) {
-					unresolvedRequirements.add(requirement);					
+					unresolvedRequirements.add(requirement);
 				}
 			}
 
@@ -3038,7 +3087,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 		}
 
 		final Set<String> mandatoryAttributes = new HashSet<String>(
-				Arrays.asList(Utils.splitString(Utils.unQuote(mandatory).toLowerCase(), ',')));
+				Arrays.asList(Utils.splitString(Utils.unQuote(mandatory)
+						.toLowerCase(), ',')));
 		final Matcher matcher = FILTER_ASSERT_MATCHER
 				.matcher(filterStr == null ? "" : filterStr);
 		while (matcher.find()) {
@@ -3283,7 +3333,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 			final ArrayList<BundleListener> asyncListeners = new ArrayList<BundleListener>(
 					bundleListeners);
 
-			final DeltaTrackingRemoveOnlyList<BundleContext> contexts = new DeltaTrackingRemoveOnlyList<BundleContext>(
+			final ConciergeCollections.DeltaTrackingRemoveOnlyList<BundleContext> contexts = new ConciergeCollections.DeltaTrackingRemoveOnlyList<BundleContext>(
 					bundleListenerMap.keySet());
 
 			for (final ServiceReferenceImpl<org.osgi.framework.hooks.bundle.EventHook> sref : bundleEventHooks) {
@@ -3406,7 +3456,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 					"Bundle with same symbolic name and same version is already installed",
 					BundleException.DUPLICATE_BUNDLE_ERROR);
 		} else if (collisionPolicy == COLLISION_POLICY_NONE) {
-			final RemoveOnlyList<Bundle> list = new RemoveOnlyList<Bundle>(
+			final ConciergeCollections.RemoveOnlyList<Bundle> list = new ConciergeCollections.RemoveOnlyList<Bundle>(
 					collisions);
 
 			for (final ServiceReferenceImpl<CollisionHook> hookRef : bundleCollisionHooks) {
@@ -3499,9 +3549,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 				mmap.insert(entry.bundle.context, entry);
 			}
 
-			final RemoveOnlyMap<BundleContext, Collection<ListenerInfo>> map = new RemoveOnlyMap<BundleContext, Collection<ListenerInfo>>();
+			final ConciergeCollections.RemoveOnlyMap<BundleContext, Collection<ListenerInfo>> map = new ConciergeCollections.RemoveOnlyMap<BundleContext, Collection<ListenerInfo>>();
 			for (final BundleContext ctx : mmap.keySet()) {
-				final Collection<ListenerInfo> col = new RemoveOnlyList<ListenerInfo>(
+				final Collection<ListenerInfo> col = new ConciergeCollections.RemoveOnlyList<ListenerInfo>(
 						mmap.get(ctx));
 				map.put(ctx, col);
 			}
@@ -3693,7 +3743,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 	protected Bundle[] filterWithBundleHooks(final BundleContext context,
 			final Collection<Bundle> bundles) {
-		final RemoveOnlyList<Bundle> list = new RemoveOnlyList<Bundle>(bundles);
+		final ConciergeCollections.RemoveOnlyList<Bundle> list = new ConciergeCollections.RemoveOnlyList<Bundle>(
+				bundles);
 
 		for (final ServiceReferenceImpl<org.osgi.framework.hooks.bundle.FindHook> sref : bundleFindHooks) {
 			final org.osgi.framework.hooks.bundle.FindHook findHook = sref
@@ -3844,7 +3895,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 				}
 			}
 
-			final Collection<ListenerInfo> c = new RemoveOnlyList<ListenerInfo>(
+			final Collection<ListenerInfo> c = new ConciergeCollections.RemoveOnlyList<ListenerInfo>(
 					Arrays.asList(entries));
 
 			for (final Iterator<ServiceReferenceImpl<ListenerHook>> iter = hooks
@@ -4132,7 +4183,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 			}
 
 			if (!serviceFindHooks.isEmpty()) {
-				final Collection<ServiceReference<?>> c = new RemoveOnlyList<ServiceReference<?>>(
+				final Collection<ServiceReference<?>> c = new ConciergeCollections.RemoveOnlyList<ServiceReference<?>>(
 						result);
 				for (final Iterator<ServiceReferenceImpl<FindHook>> iter = serviceFindHooks
 						.iterator(); iter.hasNext();) {

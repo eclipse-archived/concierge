@@ -23,9 +23,10 @@ import java.util.regex.Pattern;
 
 import org.eclipse.concierge.BundleImpl.Revision;
 import org.eclipse.concierge.Concierge;
+import org.eclipse.concierge.ConciergeCollections.ParseResult;
+import org.eclipse.concierge.ConciergeCollections.Tuple;
 import org.eclipse.concierge.Resources.BundleCapabilityImpl;
 import org.eclipse.concierge.Resources.BundleRequirementImpl;
-import org.eclipse.concierge.Tuple;
 import org.eclipse.concierge.Utils;
 import org.eclipse.concierge.compat.LegacyBundleProcessing;
 import org.osgi.framework.BundleException;
@@ -85,7 +86,7 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 				throw new IllegalArgumentException(symNameStr);
 			}
 
-			final Tuple.ParseResult parseResult = Utils.parseLiterals(parts, 1);
+			final ParseResult parseResult = Utils.parseLiterals(parts, 1);
 
 			symbolicNameAttrs = parseResult.getAttributes();
 
@@ -181,7 +182,7 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 						throw new IllegalArgumentException(fragHostStr);
 					}
 
-					final Tuple.ParseResult parseResult2 = Utils.parseLiterals(
+					final ParseResult parseResult2 = Utils.parseLiterals(
 							parts2, 1);
 
 					if (parseResult2.getDirectives() != null) {
@@ -397,7 +398,8 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 			if (importStr != null) {
 				final String[] imports = Utils.splitString(importStr, ',');
 				for (int i = 0; i < imports.length; i++) {
-					final String[] literals = Utils.splitString(imports[i], ';');
+					final String[] literals = Utils
+							.splitString(imports[i], ';');
 
 					if (literals[0].startsWith("java.")) {
 						throw new BundleException(
@@ -411,7 +413,7 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 					}
 					importSet.add(literals[0]);
 
-					final Tuple.ParseResult parseResult = Utils.parseLiterals(
+					final ParseResult parseResult = Utils.parseLiterals(
 							literals, 1);
 					final HashMap<String, String> dirs = parseResult
 							.getDirectives();
@@ -432,11 +434,13 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 			final String dynImportStr = mfAttrs
 					.getValue(Constants.DYNAMICIMPORT_PACKAGE);
 			if (dynImportStr != null) {
-				final String[] dynImports = Utils.splitString(dynImportStr, ',');
+				final String[] dynImports = Utils
+						.splitString(dynImportStr, ',');
 				for (int i = 0; i < dynImports.length; i++) {
-					final String[] literals = Utils.splitString(dynImports[i], ';');
+					final String[] literals = Utils.splitString(dynImports[i],
+							';');
 
-					final Tuple.ParseResult parseResult = Utils.parseLiterals(
+					final ParseResult parseResult = Utils.parseLiterals(
 							literals, 1);
 					final HashMap<String, String> dirs = parseResult
 							.getDirectives();
@@ -476,9 +480,10 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 			if (exportStr != null) {
 				final String[] exports = Utils.splitString(exportStr, ',');
 				for (int i = 0; i < exports.length; i++) {
-					final String[] literals = Utils.splitString(exports[i], ';');
+					final String[] literals = Utils
+							.splitString(exports[i], ';');
 
-					final Tuple.ParseResult parseResult = Utils.parseLiterals(
+					final ParseResult parseResult = Utils.parseLiterals(
 							literals, 1);
 					final HashMap<String, Object> attrs = parseResult
 							.getAttributes();
@@ -538,14 +543,15 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 
 			// require bundle
 			if (requireBundleStr != null) {
-				final String[] requires = Utils.splitString
-						(requireBundleStr, ',');
+				final String[] requires = Utils.splitString(requireBundleStr,
+						',');
 				for (int i = 0; i < requires.length; i++) {
-					final String[] literals = Utils.splitString(requires[i], ';');
+					final String[] literals = Utils.splitString(requires[i],
+							';');
 
 					final String requiredBundle = literals[0].trim();
 
-					final Tuple.ParseResult parseResult = Utils.parseLiterals(
+					final ParseResult parseResult = Utils.parseLiterals(
 							literals, 1);
 
 					final Map<String, String> dirs = parseResult
