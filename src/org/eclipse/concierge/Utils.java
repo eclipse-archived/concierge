@@ -44,7 +44,7 @@ public final class Utils {
 	@SuppressWarnings("deprecation")
 	private static final String SPECIFICATION_VERSION = Constants.PACKAGE_SPECIFICATION_VERSION;
 
-	static String[] splitString2(String values, final char delimiter) {
+	public static String[] splitString2(String values, final char delimiter) {
 		return splitString2(values, delimiter, Integer.MAX_VALUE);
 	}
 	
@@ -243,7 +243,7 @@ public final class Utils {
 					.group(1)) : STRING_TYPE;
 			final List<Object> list = new ArrayList<Object>();
 
-			final String[] valueStrs = Utils.splitAtCommaPlus(valueStr);
+			final String[] valueStrs = splitString2(valueStr, ',');
 
 			for (int i = 0; i < valueStrs.length; i++) {
 				list.add(createValue0(elementType, valueStrs[i]));
@@ -253,25 +253,6 @@ public final class Utils {
 		} else {
 			return createValue0(getType(type), valueStr);
 		}
-	}
-
-	static String[] splitAtCommaPlus(final String str) {
-		//return Utils.SPLIT_AT_COMMA_PLUS.split(str);
-		//return splitString(str, ",");
-		return splitString2(str, ',');
-	}
-
-	public static String[] splitAtComma(final String str) {
-		return splitString2(str, ',');
-	}
-	
-	public static String[] splitAtSemicolon(final String str) {
-		return splitString2(str, ';');
-	}
-	
-	public static String[] splitAtSemicolonPlus(final String str) {
-		//return SPLIT_AT_SEMICOLON_PLUS.split(str);
-		return splitString2(str, ';');
 	}
 	
 	private static short getType(final String type) {

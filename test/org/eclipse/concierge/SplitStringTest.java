@@ -136,7 +136,7 @@ public class SplitStringTest {
 
 		time = System.nanoTime();
 		for (int i = 0; i < 1000; i++) {
-			foo = Utils.splitAtComma(longTest);
+			foo = Utils.splitString2(longTest, ',');
 			compare2 = foo.length;
 		}
 		long time2 = System.nanoTime() - time;
@@ -170,7 +170,7 @@ public class SplitStringTest {
 		compare2 = 0;
 		time = System.nanoTime();
 		for (int i = 0; i < 500; i++) {
-			foo = Utils.splitAtComma(longTest);
+			foo = Utils.splitString2(longTest, ',');
 			compare2 = foo.length;
 		}
 		long time2 = System.nanoTime() - time;
@@ -205,7 +205,7 @@ public class SplitStringTest {
 		compare2 = 0;
 		time = System.nanoTime();
 		for (int i = 0; i < 1000; i++) {
-			foo = Utils.splitAtComma(longTest);
+			foo = Utils.splitString2(longTest, ',');
 			compare2 = foo.length;
 		}
 		long time2 = System.nanoTime() - time;
