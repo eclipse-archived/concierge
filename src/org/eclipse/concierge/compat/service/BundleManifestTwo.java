@@ -80,7 +80,7 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 						+ Constants.BUNDLE_SYMBOLICNAME);
 			}
 
-			final String[] parts = Utils.splitString2(symNameStr, ';');
+			final String[] parts = Utils.splitString(symNameStr, ';');
 			if (parts[0].contains(";")) {
 				throw new IllegalArgumentException(symNameStr);
 			}
@@ -176,7 +176,7 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 				if (fragHostStr != null) {
 					final Map<String, String> dirs2 = new HashMap<String, String>();
 
-					final String[] parts2 = Utils.splitString2(fragHostStr, ';');
+					final String[] parts2 = Utils.splitString(fragHostStr, ';');
 					if (parts2[0].contains(";")) {
 						throw new IllegalArgumentException(fragHostStr);
 					}
@@ -395,9 +395,9 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 			// package imports
 			final String importStr = mfAttrs.getValue(Constants.IMPORT_PACKAGE);
 			if (importStr != null) {
-				final String[] imports = Utils.splitString2(importStr, ',');
+				final String[] imports = Utils.splitString(importStr, ',');
 				for (int i = 0; i < imports.length; i++) {
-					final String[] literals = Utils.splitString2(imports[i], ';');
+					final String[] literals = Utils.splitString(imports[i], ';');
 
 					if (literals[0].startsWith("java.")) {
 						throw new BundleException(
@@ -432,9 +432,9 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 			final String dynImportStr = mfAttrs
 					.getValue(Constants.DYNAMICIMPORT_PACKAGE);
 			if (dynImportStr != null) {
-				final String[] dynImports = Utils.splitString2(dynImportStr, ',');
+				final String[] dynImports = Utils.splitString(dynImportStr, ',');
 				for (int i = 0; i < dynImports.length; i++) {
-					final String[] literals = Utils.splitString2(dynImports[i], ';');
+					final String[] literals = Utils.splitString(dynImports[i], ';');
 
 					final Tuple.ParseResult parseResult = Utils.parseLiterals(
 							literals, 1);
@@ -474,9 +474,9 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 
 			final String exportStr = mfAttrs.getValue(Constants.EXPORT_PACKAGE);
 			if (exportStr != null) {
-				final String[] exports = Utils.splitString2(exportStr, ',');
+				final String[] exports = Utils.splitString(exportStr, ',');
 				for (int i = 0; i < exports.length; i++) {
-					final String[] literals = Utils.splitString2(exports[i], ';');
+					final String[] literals = Utils.splitString(exports[i], ';');
 
 					final Tuple.ParseResult parseResult = Utils.parseLiterals(
 							literals, 1);
@@ -538,10 +538,10 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 
 			// require bundle
 			if (requireBundleStr != null) {
-				final String[] requires = Utils.splitString2
+				final String[] requires = Utils.splitString
 						(requireBundleStr, ',');
 				for (int i = 0; i < requires.length; i++) {
-					final String[] literals = Utils.splitString2(requires[i], ';');
+					final String[] literals = Utils.splitString(requires[i], ';');
 
 					final String requiredBundle = literals[0].trim();
 
@@ -681,7 +681,7 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 			final Concierge framework, final String attributeName,
 			final String valueStr) {
 		if (FRAMEWORK_EXECUTIONENVIRONMENT.equals(attributeName)) {
-			final String[] fees = Utils.splitString2(valueStr, ',');
+			final String[] fees = Utils.splitString(valueStr, ',');
 			final List<BundleCapability> caps = new ArrayList<BundleCapability>();
 
 			for (final String fee : fees) {

@@ -711,7 +711,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 		// sort out the boot delegations
 		final String[] bds = Utils
-				.splitString2(properties
+				.splitString(properties
 						.getProperty(Constants.FRAMEWORK_BOOTDELEGATION), ',');
 		final ArrayList<String> bdsAbs = new ArrayList<String>();
 		final ArrayList<String> bdsRel = new ArrayList<String>();
@@ -904,7 +904,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 		final String libExtStr = properties
 				.getProperty(Constants.FRAMEWORK_LIBRARY_EXTENSIONS);
 		if (libExtStr != null) {
-			libraryExtensions = Utils.splitString2(libExtStr, ',');
+			libraryExtensions = Utils.splitString(libExtStr, ',');
 		}
 
 		// set execpermission if set
@@ -933,7 +933,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 				+ extraPkgs;
 
 		// initialize the system bundle capabilities
-		final String[] framework_pkgs = Utils.splitString2(sysPkgs, ',');
+		final String[] framework_pkgs = Utils.splitString(sysPkgs, ',');
 		exportSystemBundlePackages(framework_pkgs);
 
 		headers.put(Constants.EXPORT_PACKAGE, sysPkgs);
@@ -946,7 +946,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 		final String extraCaps = properties
 				.getProperty(Constants.FRAMEWORK_SYSTEMCAPABILITIES_EXTRA);
 		if (extraCaps != null) {
-			final String[] capStrs = Utils.splitString2(extraCaps, ',');
+			final String[] capStrs = Utils.splitString(extraCaps, ',');
 			for (final String capStr : capStrs) {
 				try {
 					final BundleCapabilityImpl cap = new BundleCapabilityImpl(
@@ -1007,7 +1007,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 	private void exportSystemBundlePackages(final String[] pkgs)
 			throws BundleException {
 		for (final String pkg : pkgs) {
-			final String[] literals = Utils.splitString2(pkg,';');
+			final String[] literals = Utils.splitString(pkg,';');
 
 			final Tuple.ParseResult parseResult = Utils.parseLiterals(literals,
 					1);
@@ -2731,7 +2731,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 									PackageNamespace.CAPABILITY_USES_DIRECTIVE);
 
 							if (usesStr != null) {
-								final String[] usesConstraints = Utils.splitString2(usesStr, ',');
+								final String[] usesConstraints = Utils.splitString(usesStr, ',');
 								final HashSet<String> usesSet = new HashSet<String>();
 								usesSet.addAll(Arrays.asList(usesConstraints));
 
@@ -2936,7 +2936,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 						try {
 							final String host = u.getHost();
 							// FIXME: unsafe!
-							final String[] s = Utils.splitString2(host, '.');
+							final String[] s = Utils.splitString(host, '.');
 
 							final Long bundleId = Long.parseLong(s[0]);
 							final int rev = Integer.parseInt(s[1]);
@@ -3037,7 +3037,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 		}
 
 		final Set<String> mandatoryAttributes = new HashSet<String>(
-				Arrays.asList(Utils.splitString2(Utils.unQuote(mandatory).toLowerCase(), ',')));
+				Arrays.asList(Utils.splitString(Utils.unQuote(mandatory).toLowerCase(), ',')));
 		final Matcher matcher = FILTER_ASSERT_MATCHER
 				.matcher(filterStr == null ? "" : filterStr);
 		while (matcher.find()) {

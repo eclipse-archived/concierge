@@ -31,7 +31,7 @@ public class SplitStringTest {
 	@Test
 	public void testCorrectness0() {
 		final String s = "test; filter:=\"(&(test=aaa)(version>=1.1.0))\", test; filter:=\"(&(version>=4.1)(string~=stringtest_1))\", test; filter:=\"(&(version>=10.1)(long>=99))\", test; filter:=\"(&(version>=1.1)(double>=1.0))\", test; filter:=\"(&(version>=2.2)(versions=9.0)(versions=1)(versions=1.2))\", test; filter:=\"(&(version>=1.10)(longs=1)(longs=2)(longs=3)(longs=4))\", test; filter:=\"(&(version>=1.1)(doubles=1.001)(doubles=1.002)(doubles=1.00002)(doubles<=1.3))\", test; filter:=\"(&(version>=10.1)(strings~=aaa)(strings~=bbb)(strings=ccc))\"";
-		final String[] res = Utils.splitString2(s, ',');
+		final String[] res = Utils.splitString(s, ',');
 
 		assertEquals(res.length, 8);
 
@@ -54,7 +54,7 @@ public class SplitStringTest {
 	@Test
 	public void testCorrectness2() {
 		final String s = "one,two,three,four,five";
-		final String[] res = Utils.splitString2(s, ',');
+		final String[] res = Utils.splitString(s, ',');
 
 		assertEquals(res.length, 5);
 
@@ -70,7 +70,7 @@ public class SplitStringTest {
 	@Test
 	public void testCorrectness3() {
 		final String s = "   one      , two         ,        three,   four ,     five   ";
-		final String[] res = Utils.splitString2(s, ',');
+		final String[] res = Utils.splitString(s, ',');
 
 		assertEquals(res.length, 5);
 
@@ -103,7 +103,7 @@ public class SplitStringTest {
 
 		time = System.nanoTime();
 		for (int i = 0; i < 100000; i++) {
-			foo = Utils.splitString2(longTest, ',');
+			foo = Utils.splitString(longTest, ',');
 			compare2 = foo.length;
 		}
 		long time2 = System.nanoTime() - time;
@@ -136,7 +136,7 @@ public class SplitStringTest {
 
 		time = System.nanoTime();
 		for (int i = 0; i < 1000; i++) {
-			foo = Utils.splitString2(longTest, ',');
+			foo = Utils.splitString(longTest, ',');
 			compare2 = foo.length;
 		}
 		long time2 = System.nanoTime() - time;
@@ -170,7 +170,7 @@ public class SplitStringTest {
 		compare2 = 0;
 		time = System.nanoTime();
 		for (int i = 0; i < 500; i++) {
-			foo = Utils.splitString2(longTest, ',');
+			foo = Utils.splitString(longTest, ',');
 			compare2 = foo.length;
 		}
 		long time2 = System.nanoTime() - time;
@@ -205,7 +205,7 @@ public class SplitStringTest {
 		compare2 = 0;
 		time = System.nanoTime();
 		for (int i = 0; i < 1000; i++) {
-			foo = Utils.splitString2(longTest, ',');
+			foo = Utils.splitString(longTest, ',');
 			compare2 = foo.length;
 		}
 		long time2 = System.nanoTime() - time;

@@ -62,7 +62,7 @@ public class Resources {
 		private final Map<String, Object> attributes;
 
 		protected GenericReqCap(final String str) throws BundleException {
-			final String[] literals = Utils.splitString2(str, ';');
+			final String[] literals = Utils.splitString(str, ';');
 
 			this.namespace = literals[0].trim();
 
@@ -143,7 +143,7 @@ public class Resources {
 				excludes[0] = "";
 				hasExcludes = false;
 			} else {
-				excludes = Utils.splitString2(Utils.unQuote(excludeStr), ',');
+				excludes = Utils.splitString(Utils.unQuote(excludeStr), ',');
 				hasExcludes = true;
 			}
 
@@ -153,7 +153,7 @@ public class Resources {
 				includes = new String[1];
 				includes[0] = "*";
 			} else {
-				includes = Utils.splitString2(Utils.unQuote(excludeStr), ',');
+				includes = Utils.splitString(Utils.unQuote(excludeStr), ',');
 			}
 		}
 
@@ -172,7 +172,7 @@ public class Resources {
 				excludes[0] = "";
 				hasExcludes = false;
 			} else {
-				excludes = Utils.splitString2(Utils.unQuote(excludeStr), ',');
+				excludes = Utils.splitString(Utils.unQuote(excludeStr), ',');
 				hasExcludes = true;
 			}
 
@@ -182,7 +182,7 @@ public class Resources {
 				includes = new String[1];
 				includes[0] = "*";
 			} else {
-				includes = Utils.splitString2(Utils.unQuote(includeStr), ',');
+				includes = Utils.splitString(Utils.unQuote(includeStr), ',');
 			}
 		}
 

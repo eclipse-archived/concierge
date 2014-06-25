@@ -38,145 +38,99 @@ import org.osgi.resource.Capability;
 
 public final class Utils {
 
+	private static String[] EMPTY_STRING_ARRAY = new String[0];
+
 	private static final Pattern LIST_TYPE_PATTERN = Pattern
 			.compile("List\\s*<\\s*([^\\s]*)\\s*>");
 
 	@SuppressWarnings("deprecation")
 	private static final String SPECIFICATION_VERSION = Constants.PACKAGE_SPECIFICATION_VERSION;
 
-	public static String[] splitString2(String values, final char delimiter) {
-		return splitString2(values, delimiter, Integer.MAX_VALUE);
+	public static String[] splitString(String values, final char delimiter) {
+		return splitString(values, delimiter, Integer.MAX_VALUE);
 	}
-	
-	static String[] splitString2(String values, final char delimiter, final int limit) {
+
+	static String[] splitString(String values, final char delimiter,
+			final int limit) {
 		if (values == null) {
 			return EMPTY_STRING_ARRAY;
 		}
-		
+
 		final List<String> tokens = new ArrayList<String>(values.length() / 10);
-		
+
 		final char[] chars = values.toCharArray();
-		
+
 		final int len = chars.length;
 		int openingQuote = -1;
 		int pointer = 0;
 		int curr = 0;
 		int matches = 0;
-		
+
 		// skip trailing whitespaces
 		while (Character.isWhitespace(chars[curr])) {
 			curr++;
 		}
-		
+
 		pointer = curr;
 
-		do  {
+		do {
 			if (chars[curr] == '\\') {
-				curr+=2; 
+				curr += 2;
 				continue;
-			} else if (chars[curr] == '"') {				
+			} else if (chars[curr] == '"') {
 				if (openingQuote < 0) {
 					openingQuote = curr;
 				} else {
 					openingQuote = -1;
 				}
-				
+
 				curr++;
-				continue;				
+				continue;
 			} else if (chars[curr] == delimiter && openingQuote < 0) {
 				matches++;
 				if (matches > limit) {
 					break;
 				}
-				
+
 				// scan back to skip whitepspaces
-				int endPointer = curr-1;
-				while (endPointer > 0 && Character.isWhitespace(chars[endPointer])) {
+				int endPointer = curr - 1;
+				while (endPointer > 0
+						&& Character.isWhitespace(chars[endPointer])) {
 					endPointer--;
 				}
-				
+
 				// copy from pointer to current - 1
 				tokens.add(new String(chars, pointer, endPointer - pointer + 1));
 
 				curr++;
-				
+
 				// scan forward to skip whitespaces
 				while (curr < len && Character.isWhitespace(chars[curr])) {
 					curr++;
-				}			
-				
-				pointer = curr;				
+				}
+
+				pointer = curr;
 				continue;
 			}
-			
+
 			curr++;
 		} while (curr < len);
-		
+
 		if (openingQuote > -1) {
 			throw new IllegalArgumentException(
-					"Unmatched quotation mark at position " + openingQuote);			
+					"Unmatched quotation mark at position " + openingQuote);
 		}
-		
+
 		// scan back to skip whitepspaces
-		int endPointer = len-1;
+		int endPointer = len - 1;
 		while (endPointer > 0 && Character.isWhitespace(chars[endPointer])) {
 			endPointer--;
 		}
 
 		tokens.add(new String(chars, pointer, endPointer - pointer + 1));
-		
+
 		return tokens.toArray(new String[tokens.size()]);
 	}
-
-	public static final Comparator<? super Capability> EXPORT_ORDER = new Comparator<Capability>() {
-
-		// reverts the order so that we can
-		// retrieve the 0st item to get the best
-		// match
-		public int compare(final Capability c1, final Capability c2) {
-			if (!(c1 instanceof BundleCapability && c2 instanceof BundleCapability)) {
-				return 0;
-			}
-
-			final BundleCapability cap1 = (BundleCapability) c1;
-			final BundleCapability cap2 = (BundleCapability) c2;
-
-			final int cap1Resolved = cap1.getResource().getWiring() == null ? 0
-					: 1;
-			final int cap2Resolved = cap2.getResource().getWiring() == null ? 0
-					: 1;
-			int score = cap1Resolved - cap2Resolved;
-			if (score != 0) {
-				return score;
-			}
-
-			Version cap1Version = (Version) cap1.getAttributes().get(
-					PackageNamespace.CAPABILITY_VERSION_ATTRIBUTE);
-			Version cap2Version = (Version) cap2.getAttributes().get(
-					PackageNamespace.CAPABILITY_VERSION_ATTRIBUTE);
-
-			if (cap1Version == null) {
-				cap1Version = Version.emptyVersion;
-			}
-			if (cap2Version == null) {
-				cap2Version = Version.emptyVersion;
-			}
-
-			score = cap2Version.compareTo(cap1Version);
-
-			if (score != 0) {
-				return score;
-			}
-
-			final long cap1BundleId = cap1.getRevision().getBundle()
-					.getBundleId();
-			final long cap2BundleId = cap2.getRevision().getBundle()
-					.getBundleId();
-
-			return (int) (cap1BundleId - cap2BundleId);
-		}
-
-	};
 
 	public static Tuple.ParseResult parseLiterals(final String[] literals,
 			final int start) throws BundleException {
@@ -185,7 +139,7 @@ public final class Utils {
 
 		for (int i = start; i < literals.length; i++) {
 
-			final String[] parts = splitString2(literals[i], '=', 1);
+			final String[] parts = splitString(literals[i], '=', 1);
 			final String name = parts[0].trim();
 			final int e = name.length() - 1;
 			if (name.charAt(e) == ':') {
@@ -205,7 +159,7 @@ public final class Utils {
 					throw new BundleException("Duplicate attribute " + name);
 				}
 
-				final String[] nameParts = splitString2(name, ':');
+				final String[] nameParts = splitString(name, ':');
 				if (nameParts.length > 1) {
 					if (nameParts.length != 2) {
 						throw new BundleException("Illegal attribute name "
@@ -243,7 +197,7 @@ public final class Utils {
 					.group(1)) : STRING_TYPE;
 			final List<Object> list = new ArrayList<Object>();
 
-			final String[] valueStrs = splitString2(valueStr, ',');
+			final String[] valueStrs = splitString(valueStr, ',');
 
 			for (int i = 0; i < valueStrs.length; i++) {
 				list.add(createValue0(elementType, valueStrs[i]));
@@ -254,7 +208,7 @@ public final class Utils {
 			return createValue0(getType(type), valueStr);
 		}
 	}
-	
+
 	private static short getType(final String type) {
 		if ("String".equals(type)) {
 			return STRING_TYPE;
@@ -324,11 +278,56 @@ public final class Utils {
 		return start == 0 && end == len ? quoted : quoted1
 				.substring(start, end);
 	}
-	
-	private static String[] EMPTY_STRING_ARRAY = new String[0];
-	
-	
 
+	public static final Comparator<? super Capability> EXPORT_ORDER = new Comparator<Capability>() {
+
+		// reverts the order so that we can
+		// retrieve the 0st item to get the best
+		// match
+		public int compare(final Capability c1, final Capability c2) {
+			if (!(c1 instanceof BundleCapability && c2 instanceof BundleCapability)) {
+				return 0;
+			}
+
+			final BundleCapability cap1 = (BundleCapability) c1;
+			final BundleCapability cap2 = (BundleCapability) c2;
+
+			final int cap1Resolved = cap1.getResource().getWiring() == null ? 0
+					: 1;
+			final int cap2Resolved = cap2.getResource().getWiring() == null ? 0
+					: 1;
+			int score = cap1Resolved - cap2Resolved;
+			if (score != 0) {
+				return score;
+			}
+
+			Version cap1Version = (Version) cap1.getAttributes().get(
+					PackageNamespace.CAPABILITY_VERSION_ATTRIBUTE);
+			Version cap2Version = (Version) cap2.getAttributes().get(
+					PackageNamespace.CAPABILITY_VERSION_ATTRIBUTE);
+
+			if (cap1Version == null) {
+				cap1Version = Version.emptyVersion;
+			}
+			if (cap2Version == null) {
+				cap2Version = Version.emptyVersion;
+			}
+
+			score = cap2Version.compareTo(cap1Version);
+
+			if (score != 0) {
+				return score;
+			}
+
+			final long cap1BundleId = cap1.getRevision().getBundle()
+					.getBundleId();
+			final long cap2BundleId = cap2.getRevision().getBundle()
+					.getBundleId();
+
+			return (int) (cap1BundleId - cap2BundleId);
+		}
+
+	};
 
 	public static class MultiMap<K, V> implements Map<K, List<V>> {
 
