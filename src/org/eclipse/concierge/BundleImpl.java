@@ -2204,12 +2204,6 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				processNativeLibraries(newNativeStrings);
 			}
 
-			/**
-			 * System.err.println("~~~~~~~~~~~~~~~~~~~~~~~~~ATTACHED FRAGMENT "
-			 * + fragment.getSymbolicName() + "~~~~~TO~~~~~" + getSymbolicName()
-			 * + "(revision=" + this + " FRAGMENTS IS NOW " + fragments);
-			 */
-
 			return true;
 		}
 
@@ -2320,7 +2314,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 			public BundleClassLoader() {
 				// set Concierge Classloader as parent of BundleClassLoader
-				super(Concierge.class.getClassLoader());
+				// super(Concierge.class.getClassLoader());
+				super(framework.parentClassLoader);
 			}
 
 			/**
@@ -2508,12 +2503,13 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 										.findResource1(pkg, name, isClass,
 												multiple, resources);
 							} else {
+								// system bundle
 								if (isClass) {
-									return getParent().loadClass(name);
+									return framework.systemBundleClassLoader.loadClass(name);
 								} else {
 									if (multiple) {
 										try {
-											final Enumeration<URL> e = getParent()
+											final Enumeration<URL> e = framework.systemBundleClassLoader
 													.getResources(name);
 											while (e.hasMoreElements()) {
 												resources.add(e.nextElement());
@@ -2523,7 +2519,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 											// FIXME: to log
 										}
 									} else {
-										return getParent().getResource(name);
+										return framework.systemBundleClassLoader.getResource(name);
 									}
 								}
 							}
@@ -2649,15 +2645,15 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 								iter.remove();
 							}
 
-							final BundleRevision rev = bundleCap.getRevision();
+							final BundleRevision rev = bundleCap.getRevision();	
 							if (!(rev instanceof Revision)) {
 								if (isClass) {
-									return getParent().loadClass(name);
+									return framework.systemBundleClassLoader.loadClass(name);
 								} else {
 									if (multiple) {
 										try {
-											final Enumeration<URL> e = getParent()
-													.getResources(name);
+											final Enumeration<URL> e = framework.systemBundleClassLoader
+															.getResources(name);
 											while (e.hasMoreElements()) {
 												resources.add(e.nextElement());
 											}
@@ -2666,7 +2662,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 											// FIXME: to log
 										}
 									} else {
-										return getParent().getResource(name);
+										return framework.systemBundleClassLoader.getResource(name);
 									}
 								}
 							} else {
@@ -3333,20 +3329,17 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 						} else {
 							basename = rest;
 						}
-						// System.out.println("basename is " + basename);
 						if (filePattern == null
 								|| RFC1960Filter.stringCompare(
 										filePattern.toCharArray(), 0,
 										basename.toCharArray(), 0) == 0) {
 							// InputStream inputStream;
-							// System.out.println("ZE ZE ZE "+"found MATCH: "+name);
 							final String nameStr = name
 									+ (isDir && !name.endsWith("/") ? "/" : "");
 							try {
 								if (paths) {
 									results.add(createURL(nameStr, null));
 								} else {
-									// inputStream = jarFile.getInputStream(ze);
 									results.add(createURL(nameStr, null));
 								}
 							} catch (final IOException ex) {
@@ -3553,7 +3546,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 	protected static String classToFile(final String fqc) {
 		return fqc.replace('.', '/') + ".class";
 	}
-	
+
 	/**
 	 * store a file on the storage.
 	 * 

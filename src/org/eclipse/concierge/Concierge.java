@@ -424,7 +424,10 @@ public final class Concierge extends AbstractBundle implements Framework,
 	private final ResolverImpl resolver = new ResolverImpl();
 
 	private final Method addURL;
-	
+
+	final ClassLoader parentClassLoader;
+	final ClassLoader systemBundleClassLoader;
+
 	protected static final Comparator<? super Capability> EXPORT_ORDER = new Comparator<Capability>() {
 
 		// reverts the order so that we can
@@ -474,7 +477,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 		}
 
 	};
-
 
 	/**
 	 * start method.
@@ -684,10 +686,24 @@ public final class Concierge extends AbstractBundle implements Framework,
 			}
 		}
 
-		// apply constants
-		properties.setProperty(Constants.FRAMEWORK_VERSION, "1.5");
-		properties
-				.setProperty(Constants.FRAMEWORK_VENDOR, "Jan S. Rellermeyer");
+		// set parent classloader
+		systemBundleClassLoader = getClass().getClassLoader();
+		final String p = properties
+				.getProperty(Constants.FRAMEWORK_BUNDLE_PARENT);
+		if (Constants.FRAMEWORK_BUNDLE_PARENT_APP.equals(p)) {
+			parentClassLoader = ClassLoader.getSystemClassLoader();
+		} else if (Constants.FRAMEWORK_BUNDLE_PARENT_FRAMEWORK.equals(p)) {
+			parentClassLoader = systemBundleClassLoader;
+		} else if (Constants.FRAMEWORK_BUNDLE_PARENT_EXT.equals(p)) {
+			ClassLoader c = ClassLoader.getSystemClassLoader();
+			while (c.getParent() != null) {
+				c = c.getParent();
+			}
+			parentClassLoader = c;
+		} else {
+			parentClassLoader = new ClassLoader(null) {
+			};
+		}
 
 		Method m = null;
 		if (getClass().getClassLoader() instanceof URLClassLoader) {
@@ -704,6 +720,11 @@ public final class Concierge extends AbstractBundle implements Framework,
 			}
 		}
 		addURL = m;
+
+		// apply constants
+		properties.setProperty(Constants.FRAMEWORK_VERSION, "1.5");
+		properties
+				.setProperty(Constants.FRAMEWORK_VENDOR, "Jan S. Rellermeyer");
 
 		properties.setProperty(Constants.SUPPORTS_BOOTCLASSPATH_EXTENSION,
 				"false");
@@ -1446,7 +1467,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 * @category SystemBundle
 	 */
 	public URL getResource(final String name) {
-		return getClass().getClassLoader().getResource(name);
+		return systemBundleClassLoader.getResource(name);
 	}
 
 	/**
@@ -1462,7 +1483,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 * @category SystemBundle
 	 */
 	public Class<?> loadClass(final String name) throws ClassNotFoundException {
-		return getClass().getClassLoader().loadClass(name);
+		return systemBundleClassLoader.loadClass(name);
 	}
 
 	/**
@@ -1470,7 +1491,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 * @category SystemBundle
 	 */
 	public Enumeration<URL> getResources(final String name) throws IOException {
-		return getClass().getClassLoader().getResources(name);
+		return systemBundleClassLoader.getResources(name);
 	}
 
 	// public long getLastModified() in AbstractBundle
@@ -2799,12 +2820,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 												.getCapability()
 												.getAttributes()
 												.get(PackageNamespace.PACKAGE_NAMESPACE);
-										System.err.println("MATCHES? " + pkg
-												+ " set=" + usesSet);
 
 										if (usesSet.contains(pkg)) {
-											System.err.println("MATCH!!!");
-
 											impliedConstraints.add(wire
 													.getCapability());
 											caps.add(wire.getCapability());
@@ -2813,18 +2830,11 @@ public final class Concierge extends AbstractBundle implements Framework,
 									final List<BundleCapability> caps2 = wiring
 											.getCapabilities(PackageNamespace.PACKAGE_NAMESPACE);
 
-									System.err.println("CHECKING " + caps2);
-
 									for (final Capability cap2 : caps2) {
 										final Object pkg = cap2
 												.getAttributes()
 												.get(PackageNamespace.PACKAGE_NAMESPACE);
-										System.err.println("MATCHES? " + pkg
-												+ " set=" + usesSet);
-
 										if (usesSet.contains(pkg)) {
-											System.err.println("MATCH!!!");
-
 											impliedConstraints
 													.add((BundleCapability) cap2);
 											caps.add((BundleCapability) cap2);
@@ -3181,7 +3191,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 	void addFragment(final Revision fragment) throws BundleException {
 		if (fragment.isExtensionBundle()) {
 			try {
-				addURL.invoke(Concierge.class.getClassLoader(),
+				addURL.invoke(systemBundleClassLoader,
 						fragment.createURL("/", null));
 			} catch (final Exception e) {
 				// FIXME: to log
