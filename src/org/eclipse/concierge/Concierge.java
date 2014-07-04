@@ -1080,13 +1080,15 @@ public final class Concierge extends AbstractBundle implements Framework,
 		for (final String pkg : pkgs) {
 			final String[] literals = Utils.splitString(pkg, ';');
 
-			final ParseResult parseResult = Utils.parseLiterals(literals, 1);
-			final HashMap<String, Object> attrs = parseResult.getAttributes();
-			attrs.put(PackageNamespace.PACKAGE_NAMESPACE, literals[0].trim());
-			systemBundleCapabilities.add(new BundleCapabilityImpl(this,
-					PackageNamespace.PACKAGE_NAMESPACE, parseResult
-							.getDirectives(), attrs, Constants.EXPORT_PACKAGE
-							+ ' ' + pkg));
+			if(literals.length > 0){
+				final ParseResult parseResult = Utils.parseLiterals(literals, 1);
+				final HashMap<String, Object> attrs = parseResult.getAttributes();
+				attrs.put(PackageNamespace.PACKAGE_NAMESPACE, literals[0].trim());
+				systemBundleCapabilities.add(new BundleCapabilityImpl(this,
+						PackageNamespace.PACKAGE_NAMESPACE, parseResult
+								.getDirectives(), attrs, Constants.EXPORT_PACKAGE
+								+ ' ' + pkg));
+			}
 		}
 	}
 
