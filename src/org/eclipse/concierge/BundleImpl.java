@@ -2235,15 +2235,19 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 			final Set<String> index = new HashSet<String>();
 			for (final T element : longer) {
-				index.add((String) element.getAttributes().get(namespace));
+				if (!element.getAttributes().isEmpty()) {
+					index.add((String) element.getAttributes().get(namespace));
+				}
 			}
 
 			for (final T element : shorter) {
-				if (index.contains(element.getAttributes().get(namespace))) {
-					throw new BundleException("Conflicting " + s
-							+ " statement "
-							+ element.getAttributes().get(namespace) + " from "
-							+ element, BundleException.RESOLVE_ERROR);
+				if (!element.getAttributes().isEmpty()) {
+					if (index.contains(element.getAttributes().get(namespace))) {
+						throw new BundleException("Conflicting " + s
+								+ " statement "
+								+ element.getAttributes().get(namespace) + " from "
+								+ element, BundleException.RESOLVE_ERROR);
+					}
 				}
 			}
 		}
