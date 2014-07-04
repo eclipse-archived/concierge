@@ -2620,7 +2620,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 						List<BundleCapability> matches;
 						matches = framework.resolveDynamic(Revision.this, pkg,
 								dynImportPackage, dynImport, wildcard);
-						if (matches != null) {
+						if (matches != null && matches.size()>0) {
 							final BundleCapability bundleCap = matches.get(0);
 
 							final BundleWire wire = new ConciergeBundleWire(
