@@ -1199,7 +1199,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 */
 	private void storeProfile() {
 		final BundleImpl[] bundleArray = (BundleImpl[]) bundles
-				.toArray(new AbstractBundle[bundles.size()]);
+				.toArray(new BundleImpl[bundles.size()]);
 		for (int i = 0; i < bundleArray.length; i++) {
 			if (bundleArray[i].state != Bundle.UNINSTALLED) {
 				bundleArray[i].updateMetadata();
