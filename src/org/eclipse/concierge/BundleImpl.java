@@ -165,6 +165,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 	 * eager activation)
 	 */
 	protected boolean lazyActivation;
+	protected boolean beingLazy = false;
 
 	protected String[] activationIncludes;
 
@@ -439,6 +440,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 		this.context = framework.createBundleContext(this);
 		if ((options & Bundle.START_ACTIVATION_POLICY) > 0 && lazyActivation) {
 			if (state != STARTING) {
+				beingLazy = true;
 				state = STARTING;
 				framework.notifyBundleListeners(BundleEvent.LAZY_ACTIVATION,
 						this);
@@ -447,6 +449,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				notify();
 			}
 			return;
+		} else {
+			beingLazy = false;
 		}
 
 		activate0();
@@ -2259,7 +2263,9 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					&& activationList.get(0) == BundleImpl.this) {
 				activationChain.set(new ArrayList<AbstractBundle>());
 				for (int i = activationList.size() - 1; i >= 0; i--) {
-					((BundleImpl) activationList.get(i)).triggerActivation();
+					final BundleImpl toActivate = ((BundleImpl) activationList.get(i));
+					if(toActivate.beingLazy)
+						toActivate.triggerActivation();
 				}
 				activationChain.set(null);
 			}
