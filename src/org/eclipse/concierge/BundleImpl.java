@@ -1966,8 +1966,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 						}
 						hasMatch = true;
 					}
-					p = n = v = l = false;
-					no_p = no_n = no_v = no_l = true;
+					p = n = v = l = s = false;
+					no_p = no_n = no_v = no_l = no_s = true;
 					libs.clear();
 				}
 			}
