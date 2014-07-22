@@ -4484,9 +4484,11 @@ public final class Concierge extends AbstractBundle implements Framework,
 			final AbstractBundle b = bundle;
 
 			frameworkListeners.remove(listener);
-			b.registeredFrameworkListeners.remove(listener);
-			if (b.registeredFrameworkListeners.isEmpty()) {
-				b.registeredFrameworkListeners = null;
+			if(b.registeredFrameworkListeners!=null){
+				b.registeredFrameworkListeners.remove(listener);
+				if (b.registeredFrameworkListeners.isEmpty()) {
+					b.registeredFrameworkListeners = null;
+				}
 			}
 		}
 
