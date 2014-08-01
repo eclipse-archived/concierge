@@ -1697,7 +1697,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 						toProcess[toProcess.length - j - 1].stopBundle();
 					}
 				} catch (final BundleException be) {
-					be.getNestedException().printStackTrace();
+					if(be.getNestedException()!=null)
+						be.getNestedException().printStackTrace();
 					be.printStackTrace();
 					notifyFrameworkListeners(FrameworkEvent.ERROR,
 							up ? toProcess[j] : toProcess[toProcess.length - j
