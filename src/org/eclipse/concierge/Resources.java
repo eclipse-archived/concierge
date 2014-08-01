@@ -276,10 +276,10 @@ public class Resources {
 	static class HostedBundleCapability implements HostedCapability,
 			BundleCapability {
 
-		private final Revision host;
+		private final BundleRevision host;
 		private final BundleCapability cap;
 
-		HostedBundleCapability(final Revision host, final Capability cap) {
+		HostedBundleCapability(final BundleRevision host, final Capability cap) {
 			this.host = host;
 			this.cap = (BundleCapability) cap;
 		}

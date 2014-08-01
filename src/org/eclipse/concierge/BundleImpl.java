@@ -335,6 +335,11 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					currentRevision.getSymbolicName(), this);
 			framework.location_bundles.put(location, this);
 		}
+		
+		// resolve if it is a framework extension
+		if(currentRevision.isFrameworkExtension()){
+			currentRevision.resolve(false);
+		}
 	}
 
 	/**
@@ -1747,8 +1752,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 		 * @category BundleRevision
 		 */
 		public List<Capability> getCapabilities(final String namespace) {
-			// FIXME
-			return new ArrayList<Capability>(getDeclaredCapabilities(namespace));
+			return Collections.unmodifiableList(new ArrayList<Capability>(getDeclaredCapabilities(namespace)));
 		}
 
 		/**
@@ -1756,9 +1760,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 		 * @category BundleRevision
 		 */
 		public List<Requirement> getRequirements(final String namespace) {
-			// FIXME
-			return new ArrayList<Requirement>(
-					getDeclaredRequirements(namespace));
+			return Collections.unmodifiableList(new ArrayList<Requirement>(
+					getDeclaredRequirements(namespace)));
 		}
 
 		protected boolean resolve(final boolean critical)

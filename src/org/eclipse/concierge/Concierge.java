@@ -1030,11 +1030,23 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 		}
 
+		// system bundle symbolic name
 		final BundleCapabilityImpl sysbundleCap = new BundleCapabilityImpl(
 				this, "osgi.wiring.bundle; osgi.wiring.bundle="
 						+ Constants.SYSTEM_BUNDLE_SYMBOLICNAME);
 		systemBundleCapabilities.add(sysbundleCap);
+		
+		// default org.wiring.host property
+		final BundleCapabilityImpl sysbundleDefaultHostCap = new BundleCapabilityImpl(
+				this, "osgi.wiring.host; osgi.wiring.host="
+						+ Constants.SYSTEM_BUNDLE_SYMBOLICNAME);
+		systemBundleCapabilities.add(sysbundleDefaultHostCap);
 
+		// concierge specific org.wiring.host property
+		final BundleCapabilityImpl sysbundleHostCap = new BundleCapabilityImpl(
+				this, "osgi.wiring.host; osgi.wiring.host=org.eclipse.concierge");
+		systemBundleCapabilities.add(sysbundleHostCap);
+		
 		publishCapabilities(systemBundleCapabilities);
 
 		// add to framework wiring
@@ -1722,7 +1734,17 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 * @category BundleRevision
 	 */
 	public List<BundleCapability> getDeclaredCapabilities(final String namespace) {
-		return Collections.unmodifiableList(systemBundleCapabilities);
+		final ArrayList<BundleCapability> filteredCapabilities = new ArrayList<BundleCapability>();
+		if(namespace!=null){
+			for(BundleCapability c : systemBundleCapabilities){
+				if(c.getNamespace().equals(namespace)){
+					filteredCapabilities.add(c);
+				}
+			}
+		} else {
+			filteredCapabilities.addAll(systemBundleCapabilities);
+		}
+		return Collections.unmodifiableList(filteredCapabilities);
 	}
 
 	/**
@@ -1756,8 +1778,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 * @category BundleRevision
 	 */
 	public List<Capability> getCapabilities(final String namespace) {
-		return Collections.unmodifiableList(new ArrayList<Capability>(
-				systemBundleCapabilities));
+		return Collections.unmodifiableList(new ArrayList<Capability>(getDeclaredCapabilities(namespace)));
 	}
 
 	/**
@@ -2297,24 +2318,38 @@ public final class Concierge extends AbstractBundle implements Framework,
 					final List<Wire> wires = solution.get(resource);
 
 					final boolean isFragment = revision.isFragment();
-					/*
-					 * if (isFragment) { boolean attached = false; for (final
-					 * Iterator<Wire> iter = wires.iterator(); iter .hasNext();)
-					 * { final Wire wire = iter.next();
-					 * 
-					 * // scan the wires for host namespace wires if
-					 * (HostNamespace.HOST_NAMESPACE.equals(wire
-					 * .getRequirement().getNamespace())) { final Revision host
-					 * = (Revision) wire .getProvider(); try {
-					 * host.attachFragment(revision); attached = true; } catch
-					 * (final BundleException be) { // TODO: remove
-					 * be.printStackTrace(); notifyFrameworkListeners(
-					 * FrameworkEvent.ERROR, revision.getBundle(), be);
-					 * iter.remove(); } } } if (!attached) { continue; }
-					 * 
-					 * // fragment has been attached to at least one host => //
-					 * becomes resolved. revision.markResolved(); }
-					 */
+					
+					if (isFragment) { 
+						boolean attached = false; 
+						for (final Iterator<Wire> iter = wires.iterator(); iter .hasNext();){ 
+							final Wire wire = iter.next();
+					 
+							// scan the wires for host namespace wires 
+							if(HostNamespace.HOST_NAMESPACE.equals(wire.getRequirement().getNamespace())) {
+			
+								if(wire.getProvider() instanceof Revision){
+									final Revision host = (Revision) wire.getProvider(); 
+									try {
+										host.attachFragment(revision); 
+										attached = true; 
+									} catch (final BundleException be) { // TODO: remove
+										be.printStackTrace(); 
+									}
+								} else {
+									// host is system bundle, check extensionBundles
+									if(extensionBundles.contains((BundleImpl)revision.getBundle())){
+										attached = true;
+									}
+								}
+							} 
+						} if (!attached) { 
+							continue; 
+						}
+					 
+						// fragment has been attached to at least one host => becomes resolved. 
+						revision.markResolved(); 
+					}
+					
 
 					final ConciergeBundleWiring wiring;
 					if (revision.getWiring() == null) {
@@ -2755,20 +2790,24 @@ public final class Concierge extends AbstractBundle implements Framework,
 				for (final Capability capability : candidates) {
 					if (isFragment) {
 						final Revision revision = (Revision) resource;
-						final Revision host = (Revision) capability
-								.getResource();
-						try {
-							if (!host.attachFragment(revision)) {
+						if(capability.getResource() instanceof Revision){
+							final Revision host = (Revision) capability
+									.getResource();
+							try {
+								if (!host.attachFragment(revision)) {
+									continue;
+								}
+							} catch (final BundleException be) {
+								// cannot attach
 								continue;
 							}
-						} catch (final BundleException be) {
-							// cannot attach
-							continue;
+						} else {
+							// case of system bundle extension is handled in Concierge.addFragment
 						}
 
 						resolved = true;
 
-						hostFragment(context, revision, host, solution);
+						hostFragment(context, revision, (BundleRevision) capability.getResource(), solution);
 
 						// dont' trigger resolution of the host
 						continue;
@@ -2852,8 +2891,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 							for (final BundleCapability implied : impliedConstraints) {
 								for (final Requirement req : requirements) {
 									if (matches(req, implied)) {
-										System.err.println("MATCH MATCH");
-
 										for (final Map.Entry<Resource, List<Wire>> entry : newWires
 												.entrySet()) {
 											for (final Iterator<Wire> iter = entry
@@ -2946,7 +2983,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 		}
 
 		private void hostFragment(final ResolveContext context,
-				final Revision fragment, final Revision host,
+				final BundleRevision fragment, final BundleRevision host,
 				final MultiMap<Resource, Wire> solution) {
 			// host the capabilities
 			for (final Capability cap : fragment.getCapabilities(null)) {
@@ -2955,7 +2992,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 					final HostedBundleCapability hostedCap = new HostedBundleCapability(
 							host, cap);
 
-					context.insertHostedCapability(host.getCapabilities(null),
+					context.insertHostedCapability(new ArrayList<Capability>(host.getCapabilities(PackageNamespace.PACKAGE_NAMESPACE)),
 							hostedCap);
 				}
 			}
