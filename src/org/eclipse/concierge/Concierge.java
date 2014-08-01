@@ -533,7 +533,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 				"java.*, sun.*, com.sun.*");
 		defaultProperties.setProperty(Constants.FRAMEWORK_BUNDLE_PARENT,
 				Constants.FRAMEWORK_BUNDLE_PARENT_BOOT);
-		defaultProperties.setProperty(Constants.FRAMEWORK_EXECPERMISSION, "");
 		defaultProperties.setProperty(Constants.FRAMEWORK_BEGINNING_STARTLEVEL,
 				"1");
 
