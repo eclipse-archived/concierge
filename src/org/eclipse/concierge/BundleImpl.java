@@ -2508,11 +2508,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 						final BundleCapabilityImpl cap = (BundleCapabilityImpl) delegation
 								.getCapability();
 						if (!cap.hasExcludes() || cap.filter(classOf(name))) {
-							if (delegation.getProvider() instanceof Revision) {
-								return ((Revision) delegation.getProvider()).classloader
-										.findResource1(pkg, name, isClass,
-												multiple, resources);
-							} else {
+							if (delegation.getProvider().getBundle().getBundleId() == 0) {
 								// system bundle
 								if (isClass) {
 									return framework.systemBundleClassLoader.loadClass(name);
@@ -2532,6 +2528,10 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 										return framework.systemBundleClassLoader.getResource(name);
 									}
 								}
+							} else {
+								return ((Revision) delegation.getProvider()).classloader
+										.findResource1(pkg, name, isClass,
+												multiple, resources);
 							}
 						}
 					}
@@ -2573,12 +2573,17 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					final HashSet<Bundle> visited = new HashSet<Bundle>();
 					visited.add(BundleImpl.this);
 					for (final BundleWire wire : requireBundleWires) {
-						final Object result = ((Revision) wire.getProvider()).classloader
-								.requireBundleLookup(pkg, name, isClass,
-										multiple, resources, visited);
-						if (!multiple && result != null) {
-							return isClass ? checkActivationChain(result)
-									: result;
+						if (wire.getProvider().getBundle().getBundleId() == 0) {
+							// if provider is system bundle: nothing 
+							// to do as system bundle is yet loaded
+						} else {
+							final Object result = ((Revision) wire.getProvider()).classloader
+									.requireBundleLookup(pkg, name, isClass,
+											multiple, resources, visited);
+							if (!multiple && result != null) {
+								return isClass ? checkActivationChain(result)
+										: result;
+							}
 						}
 					}
 				}
