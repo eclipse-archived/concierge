@@ -3497,11 +3497,10 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 									filePattern.toCharArray(), 0,
 									basename.toCharArray(), 0) == 0) {
 						try {
+							final String absPath = toTest.getAbsolutePath();
 							results.add(createURL(
-									toTest.getAbsolutePath()
-											.substring(
-													(storageLocation + File.separatorChar)
-															.length()), null));
+									 absPath.substring(absPath.indexOf(storageLocation)
+									         +(storageLocation).length() + 1), null));
 						} catch (final IOException ex) {
 							// do nothing, URL will not be added to
 							// results
