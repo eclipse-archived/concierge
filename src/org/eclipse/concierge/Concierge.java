@@ -801,8 +801,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 		// remove the fast paths
 		bdsRel.remove("java.");
-		bdsRel.remove("sun.");
-		bdsRel.remove("com.sun.");
 
 		bootdelegationAbs = bdsAbs.toArray(new String[bdsAbs.size()]);
 		bootdelegationPrefix = bdsRel.toArray(new String[bdsRel.size()]);
