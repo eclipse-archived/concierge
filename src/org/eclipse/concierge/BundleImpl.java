@@ -2771,6 +2771,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					clazz = findLoadedClass(classname);
 				}
 				if (clazz != null) {
+					definePackage(packageOf(classname));
 					return clazz;
 				}
 				try {
@@ -2818,6 +2819,9 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 								return ownClazz;
 							}
 
+							// define package
+							definePackage(packageOf(classname));
+							
 							return defineClass(classname, bytes, 0,
 									bytes.length, domain);
 						} catch (final IOException ioe) {
@@ -3005,6 +3009,15 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 				}
 				return null;
+			}
+			
+			private void definePackage(String pkg){
+				// TODO fill in version/spec/vendor attributes according to bundle manifest headers?
+				try {
+					definePackage(pkg, null, null, null, null, null, null, null);
+				} catch(IllegalArgumentException e){
+					// ignore
+				}
 			}
 		}
 
