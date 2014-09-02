@@ -700,7 +700,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 			}
 			parentClassLoader = c;
 		} else {
-			parentClassLoader = new ClassLoader(null) {
+			parentClassLoader = new ClassLoader(Object.class.getClassLoader()) {
 			};
 		}
 
