@@ -2240,22 +2240,24 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				longer = list2;
 			}
 
+			// JR: commented out due to regression
+			// TODO: investigate further
 			final Set<String> index = new HashSet<String>();
 			for (final T element : longer) {
-				if (!element.getAttributes().isEmpty()) {
+				//if (!element.getAttributes().isEmpty()) {
 					index.add((String) element.getAttributes().get(namespace));
-				}
+				//}
 			}
 
 			for (final T element : shorter) {
-				if (!element.getAttributes().isEmpty()) {
+				//if (!element.getAttributes().isEmpty()) {
 					if (index.contains(element.getAttributes().get(namespace))) {
 						throw new BundleException("Conflicting " + s
 								+ " statement "
 								+ element.getAttributes().get(namespace) + " from "
 								+ element, BundleException.RESOLVE_ERROR);
 					}
-				}
+				//}
 			}
 		}
 
