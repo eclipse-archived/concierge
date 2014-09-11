@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.concierge.compat.packageadmin;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -49,12 +50,15 @@ final class PackageAdminImpl implements PackageAdmin {
 	 * @see org.osgi.service.packageadmin.PackageAdmin#getExportedPackages(org.osgi.framework.Bundle)
 	 */
 	public ExportedPackage[] getExportedPackages(final Bundle bundle) {
+		if (bundle == null) {
+			return getExportedPackages((String) null);
+		}
 
 		final ArrayList<ExportedPackage> result = new ArrayList<ExportedPackage>();
 
 		getExportedPackages0(bundle, null, result);
 
-		return toArrayOrNull(result);
+		return toArrayOrNull(result, ExportedPackage.class);
 	}
 
 	/**
@@ -69,15 +73,26 @@ final class PackageAdminImpl implements PackageAdmin {
 			getExportedPackages0(bundle, name, result);
 		}
 
-		return toArrayOrNull(result);
+		return toArrayOrNull(result, ExportedPackage.class);
 	}
 
 	private void getExportedPackages0(final Bundle bundle, final String name,
 			final ArrayList<ExportedPackage> result) {
+		if (bundle == null) {
+			throw new IllegalArgumentException("bundle==null");
+		}
+		if (result == null) {
+			throw new IllegalArgumentException("result==null");
+		}
+
 		final BundleWiring wiring = bundle.adapt(BundleWiring.class);
 
 		final List<BundleWire> wires = wiring
 				.getProvidedWires(PackageNamespace.PACKAGE_NAMESPACE);
+
+		if (wires == null) {
+			return;
+		}
 
 		for (final BundleWire wire : wires) {
 			if (name == null
@@ -106,7 +121,7 @@ final class PackageAdminImpl implements PackageAdmin {
 	public void refreshPackages(final Bundle[] bundles) {
 		final FrameworkWiring wiring = getFrameworkWiring();
 
-		wiring.refreshBundles(Arrays.asList(bundles));
+		wiring.refreshBundles(bundles == null ? null : Arrays.asList(bundles));
 	}
 
 	/**
@@ -115,7 +130,8 @@ final class PackageAdminImpl implements PackageAdmin {
 	public boolean resolveBundles(final Bundle[] bundles) {
 		final FrameworkWiring wiring = getFrameworkWiring();
 
-		return wiring.resolveBundles(Arrays.asList(bundles));
+		return wiring.resolveBundles(bundles == null ? null : Arrays
+				.asList(bundles));
 	}
 
 	/**
@@ -143,7 +159,7 @@ final class PackageAdminImpl implements PackageAdmin {
 			}
 		}
 
-		return toArrayOrNull(result);
+		return toArrayOrNull(result, RequiredBundle.class);
 	}
 
 	private void addRequiringBundles(final BundleWiring wiring,
@@ -270,11 +286,12 @@ final class PackageAdminImpl implements PackageAdmin {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T> T[] toArrayOrNull(final List<T> l) {
+	private <T> T[] toArrayOrNull(final List<T> l, final Class<T> t) {
 		if (l == null || l.isEmpty()) {
 			return null;
 		}
-		return (T[]) l.toArray();
+
+		return l.toArray((T[]) Array.newInstance(t, l.size()));
 	}
 
 	private class ExportedPackageImpl implements ExportedPackage {
@@ -317,7 +334,7 @@ final class PackageAdminImpl implements PackageAdmin {
 
 			addRequiringBundles(wiring, result);
 
-			return toArrayOrNull(result);
+			return toArrayOrNull(result, Bundle.class);
 		}
 
 		/**
@@ -343,6 +360,11 @@ final class PackageAdminImpl implements PackageAdmin {
 			final BundleRevision rev = cap.getResource();
 			return rev.getBundle().getState() == Bundle.UNINSTALLED
 					|| rev.getBundle().adapt(BundleRevision.class) != rev;
+		}
+
+		@Override
+		public String toString() {
+			return cap.toString();
 		}
 
 	}
@@ -378,7 +400,7 @@ final class PackageAdminImpl implements PackageAdmin {
 			final BundleWiring wiring = rev.getWiring();
 			addRequiringBundles(wiring, result);
 
-			return toArrayOrNull(result);
+			return toArrayOrNull(result, Bundle.class);
 		}
 
 		/**
