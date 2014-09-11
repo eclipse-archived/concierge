@@ -1,0 +1,15 @@
+<project name="org.eclipse.concierge.buildroot" default="build">
+
+<target name="build">
+
+    <subant buildpath="org.eclipse.concierge" />
+    <subant buildpath="org.eclipse.concierge.packageadmin" />
+
+</target>
+
+<target name="clean">
+    <subant buildpath="org.eclipse.concierge" target="clean"/>
+    <subant buildpath="org.eclipse.concierge.packageadmin" target="clean" />
+</target>
+
+</project>
