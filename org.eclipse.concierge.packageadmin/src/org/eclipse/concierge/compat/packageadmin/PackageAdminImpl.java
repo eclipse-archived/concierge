@@ -28,9 +28,11 @@ import org.osgi.framework.namespace.HostNamespace;
 import org.osgi.framework.namespace.PackageNamespace;
 import org.osgi.framework.wiring.BundleCapability;
 import org.osgi.framework.wiring.BundleRevision;
+import org.osgi.framework.wiring.BundleRevisions;
 import org.osgi.framework.wiring.BundleWire;
 import org.osgi.framework.wiring.BundleWiring;
 import org.osgi.framework.wiring.FrameworkWiring;
+import org.osgi.resource.Capability;
 import org.osgi.service.packageadmin.ExportedPackage;
 import org.osgi.service.packageadmin.PackageAdmin;
 import org.osgi.service.packageadmin.RequiredBundle;
@@ -84,9 +86,53 @@ final class PackageAdminImpl implements PackageAdmin {
 		if (result == null) {
 			throw new IllegalArgumentException("result==null");
 		}
+		
+		if (bundle.getState() == Bundle.INSTALLED) {
+			final BundleRevision rev = bundle.adapt(BundleRevision.class);
+			for (final Capability cap : rev.getCapabilities(PackageNamespace.PACKAGE_NAMESPACE)) {
+				if (name == null
+						|| name.equals(cap.getAttributes()
+								.get(PackageNamespace.PACKAGE_NAMESPACE))) {
+					result.add(new ExportedPackageImpl((BundleCapability)cap));
+				}
+			}
+			return;
+		}
+		
+		if (bundle.getState() == Bundle.UNINSTALLED) {
+			final List<BundleRevision> revs = bundle.adapt(BundleRevisions.class).getRevisions();
+			if (revs.isEmpty()) {
+				return;
+			}
+			
+			BundleRevision rev = null;
+			
+			for (final BundleRevision r : revs) {
+				if (r.getWiring().isInUse()) {
+					rev = r;
+				}
+			}
+			if (rev == null) {
+				return;
+			}
+			
+			for (final Capability cap : rev.getCapabilities(PackageNamespace.PACKAGE_NAMESPACE)) {
+				if (name == null
+						|| name.equals(cap.getAttributes()
+								.get(PackageNamespace.PACKAGE_NAMESPACE))) {
+					result.add(new ExportedPackageImpl((BundleCapability)cap));
+				}
+			}
+			return;
 
+		}
+		
 		final BundleWiring wiring = bundle.adapt(BundleWiring.class);
 
+		if (wiring == null) {
+			return;
+		}
+		
 		final List<BundleWire> wires = wiring
 				.getProvidedWires(PackageNamespace.PACKAGE_NAMESPACE);
 

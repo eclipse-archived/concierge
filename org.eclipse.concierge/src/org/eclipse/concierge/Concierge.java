@@ -1033,7 +1033,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 				this, "osgi.wiring.bundle; osgi.wiring.bundle="
 						+ Constants.SYSTEM_BUNDLE_SYMBOLICNAME);
 		systemBundleCapabilities.add(sysbundleCap);
-		
+
 		// default org.wiring.host property
 		final BundleCapabilityImpl sysbundleDefaultHostCap = new BundleCapabilityImpl(
 				this, "osgi.wiring.host; osgi.wiring.host="
@@ -1042,9 +1042,10 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 		// concierge specific org.wiring.host property
 		final BundleCapabilityImpl sysbundleHostCap = new BundleCapabilityImpl(
-				this, "osgi.wiring.host; osgi.wiring.host=org.eclipse.concierge");
+				this,
+				"osgi.wiring.host; osgi.wiring.host=org.eclipse.concierge");
 		systemBundleCapabilities.add(sysbundleHostCap);
-		
+
 		publishCapabilities(systemBundleCapabilities);
 
 		// add to framework wiring
@@ -1089,14 +1090,17 @@ public final class Concierge extends AbstractBundle implements Framework,
 		for (final String pkg : pkgs) {
 			final String[] literals = Utils.splitString(pkg, ';');
 
-			if(literals.length > 0){
-				final ParseResult parseResult = Utils.parseLiterals(literals, 1);
-				final HashMap<String, Object> attrs = parseResult.getAttributes();
-				attrs.put(PackageNamespace.PACKAGE_NAMESPACE, literals[0].trim());
+			if (literals.length > 0) {
+				final ParseResult parseResult = Utils
+						.parseLiterals(literals, 1);
+				final HashMap<String, Object> attrs = parseResult
+						.getAttributes();
+				attrs.put(PackageNamespace.PACKAGE_NAMESPACE,
+						literals[0].trim());
 				systemBundleCapabilities.add(new BundleCapabilityImpl(this,
 						PackageNamespace.PACKAGE_NAMESPACE, parseResult
-								.getDirectives(), attrs, Constants.EXPORT_PACKAGE
-								+ ' ' + pkg));
+								.getDirectives(), attrs,
+						Constants.EXPORT_PACKAGE + ' ' + pkg));
 			}
 		}
 	}
@@ -1707,7 +1711,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 						toProcess[toProcess.length - j - 1].stopBundle();
 					}
 				} catch (final BundleException be) {
-					if(be.getNestedException()!=null)
+					if (be.getNestedException() != null)
 						be.getNestedException().printStackTrace();
 					be.printStackTrace();
 					notifyFrameworkListeners(FrameworkEvent.ERROR,
@@ -1733,9 +1737,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 */
 	public List<BundleCapability> getDeclaredCapabilities(final String namespace) {
 		final ArrayList<BundleCapability> filteredCapabilities = new ArrayList<BundleCapability>();
-		if(namespace!=null){
-			for(BundleCapability c : systemBundleCapabilities){
-				if(c.getNamespace().equals(namespace)){
+		if (namespace != null) {
+			for (BundleCapability c : systemBundleCapabilities) {
+				if (c.getNamespace().equals(namespace)) {
 					filteredCapabilities.add(c);
 				}
 			}
@@ -1776,7 +1780,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 * @category BundleRevision
 	 */
 	public List<Capability> getCapabilities(final String namespace) {
-		return Collections.unmodifiableList(new ArrayList<Capability>(getDeclaredCapabilities(namespace)));
+		return Collections.unmodifiableList(new ArrayList<Capability>(
+				getDeclaredCapabilities(namespace)));
 	}
 
 	/**
@@ -1798,155 +1803,158 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 		new Thread() {
 			public void run() {
-				synchronized (Concierge.this) {
-					Bundle[] initial;
+				try {
+					synchronized (Concierge.this) {
+						Bundle[] initial;
 
-					// build the initial set of bundles
-					if (bundleCollection == null) {
-						initial = bundles.toArray(new Bundle[bundles.size()]);
-					} else {
-						initial = bundleCollection
-								.toArray(new Bundle[bundleCollection.size()]);
-					}
-
-					final ArrayList<Bundle> toProcess = new ArrayList<Bundle>();
-
-					// filter out those which need to be updated
-					for (int i = 0; i < initial.length; i++) {
-						if (initial[i] == Concierge.this) {
-							// don't process (stop/start)
-							continue;
-						}
-						if (initial[i].getState() == Bundle.INSTALLED) {
-							continue;
-						}
-						final BundleImpl theBundle = (BundleImpl) initial[i];
+						// build the initial set of bundles
 						if (bundleCollection == null) {
-							if (theBundle.currentRevision == null
-									|| theBundle.currentRevision != theBundle.revisions
-											.get(0)) {
-								toProcess.add(theBundle);
-							} else if (theBundle.currentRevision.fragments != null) {
-								for (final Revision fragment : theBundle.currentRevision.fragments) {
-									if (fragment.getBundle().getState() == Bundle.UNINSTALLED) {
-										toProcess.add(initial[i]);
-										break;
+							initial = bundles
+									.toArray(new Bundle[bundles.size()]);
+						} else {
+							initial = bundleCollection
+									.toArray(new Bundle[bundleCollection.size()]);
+						}
+
+						final ArrayList<Bundle> toProcess = new ArrayList<Bundle>();
+
+						// filter out those which need to be updated
+						for (int i = 0; i < initial.length; i++) {
+							if (initial[i] == Concierge.this) {
+								// don't process (stop/start)
+								continue;
+							}
+							if (initial[i].getState() == Bundle.INSTALLED) {
+								continue;
+							}
+							final BundleImpl theBundle = (BundleImpl) initial[i];
+							if (bundleCollection == null) {
+								if (theBundle.currentRevision == null
+										|| theBundle.currentRevision != theBundle.revisions
+												.get(0)) {
+									toProcess.add(theBundle);
+								} else if (theBundle.currentRevision.fragments != null) {
+									for (final Revision fragment : theBundle.currentRevision.fragments) {
+										if (fragment.getBundle().getState() == Bundle.UNINSTALLED) {
+											toProcess.add(initial[i]);
+											break;
+										}
 									}
 								}
+							} else {
+								// bundleArray has entries which should be
+								// processed anyway
+								toProcess.add(initial[i]);
 							}
-						} else {
-							// bundleArray has entries which should be
-							// processed anyway
-							toProcess.add(initial[i]);
 						}
-					}
 
-					// nothing to do ? fine, so we are done.
-					if (toProcess.isEmpty()) {
+						// nothing to do ? fine, so we are done.
+						if (toProcess.isEmpty()) {
+							notifyListeners(FrameworkEvent.PACKAGES_REFRESHED,
+									Concierge.this, null);
+
+							return;
+						}
+
+						if (LOG_ENABLED && DEBUG_PACKAGES) {
+							logger.log(LogService.LOG_DEBUG,
+									"REFRESHING PACKAGES FROM BUNDLES "
+											+ toProcess);
+						}
+
+						final Collection<Bundle> updateGraph = getDependencyClosure(toProcess);
+
+						if (LOG_ENABLED && DEBUG_PACKAGES) {
+							logger.log(LogService.LOG_DEBUG, "UPDATE GRAPH IS "
+									+ updateGraph);
+						}
+
+						final ArrayList<Bundle> tmp = new ArrayList<Bundle>(
+								updateGraph);
+						Collections.sort(tmp);
+						final Bundle[] refreshArray = tmp
+								.toArray(new Bundle[tmp.size()]);
+
+						// stop all bundles in the restart array regarding their
+						// startlevels
+
+						// perform a cleanup for all bundles
+						// CLEANUP
+						final List<Bundle> restartList = new ArrayList<Bundle>();
+
+						for (int i = 0; i < refreshArray.length; i++) {
+							final BundleImpl bu = (BundleImpl) refreshArray[i];
+							try {
+								if (bu.state == ACTIVE) {
+									bu.stop();
+
+									restartList.add(bu);
+								}
+
+								if (bu.state == RESOLVED) {
+									bu.state = INSTALLED;
+								}
+
+								// bundle needs to be refreshed
+								bu.refresh();
+
+								if (bu.state == UNINSTALLED) {
+									// bundle is uninstalled
+									bundles.remove(bu);
+								} else {
+									notifyBundleListeners(
+											BundleEvent.UNRESOLVED, bu);
+								}
+							} catch (final Exception e) {
+								notifyListeners(FrameworkEvent.ERROR,
+										refreshArray[i], e);
+							}
+						}
+
+						// resolve, if possible
+						// FIXME: should be bulk operation
+
+						for (final Iterator<Bundle> resolveIter = restartList
+								.iterator(); resolveIter.hasNext();) {
+							final BundleImpl bu = (BundleImpl) resolveIter
+									.next();
+							try {
+								if (bu.state == Bundle.INSTALLED) {
+									final boolean success = bu.currentRevision
+											.resolve(false);
+									if (!success) {
+										resolveIter.remove();
+									}
+								}
+							} catch (final Exception e) {
+								resolveIter.remove();
+								notifyListeners(FrameworkEvent.ERROR, bu, e);
+							}
+						}
+
+						// restart all bundles regarding their startlevels
+						for (final Bundle bu : restartList) {
+							try {
+								bu.start();
+							} catch (final Exception e) {
+								notifyListeners(FrameworkEvent.ERROR, bu, e);
+							}
+						}
+
 						notifyListeners(FrameworkEvent.PACKAGES_REFRESHED,
 								Concierge.this, null);
-
-						return;
-					}
-
-					if (LOG_ENABLED && DEBUG_PACKAGES) {
-						logger.log(LogService.LOG_DEBUG,
-								"REFRESHING PACKAGES FROM BUNDLES " + toProcess);
-					}
-
-					final Collection<Bundle> updateGraph = getDependencyClosure(toProcess);
-
-					if (LOG_ENABLED && DEBUG_PACKAGES) {
-						logger.log(LogService.LOG_DEBUG, "UPDATE GRAPH IS "
-								+ updateGraph);
-					}
-
-					final ArrayList<Bundle> tmp = new ArrayList<Bundle>(
-							updateGraph);
-					Collections.sort(tmp);
-					final Bundle[] refreshArray = tmp.toArray(new Bundle[tmp
-							.size()]);
-
-					// stop all bundles in the restart array regarding their
-					// startlevels
-
-					// perform a cleanup for all bundles
-					// CLEANUP
-					final List<Bundle> restartList = new ArrayList<Bundle>();
-
-					for (int i = 0; i < refreshArray.length; i++) {
-						final BundleImpl bu = (BundleImpl) refreshArray[i];
-						try {
-							if (bu.state == ACTIVE) {
-								bu.stop();
-
-								restartList.add(bu);
-							}
-
-							if (bu.state == RESOLVED) {
-								bu.state = INSTALLED;
-							}
-
-							// bundle needs to be refreshed
-							bu.refresh();
-
-							if (bu.state == UNINSTALLED) {
-								// bundle is uninstalled
-								bundles.remove(bu);
-							} else {
-								notifyBundleListeners(BundleEvent.UNRESOLVED,
-										bu);
-							}
-						} catch (final Exception e) {
-							notifyListeners(FrameworkEvent.ERROR,
-									refreshArray[i], e);
-						}
-					}
-
-					// resolve, if possible
-					// FIXME: should be bulk operation
-
-					for (final Iterator<Bundle> resolveIter = restartList
-							.iterator(); resolveIter.hasNext();) {
-						final BundleImpl bu = (BundleImpl) resolveIter.next();
-						try {
-							if (bu.state == Bundle.INSTALLED) {
-								final boolean success = bu.currentRevision
-										.resolve(false);
-								if (!success) {
-									resolveIter.remove();
-								}
-							}
-						} catch (final Exception e) {
-							resolveIter.remove();
-							notifyListeners(FrameworkEvent.ERROR, bu, e);
-						}
-					}
-
-					// restart all bundles regarding their startlevels
-					for (final Bundle bu : restartList) {
-						try {
-							bu.start();
-						} catch (final Exception e) {
-							notifyListeners(FrameworkEvent.ERROR, bu, e);
-						}
-					}
-
-					notifyListeners(FrameworkEvent.PACKAGES_REFRESHED,
-							Concierge.this, null);
+					} // end synchronized statement
+				} catch (final Throwable t) {
+					// TODO: to log
+					t.printStackTrace();
 				}
-			} // end synchronized statement
+			}
 
 			private void notifyListeners(final int type, final Bundle b,
 					final Exception e) {
-				switch (type) {
-				case FrameworkEvent.PACKAGES_REFRESHED:
-					break;
-				case FrameworkEvent.ERROR:
+				if (type == FrameworkEvent.ERROR) {
+					// TODO: to log
 					e.printStackTrace();
-					break;
-				default:
-					System.out.println(type);
 				}
 
 				notifyFrameworkListeners(type, b, e);
@@ -2316,38 +2324,46 @@ public final class Concierge extends AbstractBundle implements Framework,
 					final List<Wire> wires = solution.get(resource);
 
 					final boolean isFragment = revision.isFragment();
-					
-					if (isFragment) { 
-						boolean attached = false; 
-						for (final Iterator<Wire> iter = wires.iterator(); iter .hasNext();){ 
+
+					if (isFragment) {
+						boolean attached = false;
+						for (final Iterator<Wire> iter = wires.iterator(); iter
+								.hasNext();) {
 							final Wire wire = iter.next();
-					 
-							// scan the wires for host namespace wires 
-							if(HostNamespace.HOST_NAMESPACE.equals(wire.getRequirement().getNamespace())) {
-			
-								if(wire.getProvider() instanceof Revision){
-									final Revision host = (Revision) wire.getProvider(); 
+
+							// scan the wires for host namespace wires
+							if (HostNamespace.HOST_NAMESPACE.equals(wire
+									.getRequirement().getNamespace())) {
+
+								if (wire.getProvider() instanceof Revision) {
+									final Revision host = (Revision) wire
+											.getProvider();
 									try {
-										host.attachFragment(revision); 
-										attached = true; 
-									} catch (final BundleException be) { // TODO: remove
-										be.printStackTrace(); 
+										host.attachFragment(revision);
+										attached = true;
+									} catch (final BundleException be) { // TODO:
+																			// remove
+										be.printStackTrace();
 									}
 								} else {
-									// host is system bundle, check extensionBundles
-									if(extensionBundles.contains((BundleImpl)revision.getBundle())){
+									// host is system bundle, check
+									// extensionBundles
+									if (extensionBundles
+											.contains((BundleImpl) revision
+													.getBundle())) {
 										attached = true;
 									}
 								}
-							} 
-						} if (!attached) { 
-							continue; 
+							}
 						}
-					 
-						// fragment has been attached to at least one host => becomes resolved. 
-						revision.markResolved(); 
+						if (!attached) {
+							continue;
+						}
+
+						// fragment has been attached to at least one host =>
+						// becomes resolved.
+						revision.markResolved();
 					}
-					
 
 					final ConciergeBundleWiring wiring;
 					if (revision.getWiring() == null) {
@@ -2788,7 +2804,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 				for (final Capability capability : candidates) {
 					if (isFragment) {
 						final Revision revision = (Revision) resource;
-						if(capability.getResource() instanceof Revision){
+						if (capability.getResource() instanceof Revision) {
 							final Revision host = (Revision) capability
 									.getResource();
 							try {
@@ -2800,12 +2816,15 @@ public final class Concierge extends AbstractBundle implements Framework,
 								continue;
 							}
 						} else {
-							// case of system bundle extension is handled in Concierge.addFragment
+							// case of system bundle extension is handled in
+							// Concierge.addFragment
 						}
 
 						resolved = true;
 
-						hostFragment(context, revision, (BundleRevision) capability.getResource(), solution);
+						hostFragment(context, revision,
+								(BundleRevision) capability.getResource(),
+								solution);
 
 						// dont' trigger resolution of the host
 						continue;
@@ -2990,7 +3009,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 					final HostedBundleCapability hostedCap = new HostedBundleCapability(
 							host, cap);
 
-					context.insertHostedCapability(new ArrayList<Capability>(host.getCapabilities(PackageNamespace.PACKAGE_NAMESPACE)),
+					context.insertHostedCapability(
+							new ArrayList<Capability>(
+									host.getCapabilities(PackageNamespace.PACKAGE_NAMESPACE)),
 							hostedCap);
 				}
 			}
@@ -3880,9 +3901,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 		public void addFrameworkListener(final FrameworkListener listener) {
 			checkValid();
 
-			if (bundle == Concierge.this) {
-				return;
-			}
+			//if (bundle == Concierge.this) {
+			//	return;
+			//}
 
 			if (bundle.registeredFrameworkListeners == null) {
 				bundle.registeredFrameworkListeners = new ArrayList<FrameworkListener>(
@@ -4519,7 +4540,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 			final AbstractBundle b = bundle;
 
 			frameworkListeners.remove(listener);
-			if(b.registeredFrameworkListeners!=null){
+			if (b.registeredFrameworkListeners != null) {
 				b.registeredFrameworkListeners.remove(listener);
 				if (b.registeredFrameworkListeners.isEmpty()) {
 					b.registeredFrameworkListeners = null;
