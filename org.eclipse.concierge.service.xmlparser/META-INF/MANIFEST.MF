@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: org.eclipse.concierge.service.xmlparser
+Bundle-SymbolicName: org.eclipse.concierge.service.xmlparser
+Bundle-Version: 1.0.0.alpha1
+Bundle-Activator: org.eclipse.concierge.service.xmlparser.internal.Activator
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
+Import-Package: javax.xml.parsers,
+ org.osgi.framework;version="1.7.0"
