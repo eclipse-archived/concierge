@@ -1050,7 +1050,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 		// add to framework wiring
 		wirings.put(this, new ConciergeBundleWiring(this, null));
-
+		
 		// initialize the system bundle services
 		registeredServices = new ArrayList<ServiceReference<?>>(2);
 
@@ -1801,6 +1801,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 			final FrameworkListener... listeners) {
 		// TODO: check AdminPermission(this, RESOLVE)
 
+		System.err.println("REQUESTING REFRESH OF " + bundleCollection);
+		
 		new Thread() {
 			public void run() {
 				try {
@@ -1848,6 +1850,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 							}
 						}
 
+						System.err.println("\tORDER: " + toProcess);
+						
 						// nothing to do ? fine, so we are done.
 						if (toProcess.isEmpty()) {
 							notifyListeners(FrameworkEvent.PACKAGES_REFRESHED,
@@ -1888,7 +1892,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 								if (bu.state == ACTIVE) {
 									bu.stop();
 
-									restartList.add(bu);
+									restartList.add(0, bu);
 								}
 
 								if (bu.state == RESOLVED) {
@@ -1911,6 +1915,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 							}
 						}
 
+						System.err.println("RESTART LIST: " + restartList);
+						
 						// resolve, if possible
 						// FIXME: should be bulk operation
 

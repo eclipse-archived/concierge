@@ -1838,8 +1838,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			}
 		}
 
-		@SuppressWarnings("unused")
-		private boolean isFrameworkExtension() {
+		protected boolean isFrameworkExtension() {
 			final List<BundleRequirement> hostReqs = requirements
 					.get(HostNamespace.HOST_NAMESPACE);
 			if (hostReqs == null) {
