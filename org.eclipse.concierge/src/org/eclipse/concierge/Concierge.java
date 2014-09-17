@@ -1975,7 +1975,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 		final ArrayList<BundleRevision> resources = new ArrayList<BundleRevision>();
 		boolean resolved = true;
 
-		for (final Bundle bundle : bundles) {
+		for (final Bundle bundle : (bundles == null ? Concierge.this.bundles
+				: bundles)) {
 			if (bundle.getState() == UNINSTALLED) {
 				resolved = false;
 				continue;
@@ -2242,7 +2243,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 					if (filterStr == null) {
 						final List<Capability> providers = capabilityRegistry
 								.getAll(requirement.getNamespace());
+						// FIXME: conditional
 						Collections.sort(providers, EXPORT_ORDER);
+
 						return providers;
 					}
 
@@ -2255,6 +2258,25 @@ public final class Concierge extends AbstractBundle implements Framework,
 									.equals(requirement.getNamespace())) {
 								Collections.sort(providers, EXPORT_ORDER);
 							}
+							if (BundleNamespace.BUNDLE_NAMESPACE
+									.equals(requirement.getNamespace())) {
+								// FIXME: cleanup
+								Collections.sort(providers,
+										new Comparator<Capability>() {
+
+											public int compare(Capability o1,
+													Capability o2) {
+												return ((Version) o2
+														.getAttributes()
+														.get(BundleNamespace.CAPABILITY_BUNDLE_VERSION_ATTRIBUTE))
+														.compareTo((Version) o1
+																.getAttributes()
+																.get(BundleNamespace.CAPABILITY_BUNDLE_VERSION_ATTRIBUTE));
+											}
+
+										});
+							}
+
 							return providers;
 						}
 
@@ -2311,6 +2333,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 			}, solution, unresolvedRequirements, unresolvedResources);
 
+			// TODO: introduce resolver debug flag
 			if (LOG_ENABLED) {
 				logger.log(LogService.LOG_DEBUG, "Solution: " + solution);
 			}
@@ -2393,23 +2416,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 					wirings.put(resource, wiring);
 				}
 			}
-
-			/*
-			 * // process the reciprocal wires for (final Resource provider :
-			 * reciprocal.keySet()) { final List<Wire> wires =
-			 * reciprocal.get(provider);
-			 * 
-			 * if (provider instanceof Revision) { final Revision revision =
-			 * (Revision) provider;
-			 * 
-			 * final ConciergeBundleWiring wiring; if (revision.getWiring() ==
-			 * null) { // set wiring for this bundle wiring = new
-			 * ConciergeBundleWiring(revision, wires);
-			 * revision.setWiring(wiring); } else { wiring =
-			 * revision.addAdditionalWires(wires); }
-			 * 
-			 * wirings.put(revision, wiring); } }
-			 */
 
 			if (unresolvedRequirements.isEmpty()
 					&& unresolvedResources.isEmpty()) {
@@ -2810,6 +2816,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 									.getResource();
 							try {
 								if (!host.attachFragment(revision)) {
+									resolved = true;
 									continue;
 								}
 							} catch (final BundleException be) {
