@@ -97,17 +97,18 @@ final class PackageAdminImpl implements PackageAdmin {
 		for (final BundleRevision r : revs) {
 			final BundleWiring wiring = r.getWiring();
 			if (wiring != null && wiring.isInUse()) {
-				for (final Capability cap : wiring.getCapabilities(PackageNamespace.PACKAGE_NAMESPACE)) {
+				for (final Capability cap : wiring
+						.getCapabilities(PackageNamespace.PACKAGE_NAMESPACE)) {
 					if (name == null
 							|| name.equals(cap.getAttributes().get(
 									PackageNamespace.PACKAGE_NAMESPACE))) {
-						result.add(new ExportedPackageImpl((BundleCapability) cap));
-					}					
+						result.add(new ExportedPackageImpl(
+								(BundleCapability) cap));
+					}
 				}
 			}
 		}
 	}
-
 
 	/**
 	 * @see org.osgi.service.packageadmin.PackageAdmin#getExportedPackage(java.lang.String)
@@ -193,7 +194,7 @@ final class PackageAdminImpl implements PackageAdmin {
 				.getProvidedWires(BundleNamespace.BUNDLE_NAMESPACE);
 
 		for (final BundleWire wire : wires) {
-			result.add(wire.getProvider().getBundle());
+			result.add(wire.getRequirer().getBundle());
 			if (BundleNamespace.VISIBILITY_REEXPORT.equals(wire
 					.getRequirement().getDirectives()
 					.get(BundleNamespace.REQUIREMENT_VISIBILITY_DIRECTIVE))) {
@@ -267,22 +268,23 @@ final class PackageAdminImpl implements PackageAdmin {
 	 */
 	public Bundle[] getHosts(final Bundle bundle) {
 		final BundleWiring wiring = bundle.adapt(BundleWiring.class);
-		final List<BundleWire> wires = wiring
-				.getRequiredWires(HostNamespace.HOST_NAMESPACE);
 
-		if (wires.isEmpty()) {
+		if (wiring == null) {
 			return null;
 		}
 
-		final Bundle[] result = new Bundle[wires.size()];
+		final List<BundleWire> wires = wiring
+				.getRequiredWires(HostNamespace.HOST_NAMESPACE);
 
-		final Iterator<BundleWire> iter = wires.iterator();
-		for (int i = 0; i < result.length; i++) {
-			final BundleWire wire = iter.next();
-			result[i] = wire.getRequirer().getBundle();
+		final ArrayList<Bundle> result = new ArrayList<Bundle>();
+
+		for (final BundleWire wire : wires) {
+			if (wire.getRequirer().getBundle() == bundle) {
+				result.add(wire.getProvider().getBundle());
+			}
 		}
 
-		return result;
+		return toArrayOrNull(result, Bundle.class);
 	}
 
 	/**
@@ -346,18 +348,22 @@ final class PackageAdminImpl implements PackageAdmin {
 		 * @see org.osgi.service.packageadmin.ExportedPackage#getImportingBundles()
 		 */
 		public Bundle[] getImportingBundles() {
-			final BundleWiring wiring = cap.getResource().getWiring();
-
 			final ArrayList<Bundle> result = new ArrayList<Bundle>();
 
-			final List<BundleWire> wires = wiring
-					.getRequiredWires(PackageNamespace.PACKAGE_NAMESPACE);
+			final BundleWiring wiring = cap.getResource().getWiring();
 
-			for (final BundleWire wire : wires) {
-				result.add(wire.getRequirer().getBundle());
+			if (wiring != null) {
+				final List<BundleWire> wires = wiring
+						.getRequiredWires(PackageNamespace.PACKAGE_NAMESPACE);
+
+				for (final BundleWire wire : wires) {
+					if (wire.getCapability() == cap) {
+						result.add(wire.getRequirer().getBundle());
+					}
+				}
+
+				addRequiringBundles(wiring, result);
 			}
-
-			addRequiringBundles(wiring, result);
 
 			return toArrayOrNull(result, Bundle.class);
 		}
@@ -423,7 +429,9 @@ final class PackageAdminImpl implements PackageAdmin {
 			final ArrayList<Bundle> result = new ArrayList<Bundle>();
 
 			final BundleWiring wiring = rev.getWiring();
-			addRequiringBundles(wiring, result);
+			if (wiring != null) {
+				addRequiringBundles(wiring, result);
+			}
 
 			return toArrayOrNull(result, Bundle.class);
 		}
@@ -441,6 +449,10 @@ final class PackageAdminImpl implements PackageAdmin {
 		public boolean isRemovalPending() {
 			return rev.getBundle().getState() == Bundle.UNINSTALLED
 					|| rev.getBundle().adapt(BundleRevision.class) != rev;
+		}
+
+		public String toString() {
+			return "RequiredBundle{" + rev.toString();
 		}
 	}
 
