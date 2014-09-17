@@ -1050,7 +1050,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 		// add to framework wiring
 		wirings.put(this, new ConciergeBundleWiring(this, null));
-		
+
 		// initialize the system bundle services
 		registeredServices = new ArrayList<ServiceReference<?>>(2);
 
@@ -1801,8 +1801,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 			final FrameworkListener... listeners) {
 		// TODO: check AdminPermission(this, RESOLVE)
 
-		System.err.println("REQUESTING REFRESH OF " + bundleCollection);
-		
 		new Thread() {
 			public void run() {
 				try {
@@ -1850,8 +1848,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 							}
 						}
 
-						System.err.println("\tORDER: " + toProcess);
-						
 						// nothing to do ? fine, so we are done.
 						if (toProcess.isEmpty()) {
 							notifyListeners(FrameworkEvent.PACKAGES_REFRESHED,
@@ -1915,8 +1911,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 							}
 						}
 
-						System.err.println("RESTART LIST: " + restartList);
-						
 						// resolve, if possible
 						// FIXME: should be bulk operation
 
@@ -2317,8 +2311,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 			}, solution, unresolvedRequirements, unresolvedResources);
 
-			// FIXME: DEBUG OUTPUT
-			System.err.println("Solution: " + solution);
+			if (LOG_ENABLED) {
+				logger.log(LogService.LOG_DEBUG, "Solution: " + solution);
+			}
 
 			final MultiMap<Resource, Wire> reciprocal = new MultiMap<Resource, Wire>();
 
@@ -3907,9 +3902,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 		public void addFrameworkListener(final FrameworkListener listener) {
 			checkValid();
 
-			//if (bundle == Concierge.this) {
-			//	return;
-			//}
+			// if (bundle == Concierge.this) {
+			// return;
+			// }
 
 			if (bundle.registeredFrameworkListeners == null) {
 				bundle.registeredFrameworkListeners = new ArrayList<FrameworkListener>(
