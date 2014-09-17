@@ -78,6 +78,7 @@ final class PackageAdminImpl implements PackageAdmin {
 		return toArrayOrNull(result, ExportedPackage.class);
 	}
 
+
 	private void getExportedPackages0(final Bundle bundle, final String name,
 			final ArrayList<ExportedPackage> result) {
 		if (bundle == null) {
@@ -86,65 +87,87 @@ final class PackageAdminImpl implements PackageAdmin {
 		if (result == null) {
 			throw new IllegalArgumentException("result==null");
 		}
-		
-		if (bundle.getState() == Bundle.INSTALLED) {
-			final BundleRevision rev = bundle.adapt(BundleRevision.class);
-			for (final Capability cap : rev.getCapabilities(PackageNamespace.PACKAGE_NAMESPACE)) {
-				if (name == null
-						|| name.equals(cap.getAttributes()
-								.get(PackageNamespace.PACKAGE_NAMESPACE))) {
-					result.add(new ExportedPackageImpl((BundleCapability)cap));
-				}
+
+		if (bundle.getState() == Bundle.RESOLVED
+				|| bundle.getState() == Bundle.ACTIVE) {
+			final List<BundleRevision> revs = bundle.adapt(
+					BundleRevisions.class).getRevisions();
+
+			for (final BundleRevision r : revs) {
+				final ArrayList<ExportedPackage> exported = new ArrayList<ExportedPackage>();
+				getExportedPackages0(r, name, exported);
+				getExportedPackages0(r, name, result);
 			}
+			
 			return;
 		}
-		
+
+		/*
+		 * if (bundle.getState() == Bundle.INSTALLED) { final BundleRevision rev
+		 * = bundle.adapt(BundleRevision.class); for (final Capability cap :
+		 * rev.getCapabilities(PackageNamespace.PACKAGE_NAMESPACE)) { if (name
+		 * == null || name.equals(cap.getAttributes()
+		 * .get(PackageNamespace.PACKAGE_NAMESPACE))) { result.add(new
+		 * ExportedPackageImpl((BundleCapability)cap)); } } return; }
+		 */
+
 		if (bundle.getState() == Bundle.UNINSTALLED) {
-			final List<BundleRevision> revs = bundle.adapt(BundleRevisions.class).getRevisions();
+			final List<BundleRevision> revs = bundle.adapt(
+					BundleRevisions.class).getRevisions();
 			if (revs.isEmpty()) {
 				return;
 			}
-			
+
 			BundleRevision rev = null;
-			
+
 			for (final BundleRevision r : revs) {
-				if (r.getWiring().isInUse()) {
+				final BundleWiring wiring = r.getWiring();
+				if (wiring != null && wiring.isInUse()) {
 					rev = r;
 				}
 			}
 			if (rev == null) {
 				return;
 			}
-			
-			for (final Capability cap : rev.getCapabilities(PackageNamespace.PACKAGE_NAMESPACE)) {
+
+			for (final Capability cap : rev
+					.getCapabilities(PackageNamespace.PACKAGE_NAMESPACE)) {
 				if (name == null
-						|| name.equals(cap.getAttributes()
-								.get(PackageNamespace.PACKAGE_NAMESPACE))) {
-					result.add(new ExportedPackageImpl((BundleCapability)cap));
+						|| name.equals(cap.getAttributes().get(
+								PackageNamespace.PACKAGE_NAMESPACE))) {
+					result.add(new ExportedPackageImpl((BundleCapability) cap));
 				}
 			}
 			return;
-
-		}
-		
-		final BundleWiring wiring = bundle.adapt(BundleWiring.class);
-
-		if (wiring == null) {
-			return;
-		}
-		
-		final List<BundleWire> wires = wiring
-				.getProvidedWires(PackageNamespace.PACKAGE_NAMESPACE);
-
-		if (wires == null) {
-			return;
 		}
 
-		for (final BundleWire wire : wires) {
+		/*
+		 * 
+		 * final BundleWiring wiring = bundle.adapt(BundleWiring.class);
+		 * 
+		 * if (wiring == null) { return; }
+		 * 
+		 * final List<BundleWire> wires = wiring
+		 * .getProvidedWires(PackageNamespace.PACKAGE_NAMESPACE);
+		 * 
+		 * if (wires == null) { return; }
+		 * 
+		 * for (final BundleWire wire : wires) {
+		 * System.err.println("HANDLING PACKAGE " + wire.getCapability()); if
+		 * (name == null || name.equals(wire.getCapability().getAttributes()
+		 * .get(PackageNamespace.PACKAGE_NAMESPACE))) { result.add(new
+		 * ExportedPackageImpl(wire.getCapability())); } }
+		 */
+	}
+
+	private void getExportedPackages0(final BundleRevision rev,
+			final String name, final ArrayList<ExportedPackage> result) {
+		for (final Capability cap : rev
+				.getCapabilities(PackageNamespace.PACKAGE_NAMESPACE)) {
 			if (name == null
-					|| name.equals(wire.getCapability().getAttributes()
-							.get(PackageNamespace.PACKAGE_NAMESPACE))) {
-				result.add(new ExportedPackageImpl(wire.getCapability()));
+					|| name.equals(cap.getAttributes().get(
+							PackageNamespace.PACKAGE_NAMESPACE))) {
+				result.add(new ExportedPackageImpl((BundleCapability) cap));
 			}
 		}
 	}
@@ -153,8 +176,27 @@ final class PackageAdminImpl implements PackageAdmin {
 	 * @see org.osgi.service.packageadmin.PackageAdmin#getExportedPackage(java.lang.String)
 	 */
 	public ExportedPackage getExportedPackage(final String name) {
-		final ExportedPackage[] result = getExportedPackages(name);
-		return result == null ? null : result[0];
+		final Bundle[] bundles = context.getBundles();
+
+		final ArrayList<ExportedPackage> result = new ArrayList<ExportedPackage>();
+
+		for (final Bundle bundle : bundles) {
+			getExportedPackages0(bundle, name, result);
+		}
+
+		if (result.isEmpty()) {
+			return null;
+		}
+		
+		Collections.sort(result, new Comparator<ExportedPackage>() {
+
+			public int compare(ExportedPackage o1, ExportedPackage o2) {
+				return o2.getVersion().compareTo(o1.getVersion());
+			}
+			
+		});
+		
+		return result.get(0);
 	}
 
 	private FrameworkWiring getFrameworkWiring() {
