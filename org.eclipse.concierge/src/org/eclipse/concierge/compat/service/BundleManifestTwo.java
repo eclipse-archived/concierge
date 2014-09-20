@@ -422,6 +422,8 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 							.createFilter(PackageNamespace.PACKAGE_NAMESPACE,
 									literals[0], parseResult.getAttributes()));
 
+					dirs.put(Concierge.DIR_INTERNAL, literals[0]);
+
 					reqs.add(new BundleRequirementImpl(revision,
 							PackageNamespace.PACKAGE_NAMESPACE, dirs, null,
 							Constants.IMPORT_PACKAGE + ' ' + imports[i]));
@@ -455,9 +457,7 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 					dirs.put(PackageNamespace.REQUIREMENT_EFFECTIVE_DIRECTIVE,
 							PackageNamespace.EFFECTIVE_ACTIVE);
 
-					// TODO: think of something better
-					dirs.put(PackageNamespace.PACKAGE_NAMESPACE,
-							literals[0].trim());
+					dirs.put(Concierge.DIR_INTERNAL, literals[0].trim());
 
 					if (literals[0].contains("*")) {
 						dirs.put(
@@ -582,6 +582,8 @@ public class BundleManifestTwo implements LegacyBundleProcessing {
 							Utils.createFilter(
 									BundleNamespace.BUNDLE_NAMESPACE,
 									requiredBundle, parseResult.getAttributes()));
+
+					dirs.put(Concierge.DIR_INTERNAL, literals[0]);
 
 					reqs.add(new BundleRequirementImpl(revision,
 							BundleNamespace.BUNDLE_NAMESPACE, dirs, null,

@@ -36,6 +36,7 @@ public class BundleManifestOne implements LegacyBundleProcessing {
 
 	private static final String SPLIT_AT_COMMA = ",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)";
 	private static final String SPLIT_AT_SEMICOLON = ";(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)";
+	private static final Map<String, Object> NO_ATTRS = new HashMap<String, Object>();
 
 	public Tuple<List<BundleCapability>, List<BundleRequirement>> processManifest(
 			final Revision revision, final Manifest manifest)
@@ -59,10 +60,11 @@ public class BundleManifestOne implements LegacyBundleProcessing {
 							literals, 1);
 					final HashMap<String, String> dirs = parseResult
 							.getDirectives();
-					dirs.put(
-							Namespace.REQUIREMENT_FILTER_DIRECTIVE,
-							createFilterFromImport(literals[0],
-									parseResult.getAttributes(), false));
+					dirs.put(Namespace.REQUIREMENT_FILTER_DIRECTIVE, Utils
+							.createFilter(PackageNamespace.PACKAGE_NAMESPACE,
+									literals[0], parseResult.getAttributes()));
+
+					dirs.put(Concierge.DIR_INTERNAL, literals[0].trim());
 
 					reqs.add(new BundleRequirementImpl(revision,
 							PackageNamespace.PACKAGE_NAMESPACE, dirs, null,
@@ -73,8 +75,9 @@ public class BundleManifestOne implements LegacyBundleProcessing {
 			// add implicit import for org.osgi.framework
 
 			final HashMap<String, String> dirs = new HashMap<String, String>();
-			dirs.put(Namespace.REQUIREMENT_FILTER_DIRECTIVE,
-					createFilterFromImport("org.osgi.framework", null, false));
+			dirs.put(Namespace.REQUIREMENT_FILTER_DIRECTIVE, Utils
+					.createFilter(PackageNamespace.PACKAGE_NAMESPACE,
+							"org.osgi.framework", NO_ATTRS));
 
 			reqs.add(new BundleRequirementImpl(revision,
 					PackageNamespace.PACKAGE_NAMESPACE, dirs, null,
@@ -101,8 +104,8 @@ public class BundleManifestOne implements LegacyBundleProcessing {
 
 					dirs.put(PackageNamespace.REQUIREMENT_RESOLUTION_DIRECTIVE,
 							PackageNamespace.RESOLUTION_DYNAMIC);
-					attrs.put(PackageNamespace.PACKAGE_NAMESPACE,
-							literals[0].trim());
+
+					dirs.put(Concierge.DIR_INTERNAL, literals[0].trim());
 
 					if (literals[0].contains("*")) {
 						dirs.put(
@@ -131,8 +134,9 @@ public class BundleManifestOne implements LegacyBundleProcessing {
 							literals, 1);
 					final HashMap<String, Object> attrs = parseResult
 							.getAttributes();
-					attrs.put(PackageNamespace.PACKAGE_NAMESPACE,
-							literals[0].trim());
+
+					// attrs.put(PackageNamespace.PACKAGE_NAMESPACE,
+					// literals[0].trim());
 
 					caps.add(new BundleCapabilityImpl(revision,
 							PackageNamespace.PACKAGE_NAMESPACE, parseResult
@@ -144,22 +148,6 @@ public class BundleManifestOne implements LegacyBundleProcessing {
 
 		return new Tuple<List<BundleCapability>, List<BundleRequirement>>(caps,
 				reqs);
-	}
-
-	String createFilterFromImport(final String pkg,
-			final Map<String, Object> attributes, final boolean dynamic) {
-		final StringBuffer buffer = new StringBuffer();
-		buffer.append('(');
-		buffer.append(PackageNamespace.PACKAGE_NAMESPACE);
-		buffer.append('=');
-		buffer.append(pkg);
-		buffer.append(')');
-
-		if (attributes != null && attributes.size() > 0) {
-			System.err.println("SKIPPED CLAUSES " + attributes);
-		}
-
-		return buffer.toString();
 	}
 
 	public List<BundleCapability> translateToCapability(

@@ -335,9 +335,9 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					currentRevision.getSymbolicName(), this);
 			framework.location_bundles.put(location, this);
 		}
-		
+
 		// resolve if it is a framework extension
-		if(currentRevision.isFrameworkExtension()){
+		if (currentRevision.isFrameworkExtension()) {
 			currentRevision.resolve(false);
 		}
 	}
@@ -1752,7 +1752,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 		 * @category BundleRevision
 		 */
 		public List<Capability> getCapabilities(final String namespace) {
-			return Collections.unmodifiableList(new ArrayList<Capability>(getDeclaredCapabilities(namespace)));
+			return Collections.unmodifiableList(new ArrayList<Capability>(
+					getDeclaredCapabilities(namespace)));
 		}
 
 		/**
@@ -2239,24 +2240,24 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				longer = list2;
 			}
 
-			// JR: commented out due to regression
-			// TODO: investigate further
 			final Set<String> index = new HashSet<String>();
 			for (final T element : longer) {
-				//if (!element.getAttributes().isEmpty()) {
-					index.add((String) element.getAttributes().get(namespace));
-				//}
+				final String attr = element.getDirectives().get(
+						Concierge.DIR_INTERNAL);
+				if (attr != null) {
+					index.add(attr);
+				}
 			}
 
 			for (final T element : shorter) {
-				//if (!element.getAttributes().isEmpty()) {
-					if (index.contains(element.getAttributes().get(namespace))) {
-						throw new BundleException("Conflicting " + s
-								+ " statement "
-								+ element.getAttributes().get(namespace) + " from "
-								+ element, BundleException.RESOLVE_ERROR);
-					}
-				//}
+				final String attr = element.getDirectives().get(
+						Concierge.DIR_INTERNAL);
+				if (attr != null && index.contains(attr)) {
+					throw new BundleException("Conflicting " + s
+							+ " statement "
+							+ element.getAttributes().get(namespace) + " from "
+							+ element, BundleException.RESOLVE_ERROR);
+				}
 			}
 		}
 
@@ -2267,8 +2268,9 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					&& activationList.get(0) == BundleImpl.this) {
 				activationChain.set(new ArrayList<AbstractBundle>());
 				for (int i = activationList.size() - 1; i >= 0; i--) {
-					final BundleImpl toActivate = ((BundleImpl) activationList.get(i));
-					if(toActivate.beingLazy)
+					final BundleImpl toActivate = ((BundleImpl) activationList
+							.get(i));
+					if (toActivate.beingLazy)
 						toActivate.triggerActivation();
 				}
 				activationChain.set(null);
@@ -2510,10 +2512,12 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 						final BundleCapabilityImpl cap = (BundleCapabilityImpl) delegation
 								.getCapability();
 						if (!cap.hasExcludes() || cap.filter(classOf(name))) {
-							if (delegation.getProvider().getBundle().getBundleId() == 0) {
+							if (delegation.getProvider().getBundle()
+									.getBundleId() == 0) {
 								// system bundle
 								if (isClass) {
-									return framework.systemBundleClassLoader.loadClass(name);
+									return framework.systemBundleClassLoader
+											.loadClass(name);
 								} else {
 									if (multiple) {
 										try {
@@ -2527,7 +2531,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 											// FIXME: to log
 										}
 									} else {
-										return framework.systemBundleClassLoader.getResource(name);
+										return framework.systemBundleClassLoader
+												.getResource(name);
 									}
 								}
 							} else {
@@ -2576,10 +2581,11 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					visited.add(BundleImpl.this);
 					for (final BundleWire wire : requireBundleWires) {
 						if (wire.getProvider().getBundle().getBundleId() == 0) {
-							// if provider is system bundle: nothing 
+							// if provider is system bundle: nothing
 							// to do as system bundle is yet loaded
 						} else {
-							final Object result = ((Revision) wire.getProvider()).classloader
+							final Object result = ((Revision) wire
+									.getProvider()).classloader
 									.requireBundleLookup(pkg, name, isClass,
 											multiple, resources, visited);
 							if (!multiple && result != null) {
@@ -2620,7 +2626,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 						// TODO: think of something better
 						final String dynImportPackage = dynImport
 								.getDirectives().get(
-										PackageNamespace.PACKAGE_NAMESPACE);
+										Concierge.DIR_INTERNAL);
 
 						// TODO: first check if dynImport could apply to the
 						// requested package!!!
@@ -2637,7 +2643,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 						List<BundleCapability> matches;
 						matches = framework.resolveDynamic(Revision.this, pkg,
 								dynImportPackage, dynImport, wildcard);
-						if (matches != null && matches.size()>0) {
+						if (matches != null && matches.size() > 0) {
 							final BundleCapability bundleCap = matches.get(0);
 
 							final BundleWire wire = new ConciergeBundleWire(
@@ -2662,15 +2668,16 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 								iter.remove();
 							}
 
-							final BundleRevision rev = bundleCap.getRevision();	
+							final BundleRevision rev = bundleCap.getRevision();
 							if (!(rev instanceof Revision)) {
 								if (isClass) {
-									return framework.systemBundleClassLoader.loadClass(name);
+									return framework.systemBundleClassLoader
+											.loadClass(name);
 								} else {
 									if (multiple) {
 										try {
 											final Enumeration<URL> e = framework.systemBundleClassLoader
-															.getResources(name);
+													.getResources(name);
 											while (e.hasMoreElements()) {
 												resources.add(e.nextElement());
 											}
@@ -2679,7 +2686,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 											// FIXME: to log
 										}
 									} else {
-										return framework.systemBundleClassLoader.getResource(name);
+										return framework.systemBundleClassLoader
+												.getResource(name);
 									}
 								}
 							} else {
@@ -2822,7 +2830,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 							// define package
 							definePackage(packageOf(classname));
-							
+
 							return defineClass(classname, bytes, 0,
 									bytes.length, domain);
 						} catch (final IOException ioe) {
@@ -3011,12 +3019,13 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				}
 				return null;
 			}
-			
-			private void definePackage(String pkg){
-				// TODO fill in version/spec/vendor attributes according to bundle manifest headers?
+
+			private void definePackage(String pkg) {
+				// TODO fill in version/spec/vendor attributes according to
+				// bundle manifest headers?
 				try {
 					definePackage(pkg, null, null, null, null, null, null, null);
-				} catch(IllegalArgumentException e){
+				} catch (IllegalArgumentException e) {
 					// ignore
 				}
 			}
@@ -3090,8 +3099,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 									Namespace.REQUIREMENT_RESOLUTION_DIRECTIVE,
 									PackageNamespace.RESOLUTION_DYNAMIC);
 
-							// TODO: think of something better...
-							dirs.put(PackageNamespace.PACKAGE_NAMESPACE,
+							dirs.put(Concierge.DIR_INTERNAL,
 									literals[0]);
 
 							final BundleRequirement req = new BundleRequirementImpl(
@@ -3510,9 +3518,9 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 									basename.toCharArray(), 0) == 0) {
 						try {
 							final String absPath = toTest.getAbsolutePath();
-							results.add(createURL(
-									 absPath.substring(absPath.indexOf(storageLocation)
-									         +(storageLocation).length() + 1), null));
+							results.add(createURL(absPath.substring(absPath
+									.indexOf(storageLocation)
+									+ (storageLocation).length() + 1), null));
 						} catch (final IOException ex) {
 							// do nothing, URL will not be added to
 							// results

@@ -478,6 +478,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 	};
 
+	public static final String DIR_INTERNAL = "x-int";
+
 	/**
 	 * start method.
 	 * 
