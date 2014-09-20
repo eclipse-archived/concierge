@@ -432,10 +432,14 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 		public int compare(final Capability cap1, final Capability cap2) {
 			Version cap1Version = (Version) cap1.getAttributes().get(
-					PackageNamespace.CAPABILITY_VERSION_ATTRIBUTE);
+					PackageNamespace.CAPABILITY_BUNDLE_VERSION_ATTRIBUTE);
 			Version cap2Version = (Version) cap2.getAttributes().get(
-					PackageNamespace.CAPABILITY_VERSION_ATTRIBUTE);
-
+					PackageNamespace.CAPABILITY_BUNDLE_VERSION_ATTRIBUTE);
+			
+			if (cap1Version == null) {
+				throw new IllegalStateException(cap1.toString());
+			}
+			
 			// TODO: check: is version always set???
 			/*
 			 * if (cap1Version == null) { cap1Version = Version.emptyVersion; }

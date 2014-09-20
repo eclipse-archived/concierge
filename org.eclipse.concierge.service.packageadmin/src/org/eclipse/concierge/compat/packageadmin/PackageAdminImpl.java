@@ -109,7 +109,7 @@ final class PackageAdminImpl implements PackageAdmin {
 			}
 		}
 	}
-	
+
 	protected static final Comparator<ExportedPackage> EXPORT_ORDER = new Comparator<ExportedPackage>() {
 
 		// reverts the order so that we can
@@ -157,7 +157,6 @@ final class PackageAdminImpl implements PackageAdmin {
 
 	};
 
-
 	/**
 	 * @see org.osgi.service.packageadmin.PackageAdmin#getExportedPackage(java.lang.String)
 	 */
@@ -174,20 +173,8 @@ final class PackageAdminImpl implements PackageAdmin {
 			return null;
 		}
 
-		System.err.println("BEFORE " + result);
-		
-		//Collections.sort(result, new Comparator<ExportedPackage>() {
-
-		//	public int compare(ExportedPackage o1, ExportedPackage o2) {
-		//		return o2.getVersion().compareTo(o1.getVersion());
-		//	}
-
-		//});
-
 		Collections.sort(result, EXPORT_ORDER);
-		
-		System.err.println("AFTER " + result);
-		
+
 		return result.get(0);
 	}
 
