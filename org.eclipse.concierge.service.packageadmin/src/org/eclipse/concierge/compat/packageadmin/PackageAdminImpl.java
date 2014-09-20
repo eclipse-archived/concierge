@@ -109,6 +109,54 @@ final class PackageAdminImpl implements PackageAdmin {
 			}
 		}
 	}
+	
+	protected static final Comparator<ExportedPackage> EXPORT_ORDER = new Comparator<ExportedPackage>() {
+
+		// reverts the order so that we can
+		// retrieve the 0st item to get the best
+		// match
+		public int compare(final ExportedPackage c1, final ExportedPackage c2) {
+
+			final BundleCapability cap1 = ((ExportedPackageImpl) c1).cap;
+			final BundleCapability cap2 = ((ExportedPackageImpl) c2).cap;
+
+			final int cap1Resolved = cap1.getResource().getWiring() == null ? 0
+					: 1;
+			final int cap2Resolved = cap2.getResource().getWiring() == null ? 0
+					: 1;
+			int score = cap2Resolved - cap1Resolved;
+			if (score != 0) {
+				return score;
+			}
+
+			Version cap1Version = (Version) cap1.getAttributes().get(
+					PackageNamespace.CAPABILITY_VERSION_ATTRIBUTE);
+			Version cap2Version = (Version) cap2.getAttributes().get(
+					PackageNamespace.CAPABILITY_VERSION_ATTRIBUTE);
+
+			if (cap1Version == null) {
+				cap1Version = Version.emptyVersion;
+			}
+			if (cap2Version == null) {
+				cap2Version = Version.emptyVersion;
+			}
+
+			score = cap2Version.compareTo(cap1Version);
+
+			if (score != 0) {
+				return score;
+			}
+
+			final long cap1BundleId = cap1.getRevision().getBundle()
+					.getBundleId();
+			final long cap2BundleId = cap2.getRevision().getBundle()
+					.getBundleId();
+
+			return (int) (cap1BundleId - cap2BundleId);
+		}
+
+	};
+
 
 	/**
 	 * @see org.osgi.service.packageadmin.PackageAdmin#getExportedPackage(java.lang.String)
@@ -126,14 +174,20 @@ final class PackageAdminImpl implements PackageAdmin {
 			return null;
 		}
 
-		Collections.sort(result, new Comparator<ExportedPackage>() {
+		System.err.println("BEFORE " + result);
+		
+		//Collections.sort(result, new Comparator<ExportedPackage>() {
 
-			public int compare(ExportedPackage o1, ExportedPackage o2) {
-				return o2.getVersion().compareTo(o1.getVersion());
-			}
+		//	public int compare(ExportedPackage o1, ExportedPackage o2) {
+		//		return o2.getVersion().compareTo(o1.getVersion());
+		//	}
 
-		});
+		//});
 
+		Collections.sort(result, EXPORT_ORDER);
+		
+		System.err.println("AFTER " + result);
+		
 		return result.get(0);
 	}
 

@@ -428,6 +428,24 @@ public final class Concierge extends AbstractBundle implements Framework,
 	final ClassLoader parentClassLoader;
 	final ClassLoader systemBundleClassLoader;
 
+	protected static final Comparator<? super Capability> BUNDLE_VERSION = new Comparator<Capability>() {
+
+		public int compare(final Capability cap1, final Capability cap2) {
+			Version cap1Version = (Version) cap1.getAttributes().get(
+					PackageNamespace.CAPABILITY_VERSION_ATTRIBUTE);
+			Version cap2Version = (Version) cap2.getAttributes().get(
+					PackageNamespace.CAPABILITY_VERSION_ATTRIBUTE);
+
+			// TODO: check: is version always set???
+			/*
+			 * if (cap1Version == null) { cap1Version = Version.emptyVersion; }
+			 * if (cap2Version == null) { cap2Version = Version.emptyVersion; }
+			 */
+
+			return cap2Version.compareTo(cap1Version);
+		}
+	};
+
 	protected static final Comparator<? super Capability> EXPORT_ORDER = new Comparator<Capability>() {
 
 		// reverts the order so that we can
@@ -445,7 +463,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 					: 1;
 			final int cap2Resolved = cap2.getResource().getWiring() == null ? 0
 					: 1;
-			int score = cap1Resolved - cap2Resolved;
+			int score = cap2Resolved - cap1Resolved;
 			if (score != 0) {
 				return score;
 			}
@@ -455,12 +473,10 @@ public final class Concierge extends AbstractBundle implements Framework,
 			Version cap2Version = (Version) cap2.getAttributes().get(
 					PackageNamespace.CAPABILITY_VERSION_ATTRIBUTE);
 
-			if (cap1Version == null) {
-				cap1Version = Version.emptyVersion;
-			}
-			if (cap2Version == null) {
-				cap2Version = Version.emptyVersion;
-			}
+			/*
+			 * if (cap1Version == null) { cap1Version = Version.emptyVersion; }
+			 * if (cap2Version == null) { cap2Version = Version.emptyVersion; }
+			 */
 
 			score = cap2Version.compareTo(cap1Version);
 
@@ -2242,62 +2258,49 @@ public final class Concierge extends AbstractBundle implements Framework,
 					final String filterStr = requirement.getDirectives().get(
 							Namespace.REQUIREMENT_FILTER_DIRECTIVE);
 
+					final List<Capability> providers;
 					if (filterStr == null) {
-						final List<Capability> providers = capabilityRegistry
-								.getAll(requirement.getNamespace());
-						// FIXME: conditional
+						providers = capabilityRegistry.getAll(requirement
+								.getNamespace());
+					} else {
+						try {
+							providers = RFC1960Filter.filterWithIndex(
+									requirement, filterStr, capabilityRegistry);
+						} catch (final InvalidSyntaxException ise) {
+							// TODO: debug output
+							ise.printStackTrace();
+							return Collections.emptyList();
+						}
+					}
+
+					sortProviders(providers, requirement.getNamespace());
+
+					// check if the resource itself provides a
+					// candidate
+					/*
+					for (final Capability capability : requirement
+							.getResource().getCapabilities(
+									requirement.getNamespace())) {
+						if (matches(requirement, capability)) {
+							providers.add(capability);
+						}
+					}
+					*/
+
+					return providers;
+				}
+
+				private void sortProviders(final List<Capability> providers,
+						final String namespace) {
+					if (providers.isEmpty()) {
+						return;
+					}
+					if (PackageNamespace.PACKAGE_NAMESPACE.equals(namespace)) {
 						Collections.sort(providers, EXPORT_ORDER);
-
-						return providers;
 					}
-
-					try {
-						final List<Capability> providers = RFC1960Filter
-								.filterWithIndex(requirement, filterStr,
-										capabilityRegistry);
-						if (!providers.isEmpty()) {
-							if (PackageNamespace.PACKAGE_NAMESPACE
-									.equals(requirement.getNamespace())) {
-								Collections.sort(providers, EXPORT_ORDER);
-							}
-							if (BundleNamespace.BUNDLE_NAMESPACE
-									.equals(requirement.getNamespace())) {
-								// FIXME: cleanup
-								Collections.sort(providers,
-										new Comparator<Capability>() {
-
-											public int compare(Capability o1,
-													Capability o2) {
-												return ((Version) o2
-														.getAttributes()
-														.get(BundleNamespace.CAPABILITY_BUNDLE_VERSION_ATTRIBUTE))
-														.compareTo((Version) o1
-																.getAttributes()
-																.get(BundleNamespace.CAPABILITY_BUNDLE_VERSION_ATTRIBUTE));
-											}
-
-										});
-							}
-
-							return providers;
-						}
-
-						// check if the resource itself provides a
-						// candidate
-						for (final Capability capability : requirement
-								.getResource().getCapabilities(
-										requirement.getNamespace())) {
-							if (matches(requirement, capability)) {
-								return Collections.singletonList(capability);
-							}
-						}
-					} catch (final InvalidSyntaxException ise) {
-						// TODO: debug output
-						ise.printStackTrace();
-						return Collections.emptyList();
+					if (BundleNamespace.BUNDLE_NAMESPACE.equals(namespace)) {
+						Collections.sort(providers, BUNDLE_VERSION);
 					}
-
-					return Collections.emptyList();
 				}
 
 				@Override
