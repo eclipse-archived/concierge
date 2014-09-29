@@ -22,6 +22,8 @@ public interface ConciergeCollections {
 
 		private final Comparator<V> comp;
 
+		boolean dirty = false;
+
 		public MultiMap() {
 			this.map = new HashMap<K, List<V>>();
 			this.comp = null;
@@ -56,7 +58,9 @@ public interface ConciergeCollections {
 			if (comp != null) {
 				Collections.sort(list, comp);
 			}
-			allValues.add(value);
+			if (!dirty) {
+				allValues.add(value);
+			}
 		}
 
 		public void insertEmpty(final K key) {
@@ -78,7 +82,9 @@ public interface ConciergeCollections {
 				if (comp != null) {
 					Collections.sort(list, comp);
 				}
-				allValues.add(value);
+				if (!dirty) {
+					allValues.add(value);
+				}
 			}
 		}
 
@@ -92,7 +98,9 @@ public interface ConciergeCollections {
 			if (comp != null) {
 				Collections.sort(list, comp);
 			}
-			allValues.addAll(values);
+			if (!dirty) {
+				allValues.addAll(values);
+			}
 		}
 
 		public void insertMap(final MultiMap<K, ? extends V> existing) {
@@ -111,12 +119,12 @@ public interface ConciergeCollections {
 			return list == null ? -1 : list.indexOf(value);
 		}
 
-		public boolean remove(final K key, final V value) {
+		public boolean remove(final Object key, final Object value) {
 			final List<V> list = get(key);
 			if (list != null) {
 				final boolean result = list.remove(value);
 				if (result) {
-					redoAllValues();
+					dirty = true;
 				}
 				return result;
 			}
@@ -129,7 +137,7 @@ public interface ConciergeCollections {
 				return null;
 			}
 
-			redoAllValues();
+			dirty = true;
 			return values;
 		}
 
@@ -143,9 +151,13 @@ public interface ConciergeCollections {
 			for (final List<V> valueList : values()) {
 				allValues.addAll(valueList);
 			}
+			dirty = false;
 		}
 
 		public List<V> getAllValues() {
+			if (dirty) {
+				redoAllValues();
+			}
 			return new ArrayList<V>(allValues);
 		}
 
@@ -157,7 +169,7 @@ public interface ConciergeCollections {
 				}
 			}
 
-			redoAllValues();
+			dirty = true;
 		}
 
 		public Set<K> keySet() {
@@ -210,7 +222,7 @@ public interface ConciergeCollections {
 				final boolean result = MultiMap.this.remove(key) != null;
 
 				if (result) {
-					redoAllValues();
+					dirty = true;
 				}
 
 				return result;
@@ -219,6 +231,7 @@ public interface ConciergeCollections {
 			public void clear() {
 				MultiMap.this.clear();
 				allValues.clear();
+				dirty = false;
 			}
 		}
 
@@ -235,6 +248,9 @@ public interface ConciergeCollections {
 		}
 
 		public boolean containsValue(final Object value) {
+			if (dirty) {
+				redoAllValues();
+			}
 			return allValues.contains(value);
 		}
 
@@ -249,6 +265,7 @@ public interface ConciergeCollections {
 		public void clear() {
 			map.clear();
 			allValues.clear();
+			dirty = false;
 		}
 
 		public Collection<List<V>> values() {

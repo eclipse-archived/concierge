@@ -906,6 +906,17 @@ final class RFC1960Filter implements Filter {
 				default:
 					return longAttr == longValue;
 				}
+			} else if (attr instanceof Byte) {
+				final byte byteAttr = ((Byte) attr).byteValue();
+				final byte byteValue = Byte.parseByte(value);
+				switch (comparator) {
+				case GREATER:
+					return byteAttr >= byteValue;
+				case LESS:
+					return byteAttr <= byteValue;
+				default:
+					return byteAttr == byteValue;
+				}
 			} else if (attr instanceof Short) {
 				final short shortAttr = ((Short) attr).shortValue();
 				final short shortValue = Short.parseShort(value);
@@ -938,12 +949,6 @@ final class RFC1960Filter implements Filter {
 					return floatAttr <= floatValue;
 				default:
 					return floatAttr == floatValue;
-				}
-			} else if (attr instanceof Byte) {
-				try {
-					return compareTyped(Byte.decode(value), comparator,
-							(Byte) attr);
-				} catch (final Throwable t) {
 				}
 			}
 			// all other are less frequent and are handled as
@@ -1000,7 +1005,8 @@ final class RFC1960Filter implements Filter {
 			for (int i = 0; i < array.length; i++) {
 				final Object obj = array[i];
 				if (obj instanceof String) {
-					if (compareString(value.trim(), comparator, ((String) obj).trim())) {
+					if (compareString(value.trim(), comparator,
+							((String) obj).trim())) {
 						return true;
 					}
 				} else if (obj instanceof Number) {
