@@ -186,10 +186,13 @@ public class Resources {
 			} else {
 				includes = Utils.splitString(Utils.unQuote(includeStr), ',');
 			}
-			
+
 			if (PackageNamespace.PACKAGE_NAMESPACE.equals(namespace)) {
-				if (attributes.get(PackageNamespace.CAPABILITY_VERSION_ATTRIBUTE) == null) {
-					attributes.put(PackageNamespace.CAPABILITY_VERSION_ATTRIBUTE, Version.emptyVersion);
+				if (attributes
+						.get(PackageNamespace.CAPABILITY_VERSION_ATTRIBUTE) == null) {
+					attributes.put(
+							PackageNamespace.CAPABILITY_VERSION_ATTRIBUTE,
+							Version.emptyVersion);
 				}
 			}
 		}

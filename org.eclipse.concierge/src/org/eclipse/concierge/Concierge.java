@@ -435,16 +435,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 					PackageNamespace.CAPABILITY_BUNDLE_VERSION_ATTRIBUTE);
 			Version cap2Version = (Version) cap2.getAttributes().get(
 					PackageNamespace.CAPABILITY_BUNDLE_VERSION_ATTRIBUTE);
-			
-			if (cap1Version == null) {
-				throw new IllegalStateException(cap1.toString());
-			}
-			
-			// TODO: check: is version always set???
-			/*
-			 * if (cap1Version == null) { cap1Version = Version.emptyVersion; }
-			 * if (cap2Version == null) { cap2Version = Version.emptyVersion; }
-			 */
 
 			return cap2Version.compareTo(cap1Version);
 		}
@@ -476,11 +466,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 					PackageNamespace.CAPABILITY_VERSION_ATTRIBUTE);
 			Version cap2Version = (Version) cap2.getAttributes().get(
 					PackageNamespace.CAPABILITY_VERSION_ATTRIBUTE);
-
-			/*
-			 * if (cap1Version == null) { cap1Version = Version.emptyVersion; }
-			 * if (cap2Version == null) { cap2Version = Version.emptyVersion; }
-			 */
 
 			score = cap2Version.compareTo(cap1Version);
 
@@ -2282,14 +2267,11 @@ public final class Concierge extends AbstractBundle implements Framework,
 					// check if the resource itself provides a
 					// candidate
 					/*
-					for (final Capability capability : requirement
-							.getResource().getCapabilities(
-									requirement.getNamespace())) {
-						if (matches(requirement, capability)) {
-							providers.add(capability);
-						}
-					}
-					*/
+					 * for (final Capability capability : requirement
+					 * .getResource().getCapabilities(
+					 * requirement.getNamespace())) { if (matches(requirement,
+					 * capability)) { providers.add(capability); } }
+					 */
 
 					return providers;
 				}
