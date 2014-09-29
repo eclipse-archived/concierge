@@ -20,12 +20,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 
 import org.eclipse.concierge.BundleImpl.Revision;
 import org.eclipse.concierge.ConciergeCollections.MultiMap;
 import org.eclipse.concierge.ConciergeCollections.ParseResult;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleException;
+import org.osgi.framework.Version;
 import org.osgi.framework.namespace.BundleNamespace;
 import org.osgi.framework.namespace.HostNamespace;
 import org.osgi.framework.namespace.IdentityNamespace;
@@ -67,8 +69,7 @@ public class Resources {
 
 			this.namespace = literals[0].trim();
 
-			final ParseResult parseResult = Utils.parseLiterals(literals,
-					1);
+			final ParseResult parseResult = Utils.parseLiterals(literals, 1);
 
 			this.directives = parseResult.getDirectives() == null ? Collections
 					.<String, String> emptyMap() : Collections
@@ -184,6 +185,12 @@ public class Resources {
 				includes[0] = "*";
 			} else {
 				includes = Utils.splitString(Utils.unQuote(includeStr), ',');
+			}
+			
+			if (PackageNamespace.PACKAGE_NAMESPACE.equals(namespace)) {
+				if (attributes.get(PackageNamespace.CAPABILITY_VERSION_ATTRIBUTE) == null) {
+					attributes.put(PackageNamespace.CAPABILITY_VERSION_ATTRIBUTE, Version.emptyVersion);
+				}
 			}
 		}
 
@@ -716,12 +723,14 @@ public class Resources {
 					.lookup(PackageNamespace.PACKAGE_NAMESPACE)) {
 				// TODO: check if it matches...
 
-				final Enumeration<URL> enumeration2 = ((Revision) wire
-						.getProvider()).findEntries(path, filePattern,
-						(options & BundleWiring.LISTRESOURCES_RECURSE) != 0);
-				if (enumeration2 != null) {
-					while (enumeration2.hasMoreElements()) {
-						final URL url = enumeration2.nextElement();
+				final Vector<URL> localResults = ((Revision) wire.getProvider())
+						.searchFiles(
+								path,
+								filePattern,
+								(options & BundleWiring.LISTRESOURCES_RECURSE) != 0,
+								false);
+				if (localResults != null) {
+					for (final URL url : localResults) {
 						result.add(url.getPath());
 					}
 				}
