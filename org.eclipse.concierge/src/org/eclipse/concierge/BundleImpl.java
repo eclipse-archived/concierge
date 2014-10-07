@@ -282,8 +282,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					manifest.getMainAttributes(), Constants.BUNDLE_CLASSPATH,
 					new String[] { "." });
 
-			if (framework.DECOMPRESS_EMBEDDED
-					&& classpathStrings.length > 1) {
+			if (framework.ALWAYS_DECOMPRESS || (framework.DECOMPRESS_EMBEDDED
+					&& classpathStrings.length > 1)) {
 				final File contentDir = new File(storageLocation
 						+ CONTENT_DIRECTORY_NAME + revisionNumber);
 				if (contentDir.exists()) {

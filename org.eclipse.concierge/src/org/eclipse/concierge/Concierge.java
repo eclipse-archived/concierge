@@ -192,6 +192,15 @@ public final class Concierge extends AbstractBundle implements Framework,
 	boolean LOG_QUIET;
 
 	/**
+	 * always decompress the bundles, great for testing 
+	 * 
+	 * FIXME: combine with
+	 * decompress embedded into a single property, 
+	 * e.g., with values: NEVER, EMBEDDED_JARS, ALWAYS
+	 */
+	boolean ALWAYS_DECOMPRESS;
+
+	/**
 	 * decompress bundles with embedded jars.
 	 */
 	boolean DECOMPRESS_EMBEDDED;
@@ -770,6 +779,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 			DEBUG_CLASSLOADING = true;
 			LOG_LEVEL = 4;
 		}
+
+		ALWAYS_DECOMPRESS = getProperty(
+				"org.eclipse.concierge.alwaysDecompress", false);
 		DECOMPRESS_EMBEDDED = getProperty(
 				"org.eclipse.concierge.decompressEmbedded", true);
 		SECURITY_ENABLED = getProperty(
