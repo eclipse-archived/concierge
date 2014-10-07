@@ -703,43 +703,11 @@ public class Resources {
 		 */
 		public Collection<String> listResources(final String path,
 				final String filePattern, final int options) {
-			if (!isCurrent()) {
+			if (!isInUse()) {
 				return null;
 			}
 
-			final ArrayList<String> result = new ArrayList<String>();
-
-			final Enumeration<URL> enumeration = ((Revision) revision)
-					.findEntries(path, filePattern,
-							(options & BundleWiring.LISTRESOURCES_RECURSE) != 0);
-			if (enumeration != null) {
-				while (enumeration.hasMoreElements()) {
-					final URL url = enumeration.nextElement();
-					result.add(url.getPath());
-				}
-			}
-			if ((options & BundleWiring.LISTRESOURCES_LOCAL) != 0) {
-				return Collections.unmodifiableList(result);
-			}
-
-			for (final BundleWire wire : requiredWires
-					.lookup(PackageNamespace.PACKAGE_NAMESPACE)) {
-				// TODO: check if it matches...
-
-				final Vector<URL> localResults = ((Revision) wire.getProvider())
-						.searchFiles(
-								path,
-								filePattern,
-								(options & BundleWiring.LISTRESOURCES_RECURSE) != 0,
-								false);
-				if (localResults != null) {
-					for (final URL url : localResults) {
-						result.add(url.getPath());
-					}
-				}
-			}
-
-			return Collections.unmodifiableList(result);
+			return Collections.unmodifiableList(((Revision) revision).classloader.listResources(path, filePattern, options, new HashSet<String>()));
 		}
 
 		public List<Capability> getResourceCapabilities(final String namespace) {

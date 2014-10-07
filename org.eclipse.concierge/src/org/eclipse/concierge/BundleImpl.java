@@ -282,11 +282,15 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					manifest.getMainAttributes(), Constants.BUNDLE_CLASSPATH,
 					new String[] { "." });
 
-			if (framework.DECOMPRESS_EMBEDDED && classpathStrings.length > 1) {
-				final String contentDir = storageLocation
-						+ CONTENT_DIRECTORY_NAME + revisionNumber;
+			if (framework.DECOMPRESS_EMBEDDED
+					&& classpathStrings.length > 1) {
+				final File contentDir = new File(storageLocation
+						+ CONTENT_DIRECTORY_NAME + revisionNumber);
+				if (contentDir.exists()) {
+					Concierge.deleteDirectory(contentDir);
+				}
 
-				// we have embedded jars, decompress the bundle
+				// decompress the bundle
 				for (final Enumeration<JarEntry> entries = jar.entries(); entries
 						.hasMoreElements();) {
 					final JarEntry entry = entries.nextElement();
@@ -301,7 +305,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				jar.close();
 				new File(jar.getName()).delete();
 				return new ExplodedJarBundleRevision(revisionNumber,
-						contentDir, manifest, classpathStrings);
+						contentDir.getAbsolutePath(), manifest,
+						classpathStrings);
 			} else {
 				return new JarBundleRevision(revisionNumber, jar, manifest,
 						classpathStrings);
@@ -1104,8 +1109,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			// check AdminPermission(this,RESOURCE)
 		}
 
-		final Vector<URL> urls = currentRevision.searchFiles(path, "*", false,
-				true);
+		final Vector<URL> urls = currentRevision.searchFiles(null, path, "*",
+				false);
 
 		return urls.isEmpty() ? null : new Enumeration<String>() {
 
@@ -2291,14 +2296,14 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 		protected Enumeration<URL> findEntries(final String path,
 				final String filePattern, final boolean recurse) {
-			final Vector<URL> result = searchFiles(path, filePattern, recurse,
-					false);
+			final Vector<URL> result = searchFiles(null, path, filePattern,
+					recurse);
 
 			// get results from fragments:
 			if (fragments != null) {
 				for (final Revision fragment : fragments) {
-					final Vector<URL> fragResult = fragment.searchFiles(path,
-							filePattern, recurse, false);
+					final Vector<URL> fragResult = fragment.searchFiles(null,
+							path, filePattern, recurse);
 					result.addAll(fragResult);
 				}
 			}
@@ -2309,8 +2314,12 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 		protected abstract URL lookupFile(final String classpath,
 				final String filename) throws IOException;
 
-		protected abstract Vector<URL> searchFiles(final String path,
-				final String filePattern, boolean recurse, final boolean paths);
+		protected abstract URL lookupFile(final String classpath,
+				final String filename, final HashSet<String> visited)
+				throws IOException;
+
+		protected abstract Vector<URL> searchFiles(final String classpath,
+				final String path, final String filePattern, boolean recurse);
 
 		protected abstract InputStream retrieveFile(final String classpath,
 				final String filename) throws IOException;
@@ -2625,8 +2634,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 						// TODO: think of something better
 						final String dynImportPackage = dynImport
-								.getDirectives().get(
-										Concierge.DIR_INTERNAL);
+								.getDirectives().get(Concierge.DIR_INTERNAL);
 
 						// TODO: first check if dynImport could apply to the
 						// requested package!!!
@@ -2706,6 +2714,139 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				}
 
 				return resources;
+			}
+
+			List<String> listResources(final String path,
+					final String filePattern, final int options,
+					final HashSet<String> visited) {
+				final String pkg = pseudoClassname(stripTrailing(path
+						.endsWith("/") ? path.substring(0, path.length() - 1)
+						: path));
+
+				System.err.println();
+				System.err.println("NOW LISTING RESOURCES FOR " + path
+						+ " pattern " + filePattern);
+
+				final ArrayList<String> result = new ArrayList<String>();
+
+				if (wiring != null) {
+					if ((options & BundleWiring.FINDENTRIES_RECURSE) != 0) {
+						for (final Map.Entry<String, BundleWire> entry : packageImportWires
+								.entrySet()) {
+							final String importPackage = entry.getKey();
+							if (importPackage.startsWith(pkg)) {
+								final BundleWire delegation = entry.getValue();
+								final BundleCapabilityImpl cap = (BundleCapabilityImpl) delegation
+										.getCapability();
+								if (!cap.hasExcludes()
+										|| cap.filter(classOf(filePattern))) {
+
+									System.err
+											.println("################ successfully delegating to "
+													+ delegation.getProvider());
+
+									result.addAll(((Revision) delegation
+											.getProvider()).classloader
+											.listResources(importPackage
+													.replace('.', '/'),
+													filePattern, options,
+													visited));
+									visited.add(importPackage);
+								}
+							}
+						}
+
+						System.err.println("MISSING POTENTIAL MATCHES: "
+								+ packageImportWires + " with " + pkg);
+						// System.exit(1);
+					} else {
+						final BundleWire delegation = packageImportWires
+								.get(pkg);
+						if (delegation != null) {
+							final BundleCapabilityImpl cap = (BundleCapabilityImpl) delegation
+									.getCapability();
+							if (!cap.hasExcludes()
+									|| cap.filter(classOf(filePattern))) {
+								result.addAll(((Revision) delegation
+										.getProvider()).classloader
+										.listResources(path, filePattern,
+												options, visited));
+							}
+						}
+					}
+				}
+
+				if (requireBundleWires != null) {
+					for (final BundleWire wire : requireBundleWires) {
+						result.addAll(((Revision) wire.getProvider()).classloader
+								.listResources(path, filePattern, options,
+										visited));
+					}
+				}
+
+				// Step 5: search the bundle class path
+				// Step 6: search fragments bundle class path
+				result.addAll(listOwnResources(path, filePattern, options,
+						visited));
+
+				// Step 7: if the package is exported, fail
+				if (exportIndex.contains(pkg)) {
+					return result;
+				}
+
+				/*
+				 * // Step 8: check dynamic imports if
+				 * (!dynamicImports.isEmpty()) {
+				 * 
+				 * for (final Iterator<BundleRequirement> iter = dynamicImports
+				 * .iterator(); iter.hasNext();) { final BundleRequirement
+				 * dynImport = iter.next();
+				 * 
+				 * // TODO: think of something better final String
+				 * dynImportPackage = dynImport
+				 * .getDirectives().get(Concierge.DIR_INTERNAL);
+				 * 
+				 * // TODO: first check if dynImport could apply to the //
+				 * requested package!!! if (RFC1960Filter.stringCompare(
+				 * dynImportPackage.toCharArray(), 0, pkg.toCharArray(), 0) !=
+				 * 0) { continue; }
+				 * 
+				 * final boolean wildcard = Namespace.CARDINALITY_MULTIPLE
+				 * .equals(dynImport .getDirectives()
+				 * .get(Namespace.REQUIREMENT_CARDINALITY_DIRECTIVE));
+				 * List<BundleCapability> matches; matches =
+				 * framework.resolveDynamic(Revision.this, pkg,
+				 * dynImportPackage, dynImport, wildcard); if (matches != null
+				 * && matches.size() > 0) { final BundleCapability bundleCap =
+				 * matches.get(0);
+				 * 
+				 * final BundleWire wire = new ConciergeBundleWire( bundleCap,
+				 * dynImport); if (wiring == null) { setWiring(new
+				 * ConciergeBundleWiring( Revision.this, null)); }
+				 * wiring.addWire(wire);
+				 * 
+				 * ((ConciergeBundleWiring) bundleCap.getRevision()
+				 * .getWiring()).addWire(wire);
+				 * 
+				 * packageImportWires .put((String) bundleCap .getAttributes()
+				 * .get(PackageNamespace.PACKAGE_NAMESPACE), wire);
+				 * 
+				 * if (!wildcard) { // FIXME: iter.remove(); }
+				 * 
+				 * final BundleRevision rev = bundleCap.getRevision(); if (!(rev
+				 * instanceof Revision)) { if (isClass) { return
+				 * framework.systemBundleClassLoader .loadClass(name); } else {
+				 * if (multiple) { try { final Enumeration<URL> e =
+				 * framework.systemBundleClassLoader .getResources(name); while
+				 * (e.hasMoreElements()) { resources.add(e.nextElement()); } }
+				 * catch (final IOException ioe) { // nothing we can do about it
+				 * // FIXME: to log } } else { return
+				 * framework.systemBundleClassLoader .getResource(name); } } }
+				 * else { return ((Revision)
+				 * bundleCap.getRevision()).classloader .findResource1(pkg,
+				 * name, isClass, multiple, resources); } } } }
+				 */
+				return result;
 			}
 
 			/**
@@ -2910,6 +3051,42 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				return null;
 			}
 
+			List<String> listOwnResources(final String path,
+					final String filePattern, final int options,
+					final HashSet<String> visited) {
+				final List<String> result = new ArrayList<String>();
+				for (int i = 0; i < classpath.length; i++) {
+					final Vector<URL> urls = searchFiles(classpath[i], path,
+							filePattern,
+							(options & BundleWiring.LISTRESOURCES_RECURSE) != 0);
+					if (urls != null) {
+						for (final URL url : urls) {
+							result.add(url.getPath().substring(1));
+						}
+					}
+				}
+
+				if (fragments != null) {
+					for (final Revision fragment : fragments) {
+						for (int i = 0; i < classpath.length; i++) {
+							final Vector<URL> urls = fragment
+									.searchFiles(
+											classpath[i],
+											path,
+											filePattern,
+											(options & BundleWiring.LISTRESOURCES_RECURSE) != 0);
+							if (urls != null) {
+								for (final URL url : urls) {
+									result.add(url.getPath().substring(1));
+								}
+							}
+						}
+					}
+				}
+
+				return result;
+			}
+
 			/**
 			 * find one or more resources in the scope of the own class loader.
 			 * 
@@ -3099,8 +3276,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 									Namespace.REQUIREMENT_RESOLUTION_DIRECTIVE,
 									PackageNamespace.RESOLUTION_DYNAMIC);
 
-							dirs.put(Concierge.DIR_INTERNAL,
-									literals[0]);
+							dirs.put(Concierge.DIR_INTERNAL, literals[0]);
 
 							final BundleRequirement req = new BundleRequirementImpl(
 									revision,
@@ -3281,6 +3457,11 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			return (URL) findFile(classpath, filename, false);
 		}
 
+		protected URL lookupFile(final String classpath, final String filename,
+				final HashSet<String> visited) throws IOException {
+			return (URL) findFile(classpath, filename, false);
+		}
+
 		public InputStream retrieveFile(final String classpath,
 				final String filename) throws IOException {
 			return (InputStream) findFile(classpath, filename, true);
@@ -3301,10 +3482,26 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				return retrieve ? jarFile.getInputStream(entry) : createURL(
 						entry.getName(), null);
 			} else {
+				System.err.println("CLASSPATH IS " + classpath);
+
 				final ZipEntry entry = jarFile.getEntry(classpath);
 				if (entry == null) {
 					return null;
 				}
+
+				InputStream in = jarFile.getInputStream(entry);
+				if (in == null) {
+					// classpath is a directory
+					final ZipEntry entry2 = jarFile.getEntry(classpath + "/"
+							+ filename);
+					if (entry2 == null) {
+						return null;
+					}
+
+					return retrieve ? jarFile.getInputStream(entry2)
+							: createURL(entry2.getName(), null);
+				}
+
 				@SuppressWarnings("resource")
 				final JarInputStream embeddedJar = new JarInputStream(
 						jarFile.getInputStream(entry));
@@ -3320,9 +3517,9 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			return null;
 		}
 
-		protected Vector<URL> searchFiles(final String path,
-				final String filePattern, final boolean recurse,
-				final boolean paths) {
+		protected Vector<URL> searchFiles(final String classpath,
+				final String path, final String filePattern,
+				final boolean recurse) {
 			final Vector<URL> results = new Vector<URL>();
 			String pathString = path.length() > 0 && path.charAt(0) == '/' ? path
 					.substring(1) : path;
@@ -3330,56 +3527,57 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					|| path.charAt(path.length() - 1) == '/' ? pathString
 					: pathString + "/";
 
+			final int cpOffset;
+			final String comp;
+			if (classpath != null && !".".equals(classpath)) {
+				comp = pathString;
+				pathString = classpath + "/" + pathString;
+				cpOffset = classpath.length() + 1;
+			} else {
+				comp = pathString;
+				cpOffset = 0;
+			}
+
 			final Enumeration<JarEntry> enums = jarFile.entries();
 			while (enums.hasMoreElements()) {
 				final JarEntry ze = enums.nextElement();
-				final String name = ze.getName().replace('\\', '/');
+				final String name;
+				if (cpOffset == 0) {
+					name = ze.getName().replace('\\', '/');
+				} else {
+					name = ze.getName().substring(cpOffset).replace('\\', '/');
+				}
 
-				if (name.startsWith(pathString)) {
-					String rest = name.substring(pathString.length(),
+				System.err.println("NAME " + name);
+				System.err.println("PATH STRING " + pathString);
+
+				if (name.startsWith(comp)) {
+					final String rest = name.substring(comp.length(),
 							name.length());
 
 					if (rest.length() > 0) {
-						// get basename
-						// TODO: simplify!
-						final boolean isDir;
-						if (rest.charAt(rest.length() - 1) == '/') {
-							rest = rest.substring(0, rest.length() - 1);
-							isDir = true;
-						} else {
-							isDir = false;
+
+						if (rest.equals("root.export.txt")) {
+							System.out.println("FOOO");
 						}
 
-						int index = rest.indexOf('/');
-						int lastIndex = index;
-						while (index > 0) {
-							index = rest.indexOf('/', lastIndex + 1);
-							if (index > 0) {
-								lastIndex = index;
-							}
+						final File file = new File(rest);
+
+						if (file.getParent() != null & !recurse) {
+							continue;
 						}
-						final String basename;
-						if (lastIndex > -1) {
-							if (!recurse) {
-								continue; // look at next entry
-							}
-							basename = rest.substring(lastIndex + 1);
-						} else {
-							basename = rest;
-						}
+
+						System.err.println("FILE PATTERN " + filePattern);
+						System.err.println("FILE " + file.getName());
+
 						if (filePattern == null
-								|| RFC1960Filter.stringCompare(
-										filePattern.toCharArray(), 0,
-										basename.toCharArray(), 0) == 0) {
-							// InputStream inputStream;
-							final String nameStr = name
-									+ (isDir && !name.endsWith("/") ? "/" : "");
+								|| RFC1960Filter.stringCompare(filePattern
+										.toCharArray(), 0, file.getName()
+										.toCharArray(), 0) == 0) {
 							try {
-								if (paths) {
-									results.add(createURL(nameStr, null));
-								} else {
-									results.add(createURL(nameStr, null));
-								}
+								results.add(createURL(
+										name.charAt(0) == '/' ? name
+												.substring(1) : name, null));
 							} catch (final IOException ex) {
 								// do nothing, URL will not be added to
 								// results
@@ -3410,6 +3608,11 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				throws BundleException {
 			super(revId, manifest, classpathStrings);
 			this.storageLocation = location;
+		}
+
+		protected URL lookupFile(final String classpath, final String filename,
+				final HashSet<String> visited) throws IOException {
+			return (URL) findFile(classpath, filename, false);
 		}
 
 		@Override
@@ -3482,15 +3685,21 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 		}
 
-		public Vector<URL> searchFiles(final String path,
-				final String filePattern, final boolean recurse,
-				final boolean paths) {
+		// TODO: fix and use classpath...
+		public Vector<URL> searchFiles(final String classpath,
+				final String path, final String filePattern,
+				final boolean recurse) {
 			final Vector<URL> result = new Vector<URL>();
-			String pathString = path.charAt(0) == '/' ? path.substring(1)
-					: path;
 
-			pathString = path.charAt(path.length() - 1) == '/' ? pathString
-					: pathString + "/";
+			String pathString = path;
+			if (pathString.length() > 0) {
+				if (pathString.charAt(0) == '/') {
+					pathString = pathString.substring(0);
+				}
+				if (pathString.charAt(pathString.length() - 1) != '/') {
+					pathString = pathString + '/';
+				}
+			}
 
 			testFiles(new File(storageLocation, pathString), result, recurse,
 					filePattern);
@@ -3503,12 +3712,10 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				final File[] files = directory.listFiles();
 				for (int i = 0; i < files.length; i++) {
 					final File toTest = files[i];
-					if (toTest.isDirectory()) {
-						if (recurse) {
-							testFiles(toTest, results, recurse, filePattern);
-						}
-						continue;
-					}
+
+					System.err.println("testing " + toTest.getAbsolutePath()
+							+ (toTest.isDirectory() ? "/" : ""));
+
 					// get basename
 					final String basename = toTest.getName();
 
@@ -3518,13 +3725,20 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 									basename.toCharArray(), 0) == 0) {
 						try {
 							final String absPath = toTest.getAbsolutePath();
-							results.add(createURL(absPath.substring(absPath
-									.indexOf(storageLocation)
-									+ (storageLocation).length() + 1), null));
+							results.add(createURL(
+									absPath.substring(absPath
+											.indexOf(storageLocation)
+											+ (storageLocation).length() + 1)
+											+ (toTest.isDirectory() ? "/" : ""),
+									null));
 						} catch (final IOException ex) {
 							// do nothing, URL will not be added to
 							// results
 						}
+					}
+
+					if (recurse && toTest.isDirectory()) {
+						testFiles(toTest, results, recurse, filePattern);
 					}
 				}
 			}
