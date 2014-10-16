@@ -5,6 +5,7 @@
     <subant buildpath="org.eclipse.concierge" />
     <subant buildpath="org.eclipse.concierge.extension.permission" />
     <subant buildpath="org.eclipse.concierge.service.packageadmin" />
+    <subant buildpath="org.eclipse.concierge.service.startlevel" />
     <subant buildpath="org.eclipse.concierge.service.xmlparser" />
 
 </target>
@@ -13,6 +14,7 @@
     <subant buildpath="org.eclipse.concierge" target="clean"/>
     <subant buildpath="org.eclipse.concierge.extension.permission" target="clean" />
     <subant buildpath="org.eclipse.concierge.service.packageadmin" target="clean" />
+    <subant buildpath="org.eclipse.concierge.service.startlevel" target="clean" />
     <subant buildpath="org.eclipse.concierge.service.xmlparser" target="clean" />
 </target>
 
