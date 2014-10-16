@@ -135,8 +135,7 @@ public class BundleManifestOne implements LegacyBundleProcessing {
 					final HashMap<String, Object> attrs = parseResult
 							.getAttributes();
 
-					// attrs.put(PackageNamespace.PACKAGE_NAMESPACE,
-					// literals[0].trim());
+					attrs.put(PackageNamespace.PACKAGE_NAMESPACE, literals[0].trim());
 
 					caps.add(new BundleCapabilityImpl(revision,
 							PackageNamespace.PACKAGE_NAMESPACE, parseResult
