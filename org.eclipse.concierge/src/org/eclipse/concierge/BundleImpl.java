@@ -1241,6 +1241,31 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 		return null;
 	}
+	
+	final long getResourceLength(final URL url, final int rev){
+		String frag;
+		try {
+			frag = url.toURI().getFragment();
+		} catch (final URISyntaxException e) {
+			e.printStackTrace();
+			frag = null;
+		}
+
+		try {
+			for (final BundleRevision brevision : revisions) {
+				final Revision revision = (Revision) brevision;
+				if (revision.revId == rev) {
+					if (frag == null) {
+						return revision.retrieveFileLength(null, url.getPath());
+					} else {
+						return revision.retrieveFileLength(url.getPath(), frag);
+					}
+				}
+			}
+		} catch(IOException e){}
+
+		return -1;
+	}
 
 	// BundleStartLevel
 
@@ -2322,6 +2347,9 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				final String path, final String filePattern, boolean recurse);
 
 		protected abstract InputStream retrieveFile(final String classpath,
+				final String filename) throws IOException;
+		
+		protected abstract long retrieveFileLength(final String classpath,
 				final String filename) throws IOException;
 
 		protected abstract void close() throws IOException;
@@ -3454,21 +3482,30 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 		protected URL lookupFile(final String classpath, final String filename)
 				throws IOException {
-			return (URL) findFile(classpath, filename, false);
+			return (URL) findFile(classpath, filename, 0);
 		}
 
 		protected URL lookupFile(final String classpath, final String filename,
 				final HashSet<String> visited) throws IOException {
-			return (URL) findFile(classpath, filename, false);
+			return (URL) findFile(classpath, filename, 0);
 		}
 
 		public InputStream retrieveFile(final String classpath,
 				final String filename) throws IOException {
-			return (InputStream) findFile(classpath, filename, true);
+			return (InputStream) findFile(classpath, filename, 1);
+		}
+		
+		public long retrieveFileLength(final String classpath,
+				final String filename) throws IOException {
+			return (Long) findFile(classpath, filename, 2);
 		}
 
 		private Object findFile(final String classpath, String filename,
-				final boolean retrieve) throws IOException {
+				final int mode) throws IOException {
+			// mode == 0 return URL
+			// mode == 1 return InputStream
+			// mode == 2 return Long (length)
+			
 			// strip trailing separator
 			if (filename.charAt(0) == '/') {
 				filename = filename.substring(1);
@@ -3479,8 +3516,14 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				if (entry == null) {
 					return null;
 				}
-				return retrieve ? jarFile.getInputStream(entry) : createURL(
-						entry.getName(), null);
+				switch(mode){
+				case 0:
+					return createURL(entry.getName(), null);
+				case 1:
+					return jarFile.getInputStream(entry);
+				case 2:
+					return entry.getSize();
+				}
 			} else {
 				System.err.println("CLASSPATH IS " + classpath);
 
@@ -3497,9 +3540,14 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					if (entry2 == null) {
 						return null;
 					}
-
-					return retrieve ? jarFile.getInputStream(entry2)
-							: createURL(entry2.getName(), null);
+					switch(mode){
+					case 0:
+						return createURL(entry2.getName(), null);
+					case 1:
+						return jarFile.getInputStream(entry2);
+					case 2:
+						return entry2.getSize();
+					}
 				}
 
 				@SuppressWarnings("resource")
@@ -3509,8 +3557,14 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				JarEntry embeddedEntry;
 				while ((embeddedEntry = embeddedJar.getNextJarEntry()) != null) {
 					if (embeddedEntry.getName().equals(filename)) {
-						return retrieve ? embeddedJar : createURL(
-								entry.getName(), embeddedEntry.getName());
+						switch(mode){
+						case 0:
+							return createURL(entry.getName(), embeddedEntry.getName());
+						case 1:
+							return embeddedJar;
+						case 2:
+							return embeddedEntry.getSize();
+						}
 					}
 				}
 			}
@@ -3548,8 +3602,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					name = ze.getName().substring(cpOffset).replace('\\', '/');
 				}
 
-				System.err.println("NAME " + name);
-				System.err.println("PATH STRING " + pathString);
+				//System.err.println("NAME " + name);
+				//System.err.println("PATH STRING " + pathString);
 
 				if (name.startsWith(comp)) {
 					final String rest = name.substring(comp.length(),
@@ -3567,8 +3621,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 							continue;
 						}
 
-						System.err.println("FILE PATTERN " + filePattern);
-						System.err.println("FILE " + file.getName());
+						//System.err.println("FILE PATTERN " + filePattern);
+						//System.err.println("FILE " + file.getName());
 
 						if (filePattern == null
 								|| RFC1960Filter.stringCompare(filePattern
@@ -3612,24 +3666,34 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 		protected URL lookupFile(final String classpath, final String filename,
 				final HashSet<String> visited) throws IOException {
-			return (URL) findFile(classpath, filename, false);
+			return (URL) findFile(classpath, filename, 0);
 		}
 
 		@Override
 		protected InputStream retrieveFile(final String classpath,
 				final String filename) throws IOException {
-			return (InputStream) findFile(classpath, filename, true);
+			return (InputStream) findFile(classpath, filename, 1);
+		}
+		
+		@Override
+		protected long retrieveFileLength(final String classpath,
+				final String filename) throws IOException {
+			return (Long) findFile(classpath, filename, 2);
 		}
 
 		@Override
 		protected URL lookupFile(final String classpath, final String filename)
 				throws IOException {
-			return (URL) findFile(classpath, filename, false);
+			return (URL) findFile(classpath, filename, 0);
 		}
 
 		@SuppressWarnings("resource")
 		private Object findFile(final String classpath, String filename,
-				final boolean retrieve) throws IOException {
+				final int mode) throws IOException {
+			// mode == 0 return URL
+			// mode == 1 return InputStream
+			// mode == 2 return Long (length)
+			
 			// strip trailing separator
 			if (filename.charAt(0) == '/') {
 				filename = filename.substring(1);
@@ -3639,8 +3703,14 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				final File file = new File(storageLocation, filename);
 				try {
 					if (file.exists()) {
-						return retrieve ? new FileInputStream(file)
-								: createURL(filename, null);
+						switch(mode){
+						case 0:
+							return createURL(filename, null);
+						case 1:
+							return new FileInputStream(file);
+						case 2:
+							return file.length();
+						}
 					} else {
 						return null;
 					}
@@ -3658,10 +3728,16 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 							if (entry == null) {
 								return null;
 							}
-							return retrieve ? jar.getInputStream(entry)
-									: createURL(classpath, filename);
+							switch(mode){
+							case 0:
+								return createURL(classpath, filename);
+							case 1:
+								return jar.getInputStream(entry);
+							case 2:
+								return entry.getSize();
+							}
 						} finally {
-							if (!retrieve) {
+							if (mode==1) {
 								jar.close();
 							}
 						}
@@ -3670,8 +3746,14 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 						try {
 							final File source = new File(file, filename);
 							if (file.exists()) {
-								return retrieve ? new FileInputStream(source)
-										: createURL(filename, null);
+								switch(mode){
+								case 0:
+									return createURL(filename, null);
+								case 1:
+									return new FileInputStream(source);
+								case 2:
+									return source.length();
+								}
 							} else {
 								return null;
 							}

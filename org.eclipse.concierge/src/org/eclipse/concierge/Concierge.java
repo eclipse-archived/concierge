@@ -3094,6 +3094,10 @@ public final class Concierge extends AbstractBundle implements Framework,
 									isConnected = true;
 								}
 
+								public int getContentLength() {
+									return (int) bundle.getResourceLength(u, rev);
+								}
+								
 								/*
 								 * 
 								 * @see java.net.URLConnection#getInputStream()
