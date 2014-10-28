@@ -1754,7 +1754,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 		public List<BundleRequirement> getDeclaredRequirements(
 				final String namespace) {
 			return namespace == null ? requirements.getAllValues()
-					: requirements.lookup(namespace);
+					: (requirements.containsKey(namespace) ? requirements.lookup(namespace)
+							: Collections.EMPTY_LIST);
 		}
 
 		/**
