@@ -289,7 +289,7 @@ final class PackageAdminImpl implements PackageAdmin {
 		final List<BundleWire> wires = wiring
 				.getProvidedWires(HostNamespace.HOST_NAMESPACE);
 
-		if (wires.isEmpty()) {
+		if (wires==null || wires.isEmpty()) {
 			return null;
 		}
 
