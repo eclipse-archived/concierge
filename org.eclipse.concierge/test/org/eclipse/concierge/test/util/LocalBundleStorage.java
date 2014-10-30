@@ -19,7 +19,7 @@ public class LocalBundleStorage {
 	private static boolean DEBUG = false;
 
 	/** The properties contains the configuration. */
-	private final Properties localStorageConfiguration;
+	private Properties localStorageConfiguration;
 
 	public static LocalBundleStorage getInstance() {
 		return instance;
@@ -47,6 +47,10 @@ public class LocalBundleStorage {
 				}
 			}
 		}
+		this.localStorageConfiguration = props;
+	}
+
+	public void setProperties(Properties props) {
 		this.localStorageConfiguration = props;
 	}
 
@@ -78,6 +82,10 @@ public class LocalBundleStorage {
 	public String findRemoteBundle(final String bundleName) {
 		String urls = (String) this.localStorageConfiguration
 				.get("concierge.test.remoteURLs");
+		// if property not set, no bundle found
+		if (urls == null) {
+			return null;
+		}
 		String[] urlElements = urls.split("\n");
 		for (int i = 0; i < urlElements.length; i++) {
 			String u = urlElements[i]
@@ -114,12 +122,14 @@ public class LocalBundleStorage {
 		logDebug("Clear Cache !");
 		String localCacheDirname = (String) this.localStorageConfiguration
 				.get("concierge.test.localCache");
-		File cacheDir = new File(localCacheDirname);
-		File[] files = cacheDir.listFiles();
-		if (files != null) {
-			for (int i = 0; i < files.length; i++) {
-				File f = files[i];
-				f.delete();
+		if (localCacheDirname != null) {
+			File cacheDir = new File(localCacheDirname);
+			File[] files = cacheDir.listFiles();
+			if (files != null) {
+				for (int i = 0; i < files.length; i++) {
+					File f = files[i];
+					f.delete();
+				}
 			}
 		}
 	}
