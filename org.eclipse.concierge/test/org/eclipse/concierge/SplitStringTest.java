@@ -82,7 +82,27 @@ public class SplitStringTest {
 		assertEquals(res[4],
 				"five");
 	}
-
+	
+	@Test
+	public void testNull() {
+		final String[] res = Utils.splitString(null, ',');
+		assertEquals(res.length, 0);
+	}
+	@Test
+	public void testEmpty() {
+		final String[] res = Utils.splitString("", ',');
+		assertEquals(res.length, 0);
+	}
+	@Test
+	public void testTrailingSeparator() {
+		String[] res;
+		// no trailing separator
+		res = Utils.splitString("p1,p2,p3", ',');
+		assertEquals(res.length, 3);
+		// with trailing separator
+		res = Utils.splitString("p1,p2,p3,", ',');
+		assertEquals(res.length, 3);
+	}
 	
 	// simple test against String.split which does not support quotes and
 	// escaping
