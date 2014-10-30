@@ -1937,6 +1937,15 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 								} else {
 									n |= value
 											.equalsIgnoreCase(framework.osname);
+									// support aliases for "Mac OS" and "Mac OS X"
+									if (framework.osname.equals("MacOSX")) {
+										n |= value
+												.equalsIgnoreCase("Mac OS X");
+									} else if (framework.osname.equals("MacOS")) {
+										n |= value
+												.equalsIgnoreCase("Mac OS");
+									}
+									// TODO add other alias missing in OSGi R5 spec Table 4.4
 								}
 								no_n = false;
 							} else if (criterium == Constants.BUNDLE_NATIVECODE_OSVERSION) {
@@ -3812,6 +3821,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 									absPath.substring(absPath
 											.indexOf(storageLocation)
 											+ (storageLocation).length() + 1)
+											// TODO File.separatorChar instead of "/" ?
 											+ (toTest.isDirectory() ? "/" : ""),
 									null));
 						} catch (final IOException ex) {
