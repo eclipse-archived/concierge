@@ -60,6 +60,11 @@ public class XargsFileLauncher {
 				.newFramework(passedProperties);
 		
 		concierge.init();
+		
+		// we will start Concierge immediately BEFORE installing
+		// any bundles into it.
+		// This will result in a natural order of installed bundles.
+		concierge.start();
 
 		final BundleContext context = concierge.getBundleContext();
 
@@ -154,9 +159,8 @@ public class XargsFileLauncher {
 			} catch (IOException ioe) {
 
 			}
-			
-			concierge.start();
-
+			// formerly Concierge was started here.
+			// we moved that to start Concierge at beginning
 		}
 
 		return concierge;
