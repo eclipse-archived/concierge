@@ -69,6 +69,9 @@ public class TestUtils {
 
 	public static void copyStreamToFile(InputStream inputStream, File destFile)
 			throws IOException {
+		// ensure that parent dirs are created
+		File parentDir = destFile.getParentFile();
+		parentDir.mkdirs();
 		FileOutputStream fos = new FileOutputStream(destFile);
 		copyStream(inputStream, fos);
 		fos.close();
