@@ -81,7 +81,8 @@ public abstract class AbstractConciergeTestCase {
 		this.bundleContext = this.framework.getBundleContext();
 
 		if (stayInShell()) {
-			installAndStartBundle("./test/plugins/shell-1.0.0.jar");
+			// assume to get shell jar file in target folder
+			installAndStartBundle("./target/plugins/shell-1.0.0.jar");
 		}
 	}
 

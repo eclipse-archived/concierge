@@ -4,10 +4,8 @@ import java.io.File;
 
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
-
 
 /**
  * TODO move tests with bundles to Integration tests
@@ -33,7 +31,6 @@ public class LocalBundleStorageTest {
 	}
 
 	@Test
-	@Ignore
 	public void test03PathElements() {
 		LocalBundleStorage inst = LocalBundleStorage.getInstance();
 		File[] pathElements = inst
@@ -45,11 +42,10 @@ public class LocalBundleStorageTest {
 	}
 
 	@Test
-	@Ignore
 	public void test10FindLocalBundleFound() {
 		LocalBundleStorage inst = LocalBundleStorage.getInstance();
 		File f = inst.findLocalBundle("shell-1.0.0.jar");
-		Assert.assertEquals("./test/plugins/shell-1.0.0.jar", f.getPath());
+		Assert.assertEquals("./target/plugins/shell-1.0.0.jar", f.getPath());
 	}
 
 	@Test
@@ -60,7 +56,6 @@ public class LocalBundleStorageTest {
 	}
 
 	@Test
-	@Ignore
 	public void test12FindRemoteBundleFound() {
 		LocalBundleStorage inst = LocalBundleStorage.getInstance();
 		String s = inst.findRemoteBundle("javax.xml_1.3.4.v201005080400.jar");
@@ -77,15 +72,13 @@ public class LocalBundleStorageTest {
 	}
 
 	@Test
-	@Ignore
 	public void test14GetUrlForBundle() {
 		LocalBundleStorage inst = LocalBundleStorage.getInstance();
 		String s = inst.getUrlForBundle("shell-1.0.0.jar");
-		Assert.assertEquals("./test/plugins/shell-1.0.0.jar", s);
+		Assert.assertEquals("./target/plugins/shell-1.0.0.jar", s);
 	}
 
 	@Test
-	@Ignore
 	public void test15GetUrlForBundle() {
 		LocalBundleStorage inst = LocalBundleStorage.getInstance();
 		String s = inst.getUrlForBundle("org.apache.felix.metatype-1.0.10.jar");
