@@ -52,11 +52,11 @@ public class XargsFileLauncher {
 	 */
 	public Concierge processXargsFile(final File file) throws BundleException,
 			FileNotFoundException {
-		final Concierge concierge;
-		Map<String, String> passedProperties = new HashMap<String, String>();
+		// we have to preserve the properties for later variable and wildcard
+		// replacement
+		final Map<String, String> passedProperties = getPropertiesFromXargsFile(file);
 
-		passedProperties = getPropertiesFromXargsFile(file);
-		concierge = (Concierge) new Factory()
+		final Concierge concierge = (Concierge) new Factory()
 				.newFramework(passedProperties);
 		
 		concierge.init();
