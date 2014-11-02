@@ -238,6 +238,17 @@ public abstract class AbstractConciergeTestCase {
 		}
 	}
 
+	/** Checks about Bundle INSTALLED state. */
+	protected void assertBundleInstalled(final Bundle bundle) {
+		if (bundle.getState() == Bundle.INSTALLED) {
+			// all fine
+		} else {
+			Assert.fail("Bundle " + bundle.getSymbolicName() + " needs to be "
+					+ getBundleStateAsString(Bundle.INSTALLED) + " but was "
+					+ getBundleStateAsString(bundle.getState()));
+		}
+	}
+
 	/**
 	 * This method will install a "pseudo" bundle into the framework. The bundle
 	 * will get its <code>META-INF/MANIFEST.MF</code> from given headers. The
