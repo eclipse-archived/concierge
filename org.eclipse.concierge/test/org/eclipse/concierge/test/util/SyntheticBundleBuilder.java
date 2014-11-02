@@ -22,8 +22,8 @@ import org.osgi.framework.Constants;
  */
 public class SyntheticBundleBuilder {
 
-	private Map<Attributes.Name, String> manifestHeaders;
-	private Map<String, File> files;
+	private final Map<Attributes.Name, String> manifestHeaders;
+	private final Map<String, File> files;
 
 	public static SyntheticBundleBuilder newBuilder() {
 		return new SyntheticBundleBuilder();
@@ -33,14 +33,14 @@ public class SyntheticBundleBuilder {
 		// preserve files
 		this.files = new HashMap<String, File>();
 		// pre-fill default headers
-		Map<Attributes.Name, String> headers = new HashMap<Attributes.Name, String>();
+		final Map<Attributes.Name, String> headers = new HashMap<Attributes.Name, String>();
 		headers.put(Attributes.Name.MANIFEST_VERSION, "1.0");
 		headers.put(new Attributes.Name(Constants.BUNDLE_MANIFESTVERSION), "2");
+		headers.put(new Attributes.Name(Constants.BUNDLE_VERSION), "0.0.0");
 		this.manifestHeaders = headers;
-
 	}
 
-	public SyntheticBundleBuilder bundleSymbolicName(String bsn) {
+	public SyntheticBundleBuilder bundleSymbolicName(final String bsn) {
 		this.manifestHeaders.put(new Attributes.Name(
 				Constants.BUNDLE_SYMBOLICNAME), bsn);
 		return this;
@@ -55,7 +55,7 @@ public class SyntheticBundleBuilder {
 		return this;
 	}
 
-	public SyntheticBundleBuilder bundleVersion(String version) {
+	public SyntheticBundleBuilder bundleVersion(final String version) {
 		this.manifestHeaders.put(new Attributes.Name(Constants.BUNDLE_VERSION),
 				version);
 		return this;
@@ -67,19 +67,10 @@ public class SyntheticBundleBuilder {
 	}
 
 	public String getBundleVersion() {
-		String version = this.manifestHeaders.get(new Attributes.Name(
+		final String version = this.manifestHeaders.get(new Attributes.Name(
 				Constants.BUNDLE_VERSION));
-		if (version == null) {
-			return "0.0.0";
-		}
 		return version;
 	}
-
-	// public SynteticBundleBuilder manifest(String mf) {
-	// this.manifest = mf;
-	// return this;
-	// }
-	//
 
 	public SyntheticBundleBuilder addManifestHeader(final String key,
 			final String value) {
@@ -100,7 +91,7 @@ public class SyntheticBundleBuilder {
 		return this;
 	}
 
-	public SyntheticBundleBuilder addFile(String resPath, File f) {
+	public SyntheticBundleBuilder addFile(final String resPath, final File f) {
 		this.files.put(resPath, f);
 		return this;
 	}
@@ -123,11 +114,11 @@ public class SyntheticBundleBuilder {
 			// copy files into JAR
 			for (Iterator<Map.Entry<String, File>> iter = this.files.entrySet()
 					.iterator(); iter.hasNext();) {
-				Map.Entry<String, File> entry = iter.next();
-				String resPath = entry.getKey();
-				File f = entry.getValue();
-				FileInputStream fis = new FileInputStream(f);
-				JarEntry je = new JarEntry(resPath);
+				final Map.Entry<String, File> entry = iter.next();
+				final String resPath = entry.getKey();
+				final File f = entry.getValue();
+				final FileInputStream fis = new FileInputStream(f);
+				final JarEntry je = new JarEntry(resPath);
 				jarStream.putNextEntry(je);
 				TestUtils.copyStream(fis, jarStream);
 				jarStream.closeEntry();
@@ -153,7 +144,7 @@ public class SyntheticBundleBuilder {
 
 	public File asFile() {
 		final InputStream is = this.asInputStream();
-		File destFile;
+		final File destFile;
 		try {
 			destFile = new File("concierge-" + this.getBundleSymbolicName()
 					+ "-" + getBundleVersion() + ".jar");

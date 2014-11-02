@@ -43,7 +43,7 @@ public class BundlesWithNativeCodeTest extends AbstractConciergeTestCase {
 		final SyntheticBundleBuilder builder = SyntheticBundleBuilder
 				.newBuilder();
 		builder.bundleSymbolicName("testBundleNativeCodeMacOSX_X86_64")
-				.addManifestHeader("Bundle-Version", "1.0.0")
+				.bundleVersion("1.0.0")
 				.addManifestHeader("Bundle-NativeCode",
 						"lib/native/someNative.so; osname=MacOSX; processor=x86_64");
 		final Bundle bundleUnderTest = installBundle(builder);
@@ -59,7 +59,7 @@ public class BundlesWithNativeCodeTest extends AbstractConciergeTestCase {
 				.newBuilder();
 		builder.bundleSymbolicName(
 				"testBundleNativeCodeMacOSX_X86_64_WithSelectionFilter")
-				.addManifestHeader("Bundle-Version", "1.0.0")
+				.bundleVersion("1.0.0")
 				.addManifestHeader(
 						"Bundle-NativeCode",
 						"lib/native/someNative.so; osname=Linux; processor=ARM; selection-filter=\"(&(kura.arch=armv7_hf))\","
@@ -75,7 +75,7 @@ public class BundlesWithNativeCodeTest extends AbstractConciergeTestCase {
 		final SyntheticBundleBuilder builder = SyntheticBundleBuilder
 				.newBuilder();
 		builder.bundleSymbolicName("testBundleNativeCodeMacOSX_X86")
-				.addManifestHeader("Bundle-Version", "1.0.0")
+				.bundleVersion("1.0.0")
 				.addManifestHeader("Bundle-NativeCode",
 						"lib/native/someNative.so; osname=MacOSX; processor=x86");
 		final Bundle bundleUnderTest = installBundle(builder);

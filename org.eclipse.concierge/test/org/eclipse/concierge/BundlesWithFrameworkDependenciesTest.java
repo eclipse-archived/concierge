@@ -42,7 +42,7 @@ public class BundlesWithFrameworkDependenciesTest extends
 				.newBuilder();
 		builder.bundleSymbolicName(
 				"testInstallAndStartManifestWithRequireBundleSystemBundle")
-				.addManifestHeader("Bundle-Version", "1.0.0")
+				.bundleVersion("1.0.0")
 				.addManifestHeader("Require-Bundle", "system.bundle");
 		final Bundle bundleUnderTest = installBundle(builder);
 		bundleUnderTest.start();
@@ -56,7 +56,7 @@ public class BundlesWithFrameworkDependenciesTest extends
 				.newBuilder();
 		builder.bundleSymbolicName(
 				"testInstallAndStartManifestWithImportPackageOSGiNamespae")
-				.addManifestHeader("Bundle-Version", "1.0.0")
+				.bundleVersion("1.0.0")
 				.addManifestHeader("Import-Package",
 						"org.osgi.framework.namespace;version=\"[1.0,2.0)\"");
 		final Bundle bundleUnderTest = installBundle(builder);

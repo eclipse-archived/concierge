@@ -13,59 +13,62 @@ import org.junit.Test;
 public class SyntheticBundleBuilderTest {
 
 	@Test
-	public void test01Constructor() {
+	public void testConstructor() {
 		Assert.assertNotNull(SyntheticBundleBuilder.newBuilder());
 	}
 
 	@Test
-	public void test02AsInputStream() throws IOException {
+	public void testAsInputStream() throws IOException {
 		SyntheticBundleBuilder builder = SyntheticBundleBuilder.newBuilder();
-		builder.bundleSymbolicName("xxx").addManifestHeader("Import-Package",
-				"org.osgi.framework");
+		builder.bundleSymbolicName("testAsInputStream").addManifestHeader(
+				"Import-Package", "org.osgi.framework");
 		InputStream is = builder.asInputStream();
 		Assert.assertNotNull(is);
 		is.close();
 	}
 
 	@Test
-	public void test03AsFileWithoutVersion() throws IOException {
+	public void testAsFileWithoutVersion() throws IOException {
 		SyntheticBundleBuilder builder = SyntheticBundleBuilder.newBuilder();
-		builder.bundleSymbolicName("xxx").addManifestHeader("Import-Package",
-				"org.osgi.framework");
-		File f = builder.asFile();
-		f.deleteOnExit();
-		Assert.assertNotNull(f);
-		Assert.assertEquals("concierge-xxx-0.0.0.jar", f.getName());
-	}
-
-	@Test
-	public void test04AsFileWithVersion() throws IOException {
-		SyntheticBundleBuilder builder = SyntheticBundleBuilder.newBuilder();
-		builder.bundleSymbolicName("xxx").bundleVersion("1.0.0")
+		builder.bundleSymbolicName("testAsFileWithoutVersion")
 				.addManifestHeader("Import-Package", "org.osgi.framework");
 		File f = builder.asFile();
 		f.deleteOnExit();
 		Assert.assertNotNull(f);
-		Assert.assertEquals("concierge-xxx-1.0.0.jar", f.getName());
+		Assert.assertEquals("concierge-testAsFileWithoutVersion-0.0.0.jar",
+				f.getName());
 	}
 
 	@Test
-	public void test10FluentInterface() throws IOException {
+	public void testAsFileWithVersion() throws IOException {
 		SyntheticBundleBuilder builder = SyntheticBundleBuilder.newBuilder();
-		builder.bundleSymbolicName("xxx").singleton()
+		builder.bundleSymbolicName("testAsFileWithVersion")
+				.bundleVersion("1.0.0")
 				.addManifestHeader("Import-Package", "org.osgi.framework");
-		Assert.assertEquals("xxx;singleton:=true", builder.getBundleSymbolicName());
+		File f = builder.asFile();
+		f.deleteOnExit();
+		Assert.assertNotNull(f);
+		Assert.assertEquals("concierge-testAsFileWithVersion-1.0.0.jar",
+				f.getName());
+	}
+
+	@Test
+	public void testFluentInterface() throws IOException {
+		SyntheticBundleBuilder builder = SyntheticBundleBuilder.newBuilder();
+		builder.bundleSymbolicName("testFluentInterface").singleton()
+				.addManifestHeader("Import-Package", "org.osgi.framework");
+		Assert.assertEquals("testFluentInterface;singleton:=true",
+				builder.getBundleSymbolicName());
 		InputStream is = builder.asInputStream();
 		Assert.assertNotNull(is);
 		is.close();
 	}
 
 	@Test
-	public void test20AddFiles() throws IOException {
+	public void testAddFiles() throws IOException {
 		SyntheticBundleBuilder builder = SyntheticBundleBuilder.newBuilder();
 		File f = TestUtils.createFileFromString("<xml>", "xml");
-		builder.bundleSymbolicName("xxx")
-				.addManifestHeader("Bundle-Version", "1.0.0")
+		builder.bundleSymbolicName("testAddFiles").bundleVersion("1.0.0")
 				.addManifestHeader("Import-Package", "org.osgi.framework")
 				.addFile("plugin.xml", f);
 		InputStream is = builder.asInputStream();

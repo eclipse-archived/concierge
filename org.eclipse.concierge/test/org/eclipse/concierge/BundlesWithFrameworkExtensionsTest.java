@@ -33,7 +33,7 @@ public class BundlesWithFrameworkExtensionsTest extends
 					.newBuilder();
 			builder.bundleSymbolicName(
 					"testFrameworkExtensionFragmentOfConcierge")
-					.addManifestHeader("Bundle-Version", "1.0.0")
+					.bundleVersion("1.0.0")
 					.addManifestHeader("Fragment-Host",
 							"org.eclipse.concierge; extension:=framework");
 			final Bundle bundleUnderTest = installBundle(builder);
@@ -55,7 +55,7 @@ public class BundlesWithFrameworkExtensionsTest extends
 					.newBuilder();
 			builder.bundleSymbolicName(
 					"testFrameworkExtensionFragmentOfSystemBundle")
-					.addManifestHeader("Bundle-Version", "1.0.0")
+					.bundleVersion("1.0.0")
 					.addManifestHeader("Fragment-Host",
 							"system.bundle; extension:=framework");
 			final Bundle bundleUnderTest = installBundle(builder);

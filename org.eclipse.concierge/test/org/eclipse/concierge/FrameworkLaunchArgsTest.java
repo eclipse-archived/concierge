@@ -37,7 +37,7 @@ public class FrameworkLaunchArgsTest extends AbstractConciergeTestCase {
 			final SyntheticBundleBuilder builder = SyntheticBundleBuilder
 					.newBuilder();
 			builder.bundleSymbolicName("testGetClassFromBootdelegationMissing")
-					.addManifestHeader("Bundle-Version", "1.0.0");
+					.bundleVersion("1.0.0");
 			final Bundle bundleUnderTest = installBundle(builder);
 			bundleUnderTest.start();
 			assertBundleResolved(bundleUnderTest);
@@ -72,7 +72,7 @@ public class FrameworkLaunchArgsTest extends AbstractConciergeTestCase {
 			final SyntheticBundleBuilder builder = SyntheticBundleBuilder
 					.newBuilder();
 			builder.bundleSymbolicName("testGetClassFromBootdelegationOK")
-					.addManifestHeader("Bundle-Version", "1.0.0");
+					.bundleVersion("1.0.0");
 			final Bundle bundleUnderTest = installBundle(builder);
 			bundleUnderTest.start();
 			assertBundleResolved(bundleUnderTest);
