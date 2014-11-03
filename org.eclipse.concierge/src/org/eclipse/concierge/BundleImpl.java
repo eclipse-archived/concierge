@@ -2280,23 +2280,29 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				longer = list2;
 			}
 
-			final Set<String> index = new HashSet<String>();
+			// remember element and not only attribute as string
+			final Map<String, T> index = new HashMap<String, T>();
 			for (final T element : longer) {
 				final String attr = element.getDirectives().get(
 						Concierge.DIR_INTERNAL);
 				if (attr != null) {
-					index.add(attr);
+					index.put(attr, element);
 				}
 			}
 
 			for (final T element : shorter) {
 				final String attr = element.getDirectives().get(
 						Concierge.DIR_INTERNAL);
-				if (attr != null && index.contains(attr)) {
-					throw new BundleException("Conflicting " + s
-							+ " statement "
-							+ element.getAttributes().get(namespace) + " from "
-							+ element, BundleException.RESOLVE_ERROR);
+				if (attr != null && index.containsKey(attr)) {
+					T element2 = index.get(attr);
+					// check if directives are equals
+					// TODO must compare version statements including semantics
+					if (!element.getDirectives().equals (element2.getDirectives())) {
+						throw new BundleException("Conflicting " + s
+								+ " statement "
+								+ element.getAttributes().get(namespace) + " from "
+								+ element, BundleException.RESOLVE_ERROR);
+					}
 				}
 			}
 		}
@@ -3747,6 +3753,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 								return entry.getSize();
 							}
 						} finally {
+							// TODO needs to be fixed: do NOT close jar her
+							// see https://bugs.eclipse.org/bugs/show_bug.cgi?id=449582
 							if (mode==1) {
 								jar.close();
 							}
