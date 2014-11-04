@@ -25,9 +25,9 @@ public class PrepareTargetFolder {
 			"patched/com.sun.jersey_1.17.0.v20130314-2020.jar",
 			"patched/jetty-osgi-boot-9.2.1.v20140609.jar",
 			"patched/org.apache.felix.fileinstall-3.4.0.jar",
-			"patched/org.eclipse.core.runtime_3.10.0.201408192241.jar",
-			"patched/org.eclipse.equinox.console_1.1.0.v20140131-1639.jar",
-			"patched/org.eclipse.equinox.supplement_1.5.100.v20140428-1446.jar",
+			"patched/org.eclipse.core.runtime_3.10.0.201411050014.jar",
+			"bundles-fixed/org.eclipse.equinox.console_1.1.100.v20141023-1406.jar",
+			"bundles-fixed/org.eclipse.equinox.supplement_1.6.0.v20141009-1504.jar",
 			"plugins/concierge.test.version_0.1.0.jar",
 			"plugins/concierge.test.version_0.2.0.jar",
 			"plugins/concierge.test.version_1.0.0.201407232153.jar",
@@ -36,7 +36,6 @@ public class PrepareTargetFolder {
 			"plugins/org.eclipse.concierge.extension.permission_1.0.0.201408052201.jar",
 			"plugins/org.eclipse.concierge.service.xmlparser_1.0.0.201407191653.jar",
 			"plugins/org.eclipse.concierge.test.support_1.0.0.jar",
-			"plugins/org.eclipse.equinox.supplement_1.5.100.v20140428-1446.jar",
 			"plugins/shell-1.0.0.jar",
 			"xtext-2.6.1/org.eclipse.xtend.lib_2.6.1.v201406120726.jar",
 			"xtext-2.6.1/org.eclipse.xtext_2.6.1.v201406120726.jar",
@@ -57,6 +56,7 @@ public class PrepareTargetFolder {
 			copyUrl(s);
 			System.out.println(" done");
 		}
+		System.out.println("All files copied to target folder !");
 		return 0;
 	}
 

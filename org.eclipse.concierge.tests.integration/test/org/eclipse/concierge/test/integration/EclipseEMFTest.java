@@ -263,13 +263,13 @@ public class EclipseEMFTest extends AbstractConciergeTestCase {
 			final Bundle[] bundles = installAndStartBundles(new String[] {
 					"org.eclipse.concierge.service.xmlparser_1.0.0.201407191653.jar",
 					"org.eclipse.osgi.services_3.4.0.v20140312-2051.jar",
-					"org.eclipse.equinox.supplement_1.5.100.v20140428-1446.jar",
+					"org.eclipse.equinox.supplement_1.6.0.v20141009-1504.jar",
 					"org.eclipse.equinox.util_1.0.500.v20130404-1337.jar",
 					"org.apache.felix.gogo.runtime_0.10.0.v201209301036.jar",
 					// required by Equinox Console, is not optional
 					"org.eclipse.concierge.extension.permission_1.0.0.201408052201.jar",
-					"org.eclipse.equinox.console_1.1.0.v20140131-1639.jar",
-					"org.eclipse.equinox.supplement_1.5.100.v20140428-1446.jar",
+					"org.eclipse.equinox.console_1.1.100.v20141023-1406.jar",
+					"org.eclipse.equinox.supplement_1.6.0.v20141009-1504.jar",
 					"org.eclipse.equinox.common_3.6.200.v20130402-1505.jar",
 					"org.eclipse.equinox.registry_3.5.400.v20140428-1507.jar",
 					asEmfBuild("org.eclipse.emf.common"), });

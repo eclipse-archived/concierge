@@ -28,7 +28,7 @@ public class EclipseSmartHomeTest extends AbstractConciergeTestCase {
 
 	/** extend bundle name with BUILD tag. */
 	private static final String B_ESH(String bundleName) {
-		return bundleName + "_0.8.0.201410241207" + ".jar";
+		return bundleName + "_0.8.0.201411032207" + ".jar";
 	}
 
 	private static final String B_EMF(String bundleName) {
@@ -86,7 +86,7 @@ public class EclipseSmartHomeTest extends AbstractConciergeTestCase {
 					// "org.apache.felix.scr-1.8.2.jar",
 					// use Equinox DS instead
 					"org.eclipse.osgi.services_3.4.0.v20140312-2051.jar",
-					"org.eclipse.equinox.supplement_1.5.100.v20140428-1446.jar",
+					"org.eclipse.equinox.supplement_1.6.0.v20141009-1504.jar",
 					"org.eclipse.equinox.util_1.0.500.v20130404-1337.jar",
 					"org.eclipse.equinox.ds_1.4.200.v20131126-2331.jar",
 					// required for config core
@@ -184,7 +184,7 @@ public class EclipseSmartHomeTest extends AbstractConciergeTestCase {
 					// "org.apache.felix.scr-1.8.2.jar",
 					// use Equinox DS instead
 					"org.eclipse.osgi.services_3.4.0.v20140312-2051.jar",
-					"org.eclipse.equinox.supplement_1.5.100.v20140428-1446.jar",
+					"org.eclipse.equinox.supplement_1.6.0.v20141009-1504.jar",
 					"org.eclipse.equinox.util_1.0.500.v20130404-1337.jar",
 					"org.eclipse.equinox.ds_1.4.200.v20131126-2331.jar",
 					"com.google.guava_15.0.0.v201403281430.jar",
@@ -200,7 +200,7 @@ public class EclipseSmartHomeTest extends AbstractConciergeTestCase {
 
 					// o.e.s.io.console plus deps
 					"com.google.guava_10.0.1.v201203051515.jar",
-					"org.eclipse.equinox.supplement_1.5.100.v20140428-1446.jar",
+					"org.eclipse.equinox.supplement_1.6.0.v20141009-1504.jar",
 					"org.eclipse.equinox.common_3.6.200.v20130402-1505.jar",
 					B_ESH("org.eclipse.smarthome.io.console"),
 

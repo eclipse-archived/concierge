@@ -321,12 +321,12 @@ public class EclipseKuraTest extends AbstractConciergeTestCase {
 			final Bundle[] equinoxRegistry = installAndStartBundles(new String[] {
 					// registry and its deps
 					"osgi.cmpn_4.3.0.201111022214.jar",
-					"org.eclipse.equinox.supplement_1.5.100.v20140428-1446.jar",
+					"org.eclipse.equinox.supplement_1.6.0.v20141009-1504.jar",
 					"org.eclipse.equinox.util_1.0.500.v20130404-1337.jar",
 					// required by Equinox Console, is not optional
 					"org.eclipse.concierge.extension.permission_1.0.0.201408052201.jar",
-					"org.eclipse.equinox.console_1.1.0.v20140131-1639.jar",
-					"org.eclipse.equinox.supplement_1.5.100.v20140428-1446.jar",
+					"org.eclipse.equinox.console_1.1.100.v20141023-1406.jar",
+					"org.eclipse.equinox.supplement_1.6.0.v20141009-1504.jar",
 					"org.eclipse.equinox.common_3.6.200.v20130402-1505.jar",
 					"org.eclipse.equinox.registry_3.5.400.v20140428-1507.jar", });
 			assertBundlesResolved(equinoxRegistry);

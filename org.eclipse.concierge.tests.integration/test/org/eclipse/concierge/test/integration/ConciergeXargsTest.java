@@ -39,7 +39,7 @@ public class ConciergeXargsTest extends AbstractConciergeTestCase {
 		storage.getUrlForBundle("org.eclipse.osgi.services_3.4.0.v20140312-2051.jar");
 		storage.getUrlForBundle("org.eclipse.equinox.util_1.0.500.v20130404-1337.jar");
 		storage.getUrlForBundle("org.apache.felix.gogo.runtime_0.10.0.v201209301036.jar");
-		storage.getUrlForBundle("org.eclipse.equinox.console_1.1.0.v20140131-1639.jar");
+		storage.getUrlForBundle("org.eclipse.equinox.console_1.1.100.v20141023-1406.jar");
 		storage.getUrlForBundle("org.eclipse.equinox.common_3.6.200.v20130402-1505.jar");
 		storage.getUrlForBundle("org.eclipse.equinox.registry_3.5.400.v20140428-1507.jar");
 	}
@@ -251,6 +251,7 @@ public class ConciergeXargsTest extends AbstractConciergeTestCase {
 	public void test40XArgsInstallAndStartEquinoxRegistry() throws Exception {
 		runOK("-Dcache.dir=./target/localCache\n"
 				+ "-Dplugins.dir=./target/plugins\n"
+				+ "-DbundlesFixed.dir=./target/bundles-fixed\n"
 				+ "-Dpatched.dir=./target/patched\n"
 				+ "-Dorg.osgi.framework.bootdelegation=sun.,com.sun.org.apache.xerces.internal.jaxp,\\\n"
 				+ " javax.xml.parsers,org.xml.sax,org.xml.sax.helpers,javax.xml.transform,javax.script\n"
@@ -258,10 +259,10 @@ public class ConciergeXargsTest extends AbstractConciergeTestCase {
 				+ "-install ${plugins.dir}/org.eclipse.concierge.extension.permission_1.0.0.201408052201.jar\n"
 				+ "-istart ${plugins.dir}/org.eclipse.concierge.service.xmlparser_1.0.0.201407191653.jar\n"
 				+ "-istart ${cache.dir}/org.eclipse.osgi.services_3.4.0.v20140312-2051.jar\n"
-				+ "-istart ${patched.dir}/org.eclipse.equinox.supplement_1.5.100.v20140428-1446.jar\n"
+				+ "-istart ${bundlesFixed.dir}/org.eclipse.equinox.supplement_1.6.0.v20141009-1504.jar\n"
 				+ "-istart ${cache.dir}/org.eclipse.equinox.util_1.0.500.v20130404-1337.jar\n"
 				+ "-istart ${cache.dir}/org.apache.felix.gogo.runtime_0.10.0.v201209301036.jar\n"
-				+ "-istart ${patched.dir}/org.eclipse.equinox.console_1.1.0.v20140131-1639.jar\n"
+				+ "-istart ${bundlesFixed.dir}/org.eclipse.equinox.console_1.1.100.v20141023-1406.jar\n"
 				+ "-istart ${cache.dir}/org.eclipse.equinox.common_3.6.200.v20130402-1505.jar\n"
 				+ "-istart ${cache.dir}/org.eclipse.equinox.registry_3.5.400.v20140428-1507.jar\n",
 				9, true);

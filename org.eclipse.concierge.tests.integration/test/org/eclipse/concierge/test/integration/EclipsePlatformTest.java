@@ -37,14 +37,14 @@ public class EclipsePlatformTest extends AbstractConciergeTestCase {
 			startFrameworkClean(launchArgs);
 
 			final Bundle[] bundles = installAndStartBundles(new String[] {
-					"org.eclipse.equinox.supplement_1.5.100.v20140428-1446.jar",
+					"org.eclipse.equinox.supplement_1.6.0.v20141009-1504.jar",
 					"org.eclipse.equinox.common_3.6.200.v20130402-1505.jar",
 					"org.eclipse.equinox.registry_3.5.400.v20140428-1507.jar",
 					"org.eclipse.equinox.preferences_3.5.200.v20140224-1527.jar",
 					"org.eclipse.equinox.app_1.3.200.v20130910-1609.jar",
 					"org.eclipse.core.contenttype_3.4.200.v20140207-1251.jar",
 					"org.eclipse.core.jobs_3.6.0.v20140424-0053.jar",
-					"org.eclipse.core.runtime_3.10.0.201408192241.jar" });
+					"org.eclipse.core.runtime_3.10.0.201411050014.jar" });
 			assertBundlesResolved(bundles);
 		} finally {
 			stopFramework();
