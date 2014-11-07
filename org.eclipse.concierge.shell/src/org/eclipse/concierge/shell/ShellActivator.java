@@ -11,6 +11,7 @@
 package org.eclipse.concierge.shell;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.osgi.framework.BundleActivator;
@@ -18,8 +19,6 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceReference;
-//import org.osgi.service.packageadmin.PackageAdmin;
-//import org.osgi.service.startlevel.StartLevel;
 import org.eclipse.concierge.shell.commands.ShellCommandGroup;
 
 /**
@@ -48,35 +47,27 @@ public class ShellActivator implements BundleActivator {
 	 */
 	public void start(final BundleContext context) throws Exception {
 		ShellActivator.context = context;
-		List plugins = new ArrayList();
+		List<ShellCommandGroup> plugins = new ArrayList<ShellCommandGroup>();
 
-		/*
-		final ServiceReference pkgAdminRef = context
-				.getServiceReference(PackageAdmin.class.getName());
+		final ServiceReference<?> pkgAdminRef = context
+				.getServiceReference("org.osgi.service.packageadmin.PackageAdmin");
 		if (pkgAdminRef != null) {
-			plugins.add(new PackageAdminCommandGroup((PackageAdmin) context
+			plugins.add(new PackageAdminCommandGroup(context
 					.getService(pkgAdminRef)));
 		}
-		final ServiceReference startLevelRef = context
-				.getServiceReference(StartLevel.class.getName());
-		if (startLevelRef != null) {
-			plugins.add(new StartLevelCommandGroup((StartLevel) context
-					.getService(startLevelRef)));
-		}
-		*/
-		
+
 		shell = new Shell(System.out, System.err,
 				(ShellCommandGroup[]) plugins
 						.toArray(new ShellCommandGroup[plugins.size()]));
 		context.addServiceListener(shell, "(" + Constants.OBJECTCLASS + "="
 				+ ShellCommandGroup.class.getName() + ")");
 
-		final ServiceReference[] existingGroups = context.getServiceReferences(
-				ShellCommandGroup.class.getName(), null);
+		final Collection<ServiceReference<ShellCommandGroup>> existingGroups = context
+				.getServiceReferences(ShellCommandGroup.class, null);
 		if (existingGroups != null) {
-			for (int i = 0; i < existingGroups.length; i++) {
+			for (final ServiceReference<ShellCommandGroup> group : existingGroups) {
 				shell.serviceChanged(new ServiceEvent(ServiceEvent.REGISTERED,
-						existingGroups[i]));
+						group));
 			}
 		}
 	}

@@ -23,6 +23,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
+
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
@@ -30,10 +31,7 @@ import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
-import org.osgi.service.packageadmin.ExportedPackage;
-import org.osgi.service.packageadmin.PackageAdmin;
-//import org.osgi.service.startlevel.StartLevel;
-
+import org.osgi.framework.startlevel.BundleStartLevel;
 import org.eclipse.concierge.shell.commands.ShellCommandGroup;
 
 /**
@@ -43,7 +41,7 @@ import org.eclipse.concierge.shell.commands.ShellCommandGroup;
  * </p>
  * <p>
  * Other bundle can register services of the type
- * <code>ch.ethz.iks.concierge.shell.commands.ShellCommandGroup</code> and
+ * <code>org.eclipse.concierge.shell.commands.ShellCommandGroup</code> and
  * dynamically extend the shell by providing their own commands.
  * </p>
  * 
@@ -58,7 +56,8 @@ public class Shell extends Thread implements ServiceListener {
 	/**
 	 * the known command groups.
 	 */
-	private Map commandGroups = new HashMap(1);
+	private Map<String, ShellCommandGroup> commandGroups = new HashMap<String, ShellCommandGroup>(
+			1);
 
 	/**
 	 * empty string array.
@@ -68,12 +67,12 @@ public class Shell extends Thread implements ServiceListener {
 	/**
 	 * the standard out stream.
 	 */
-	private static PrintStream out;
+	static PrintStream out;
 
 	/**
 	 * the standard err stream.
 	 */
-	private static PrintStream err;
+	static PrintStream err;
 
 	/**
 	 * the default commands.
@@ -111,7 +110,7 @@ public class Shell extends Thread implements ServiceListener {
 
 		try {
 			while (running) {
-				System.out.print("\r\nConcierge> ");
+				out.print("\r\nConcierge> ");
 				String s = in.readLine();
 				if (s == null) {
 					running = false;
@@ -121,7 +120,7 @@ public class Shell extends Thread implements ServiceListener {
 				}
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
+			e.printStackTrace(err);
 		}
 
 	}
@@ -169,7 +168,7 @@ public class Shell extends Thread implements ServiceListener {
 					out.println("unknown comand group " + group);
 				}
 			}
-		} catch (Throwable t) {
+		} catch (final Throwable t) {
 			t.printStackTrace(err);
 		}
 	}
@@ -181,9 +180,9 @@ public class Shell extends Thread implements ServiceListener {
 	 *            the argument string.
 	 * @return the arguments.
 	 */
-	private String[] getArgs(final String args) {
+	protected String[] getArgs(final String args) {
 		final StringTokenizer tokenizer = new StringTokenizer(args, " ");
-		final ArrayList result = new ArrayList();
+		final ArrayList<String> result = new ArrayList<String>();
 		while (tokenizer.hasMoreTokens()) {
 			String token = tokenizer.nextToken().trim();
 			if (token.startsWith("\"")) {
@@ -202,7 +201,7 @@ public class Shell extends Thread implements ServiceListener {
 			}
 			result.add(token);
 		}
-		return (String[]) result.toArray(new String[result.size()]);
+		return result.toArray(new String[result.size()]);
 	}
 
 	/**
@@ -212,30 +211,31 @@ public class Shell extends Thread implements ServiceListener {
 	 *            the bundle id as string.
 	 * @return the bundle.
 	 */
-	private static Bundle getBundle(final String bundleIdString) {
+	protected static Bundle getBundle(final String bundleIdString) {
 		int pos;
 		final long bundleId = Long
 				.parseLong((pos = bundleIdString.indexOf(" ")) > -1 ? bundleIdString
-						.substring(0, pos)
-						: bundleIdString);
+						.substring(0, pos) : bundleIdString);
 		final Bundle bundle = ShellActivator.context.getBundle(bundleId);
 		if (bundle == null) {
-			System.err.println("Unknown bundle " + bundleId);
+			err.println("Unknown bundle " + bundleId);
 		}
 		return bundle;
 	}
 
-	private static ServiceReference getServiceRef(final String serviceIdString) {
+	protected static ServiceReference<?> getServiceRef(
+			final String serviceIdString) {
 		try {
-			final ServiceReference[] ref = ShellActivator.context
-					.getServiceReferences((String) null, "(" + Constants.SERVICE_ID
-							+ "=" + serviceIdString + ")");
+			final ServiceReference<?>[] ref = ShellActivator.context
+					.getServiceReferences((String) null, "("
+							+ Constants.SERVICE_ID + "=" + serviceIdString
+							+ ")");
 			if (ref == null) {
-				System.err.println("Unknown service " + serviceIdString);
+				err.println("Unknown service " + serviceIdString);
 			}
 			return ref[0];
-		} catch (InvalidSyntaxException e) {
-			e.printStackTrace();
+		} catch (final InvalidSyntaxException e) {
+			e.printStackTrace(err);
 			return null;
 		}
 	}
@@ -250,7 +250,7 @@ public class Shell extends Thread implements ServiceListener {
 		/**
 		 * @return the group identifier. It is the empty string for the default
 		 *         command group.
-		 * @see ch.ethz.iks.concierge.shell.commands.ShellCommandGroup#getGroup()
+		 * @see org.eclipse.concierge.shell.commands.ShellCommandGroup#getGroup()
 		 */
 		public String getGroup() {
 			return "";
@@ -258,10 +258,10 @@ public class Shell extends Thread implements ServiceListener {
 
 		/**
 		 * @return the help page.
-		 * @see ch.ethz.iks.concierge.shell.commands.ShellCommandGroup#getHelp()
+		 * @see org.eclipse.concierge.shell.commands.ShellCommandGroup#getHelp()
 		 */
 		public String getHelp() {
-			return "Concierge Shell:\n\tbundles\n\tservices [<bundle>]\n\tinstall <URL of bundle>\n\tstart <bundleId>\n\tstop <bundleId>\n\tupdate <bundleId> [<URL>]\n\tuninstall <bundleId>\n\theaders <bundleId>\n\tproperties <serviceId>\n\tprintenv \n\trestart (framework)\n\texit (framework)\n\tquit (shell)\n";
+			return "Concierge Shell:\n\tbundles\n\tservices [<bundle>]\n\tinstall <URL of bundle>\n\tstart <bundleId>\n\tstop <bundleId>\n\tupdate <bundleId> [<URL>]\n\tuninstall <bundleId>\n\theaders <bundleId>\n\tstartlevel <bundleId> [startlevel]\n\tproperties <serviceId>\n\tprintenv \n\trestart (framework)\n\texit (framework)\n\tquit (shell)\n";
 		}
 
 		/**
@@ -271,15 +271,12 @@ public class Shell extends Thread implements ServiceListener {
 		 *            the command.
 		 * @param args
 		 *            the arguments.
-		 * @FIXME: The implementation of some of these commands is, let's say,
-		 *         suboptimal. Fix this in future releases.
-		 * @see ch.ethz.iks.concierge.shell.commands.ShellCommandGroup#handleCommand(java.lang.String,
+		 * @see org.eclipse.concierge.shell.commands.ShellCommandGroup#handleCommand(java.lang.String,
 		 *      java.lang.String[])
 		 */
 		public void handleCommand(final String command, final String[] args) {
 			try {
-				final String cmd = command.intern();
-				if (cmd == "bundles") {
+				if ("bundles".equals(command)) {
 					out.println("Bundles:");
 					final StringBuffer buffer = new StringBuffer();
 					final Bundle[] bundles = ShellActivator.context
@@ -295,14 +292,14 @@ public class Shell extends Thread implements ServiceListener {
 					}
 					out.println(buffer.toString());
 					return;
-				} else if (cmd == "services") {
+				} else if ("services".equals(command)) {
 					out.println("Services:");
 					final Bundle[] bundles = ShellActivator.context
 							.getBundles();
 					final StringBuffer buffer = new StringBuffer();
 					if (args.length == 0) {
 						for (int i = 0; i < bundles.length; i++) {
-							final ServiceReference[] refs = bundles[i]
+							final ServiceReference<?>[] refs = bundles[i]
 									.getRegisteredServices();
 							if (refs != null && refs.length > 0) {
 								buffer.append(bundles[i] + "\n");
@@ -311,10 +308,8 @@ public class Shell extends Thread implements ServiceListener {
 									buffer.append(refs[j]
 											.getProperty(Constants.SERVICE_ID));
 									buffer.append("] ");
-									buffer
-											.append(Arrays
-													.asList((Object[]) refs[j]
-															.getProperty(Constants.OBJECTCLASS)));
+									buffer.append(Arrays.asList((Object[]) refs[j]
+											.getProperty(Constants.OBJECTCLASS)));
 									buffer.append('\n');
 								}
 							}
@@ -322,7 +317,7 @@ public class Shell extends Thread implements ServiceListener {
 						out.println(buffer.toString());
 					} else {
 						final Bundle bundle = getBundle(args[0]);
-						final ServiceReference[] refs = bundle
+						final ServiceReference<?>[] refs = bundle
 								.getRegisteredServices();
 						buffer.append(bundle + "\n");
 						if (refs != null && refs.length > 0) {
@@ -341,9 +336,9 @@ public class Shell extends Thread implements ServiceListener {
 						out.println(buffer.toString());
 					}
 					return;
-				} else if (cmd == "properties") {
+				} else if ("properties".equals(command)) {
 					if (args.length > 0) {
-						final ServiceReference ref = getServiceRef(args[0]);
+						final ServiceReference<?> ref = getServiceRef(args[0]);
 						final String[] keys = ref.getPropertyKeys();
 						out.println("Service [" + args[0] + "]:");
 						for (int i = 0; i < keys.length; i++) {
@@ -351,40 +346,36 @@ public class Shell extends Thread implements ServiceListener {
 							if (value.getClass().isArray()) {
 								value = Arrays.asList((Object[]) value);
 							}
-							out
-									.println("\t'" + keys[i] + "' = '" + value
-											+ "'");
+							out.println("\t'" + keys[i] + "' = '" + value + "'");
 						}
 					} else {
 						err.println("Missing argument <serviceId>");
 					}
-				} else if (cmd == "filter") {
+				} else if ("filter".equals(command)) {
 					if (args.length == 1) {
-						final ServiceReference[] refs = ShellActivator.context
+						final ServiceReference<?>[] refs = ShellActivator.context
 								.getServiceReferences((String) null, args[0]);
 						if (refs != null && refs.length > 0) {
 							for (int j = 0; j < refs.length; j++) {
-								out
-										.println("\t["
-												+ refs[j]
-														.getProperty(Constants.SERVICE_ID)
-												+ "] "
-												+ Arrays
-														.asList((Object[]) refs[j]
-																.getProperty(Constants.OBJECTCLASS)));
+								out.println("\t["
+										+ refs[j]
+												.getProperty(Constants.SERVICE_ID)
+										+ "] "
+										+ Arrays.asList((Object[]) refs[j]
+												.getProperty(Constants.OBJECTCLASS)));
 							}
 						}
 					} else {
 						out.println("Usage: filter <filterExpression>");
 					}
-				} else if (cmd == "install") {
+				} else if ("install".equals(command)) {
 					if (args.length > 0) {
 						ShellActivator.context.installBundle(args[0]);
 					} else {
 						err.println("Missing argument <bundleURL>");
 					}
 					return;
-				} else if (cmd == "start") {
+				} else if ("start".equals(command)) {
 					final Bundle bundle;
 					if (args.length > 0) {
 						if ((bundle = getBundle(args[0])) != null) {
@@ -404,7 +395,7 @@ public class Shell extends Thread implements ServiceListener {
 						err.println("Missing argument <bundleId>");
 					}
 					return;
-				} else if (cmd == "stop") {
+				} else if ("stop".equals(command)) {
 					final Bundle bundle;
 					if (args.length > 0) {
 						if ((bundle = getBundle(args[0])) != null) {
@@ -415,7 +406,7 @@ public class Shell extends Thread implements ServiceListener {
 						err.println("Missing argument <bundleId>");
 					}
 					return;
-				} else if (cmd == "uninstall") {
+				} else if ("uninstall".equals(command)) {
 					final Bundle bundle;
 					if (args.length > 0) {
 						if ((bundle = getBundle(args[0])) != null) {
@@ -426,7 +417,7 @@ public class Shell extends Thread implements ServiceListener {
 						System.err.println("Missing argument <bundleId>");
 					}
 					return;
-				} else if (cmd == "update") {
+				} else if ("update".equals(command)) {
 					final Bundle bundle;
 					if (args.length == 1) {
 						if ((bundle = getBundle(args[0])) != null) {
@@ -442,14 +433,15 @@ public class Shell extends Thread implements ServiceListener {
 						err.println("Missing argument <bundleId>");
 					}
 					return;
-				} else if (cmd == "headers") {
+				} else if ("headers".equals(command)) {
 					final Bundle bundle;
 					if (args.length > 0) {
 						if ((bundle = getBundle(args[0])) != null) {
-							final Dictionary dict = bundle.getHeaders();
+							final Dictionary<String, String> dict = bundle
+									.getHeaders();
 							final StringBuffer buffer = new StringBuffer();
 							buffer.append("Headers for " + bundle + ":\n");
-							for (Enumeration en = dict.keys(); en
+							for (Enumeration<String> en = dict.keys(); en
 									.hasMoreElements();) {
 								final Object key = en.nextElement();
 								buffer.append("\t" + key + " = "
@@ -461,20 +453,38 @@ public class Shell extends Thread implements ServiceListener {
 						err.println("Missing argument <bundleId>");
 					}
 					return;
-				} else if (cmd == "restart") {
+				} else if ("startlevel".equals(command)) {
+					if (args.length > 0) {
+						final Bundle bundle;
+						if ((bundle = getBundle(args[0])) != null) {
+							final BundleStartLevel bsl = bundle
+									.adapt(BundleStartLevel.class);
+							if (args.length > 1) {
+								bsl.setStartLevel(Integer.parseInt(args[1]));
+							}
+							final StringBuffer buffer = new StringBuffer();
+							buffer.append("Startlevel for " + bundle + ": ");
+							buffer.append(bsl.getStartLevel());
+							out.println(buffer.toString());
+						}
+					} else {
+						err.println("Missing argument <bundleId>");
+					}
+					return;
+				} else if ("restart".equals(command)) {
 					try {
 						ShellActivator.context.getBundle(0).update();
 					} catch (BundleException e) {
 						e.printStackTrace();
 					}
-				} else if (cmd == "quit") {
+				} else if ("quit".equals(command)) {
 					try {
 						ShellActivator.context.getBundle().stop();
 					} catch (BundleException e) {
 						e.printStackTrace();
 					}
 					return;
-				} else if (cmd == "exit") {
+				} else if ("exit".equals(command)) {
 					try {
 						ShellActivator.context.getBundle(0).stop();
 					} catch (BundleException e) {
@@ -482,26 +492,26 @@ public class Shell extends Thread implements ServiceListener {
 					}
 					running = false;
 					return;
-				} else if (cmd.equals("printenv")) {
+				} else if ("printenv".equals(command)) {
 					final String[] keys = (String[]) System.getProperties()
-							.keySet().toArray(
-									new String[System.getProperties().size()]);
+							.keySet()
+							.toArray(new String[System.getProperties().size()]);
 					for (int i = 0; i < keys.length; i++) {
 						final String val = System.getProperty(keys[i]);
 						out.println(keys[i] + " = " + val);
 					}
 				} else {
-					out.println("unknown command " + cmd);
+					out.println("unknown command " + command);
 				}
-			} catch (BundleException be) {
-				be.printStackTrace();
-			} catch (NumberFormatException nfe) {
+			} catch (final BundleException be) {
+				be.printStackTrace(err);
+			} catch (final NumberFormatException nfe) {
 				err.println("Illegal argument " + args[0]);
-			} catch (MalformedURLException e) {
+			} catch (final MalformedURLException e) {
 				err.println("Malformed URL " + args[1]);
-			} catch (IOException ioe) {
-				ioe.printStackTrace();
-			} catch (InvalidSyntaxException e) {
+			} catch (final IOException ioe) {
+				ioe.printStackTrace(err);
+			} catch (final InvalidSyntaxException e) {
 				e.printStackTrace(err);
 			}
 		}
@@ -547,202 +557,14 @@ public class Shell extends Thread implements ServiceListener {
 		}
 	}
 
-	/**
-	 * the package admin shell commands.
-	 * 
-	 * @author Jan S. Rellermeyer
-	 */
-	final static class PackageAdminCommandGroup implements ShellCommandGroup {
-		/**
-		 * the package admin instance.
-		 */
-		private PackageAdmin pkgAdmin;
 
-		/**
-		 * create a new command group.
-		 * 
-		 * @param pkgAdmin
-		 *            the package admin instance.
-		 */
-		PackageAdminCommandGroup(final PackageAdmin pkgAdmin) {
-			this.pkgAdmin = pkgAdmin;
-		}
-
-		/**
-		 * get the group identifier.
-		 * 
-		 * @return the group identifier.
-		 * @see ch.ethz.iks.concierge.shell.commands.ShellCommandGroup#getGroup()
-		 */
-		public String getGroup() {
-			return "package";
-		}
-
-		/**
-		 * get the help page.
-		 * 
-		 * @return the help page.
-		 * @see ch.ethz.iks.concierge.shell.commands.ShellCommandGroup#getHelp()
-		 */
-		public String getHelp() {
-			return "\tpackage.{\n\t\tpackages [<bundleID>]\n\t\trefresh [bundleID]\n\t}";
-		}
-
-		/**
-		 * handle a command.
-		 * 
-		 * @param command
-		 *            the command.
-		 * @param args
-		 *            the arguments.
-		 * @see ch.ethz.iks.concierge.shell.commands.ShellCommandGroup#handleCommand(java.lang.String,
-		 *      java.lang.String[])
-		 */
-		public void handleCommand(final String command, final String[] args) {
-			final String cmd = command.intern();
-			if (cmd == "packages") {
-				out.println("Packages:");
-				ExportedPackage[] packages = pkgAdmin
-						.getExportedPackages(args.length > 0 ? getBundle(args[0])
-								: null);
-				if (packages == null) {
-					out.println("Package " + getBundle(args[0]).getBundleId()
-							+ " has no exported packages.");
-				} else {
-					for (int i = 0; i < packages.length; i++) {
-						out.println(packages[i]);
-					}
-				}
-			} else if (cmd == "refresh") {
-				pkgAdmin.refreshPackages(args.length == 0 ? null
-						: new Bundle[] { getBundle(args[0]) });
-			} else {
-				err.println("Unknown command package." + cmd);
-			}
-		}
-	}
-
-	/**
-	 * the start level service commands.
-	 * 
-	 * @author Jan S. Rellermeyer
-	 */
-	//final static class StartLevelCommandGroup implements ShellCommandGroup {
-		/**
-		 * the start level service.
-		 */
-		//private StartLevel startLevel;
-
-		/**
-		 * create a new command group.
-		 * 
-		 * @param startLevel
-		 *            the start level service.
-		 */
-		//StartLevelCommandGroup(final StartLevel startLevel) {
-		//	this.startLevel = startLevel;
-		//}
-
-		/**
-		 * get the group identifier.
-		 * 
-		 * @return the group identifier.
-		 * @see ch.ethz.iks.concierge.shell.commands.ShellCommandGroup#getGroup()
-		 */
-		//public String getGroup() {
-		//	return "startlevel";
-		//}
-
-		/**
-		 * get the help page.
-		 * 
-		 * @return the help page.
-		 * @see ch.ethz.iks.concierge.shell.commands.ShellCommandGroup#getHelp()
-		 */
-		//public String getHelp() {
-		//	return "\tstartlevel.{\n\t\tstartLevel [<bundleId>]\n\t\tbundleStartLevel [<bundleId>] level\n\t\tinitStartLevel [<bundleId>]\n\t\tpersistentlyStarted [<bundleId>]\n\t}";
-		//}
-
-		/**
-		 * handle a command.
-		 * 
-		 * @param command
-		 *            the command.
-		 * @param args
-		 *            the arguments.
-		 * @see ch.ethz.iks.concierge.shell.commands.ShellCommandGroup#handleCommand(java.lang.String,
-		 *      java.lang.String[])
-		 */
-		//public void handleCommand(final String command, final String[] args) {
-		//	final String cmd = command.intern();
-		//	if (cmd == "startlevel") {
-		//		if (args.length == 0) {
-		//			out.println("Start level " + startLevel.getStartLevel());
-		//		} else if (args.length == 1) {
-		//			startLevel.setStartLevel(Integer.parseInt(args[0]));
-		//			out.println("Set start level " + args[0]);
-		//		} else {
-		//			err.println("Usage: startLevel [<bundleId>]");
-		//		}
-		//		return;
-		//	} else if (cmd == "bundlestartlevel") {
-		//		if (args.length == 0) {
-		//			Bundle[] bundles = ShellActivator.context.getBundles();
-		//			for (int i = 0; i < bundles.length; i++) {
-		//				out.println(bundles[i] + " has start level "
-		//						+ startLevel.getBundleStartLevel(bundles[i]));
-		//			}
-		//		} else if (args.length == 1) {
-		//			final Bundle bundle = getBundle(args[0]);
-		//			out.println(bundle + " has start level "
-		//					+ startLevel.getBundleStartLevel(bundle));
-		//		} else if (args.length == 2) {
-		//			final Bundle bundle = getBundle(args[0]);
-		//			startLevel.setBundleStartLevel(bundle, Integer
-		//					.parseInt(args[1]));
-		//			out.println("Set start level " + args[1] + " for bundle "
-		//					+ bundle);
-		//		} else {
-		//			err.println("Usage: bundleStartLevel [<bundleId> [level]]");
-		//		}
-		//		return;
-		//	} else if (cmd == "initstartlevel") {
-		//		if (args.length == 0) {
-		//			out.println("Initial start level: "
-		//					+ startLevel.getInitialBundleStartLevel());
-		//		} else if (args.length == 1) {
-		//			startLevel.setInitialBundleStartLevel(Integer
-		//					.parseInt(args[0]));
-		//			out.println("Set initial start level " + args[0]);
-		//		} else {
-		//			err.println("Usage: initStartLevel [<bundleId>]");
-		//		}
-		//		return;
-		//	} else if (cmd == "persistentlystarted") {
-		//		if (args.length == 1) {
-		//			final Bundle bundle = getBundle(args[0]);
-		//			out.print(bundle);
-		//			out
-		//					.println(startLevel
-		//							.isBundlePersistentlyStarted(bundle) ? " persistently started"
-		//							: " not persistently started");
-		//		} else {
-		//			err.println("Usage: persistentlyStarted [<bundleId>]");
-		//		}
-		//		return;
-		//	} else {
-		//		err.println("Unknown command startlevel." + cmd);
-		//	}
-		// }
-	//}
-	
 	/**
 	 * service listener method.
 	 * 
 	 * @see org.osgi.framework.ServiceListener#serviceChanged(org.osgi.framework.ServiceEvent)
 	 */
 	public void serviceChanged(final ServiceEvent event) {
-		final ServiceReference ref = event.getServiceReference();
+		final ServiceReference<?> ref = event.getServiceReference();
 		final int type = event.getType();
 		if (type == ServiceEvent.REGISTERED) {
 			final ShellCommandGroup group = (ShellCommandGroup) ShellActivator.context
