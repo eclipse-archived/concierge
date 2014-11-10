@@ -3752,9 +3752,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 								return entry.getSize();
 							}
 						} finally {
-							// TODO needs to be fixed: do NOT close jar her
-							// see https://bugs.eclipse.org/bugs/show_bug.cgi?id=449582
-							if (mode==1) {
+							if (mode!=1) {
 								jar.close();
 							}
 						}
