@@ -15,6 +15,7 @@ import org.eclipse.concierge.test.util.SyntheticBundleBuilder;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.osgi.framework.Bundle;
 
@@ -82,6 +83,39 @@ public class BundlesWithNativeCodeTest extends AbstractConciergeTestCase {
 		enforceResolveBundle(bundleUnderTest);
 		final boolean resolved = isBundleResolved(bundleUnderTest);
 		Assert.assertEquals(isMacOSX() && isX86(), resolved);
+	}
+
+	@Test
+	public void testBundleNatvieCodeOSDefaults() throws Exception {
+		String osname = System.getProperty("os.name");
+		String osarch = System.getProperty("os.arch");
+		final SyntheticBundleBuilder builder = SyntheticBundleBuilder
+				.newBuilder();
+		builder.bundleSymbolicName("testBundleNatvieCodeOSDefaults")
+				.bundleVersion("1.0.0")
+				.addManifestHeader(
+						"Bundle-NativeCode",
+						"lib/someNative.so; osname=" + osname + "; processor="
+								+ osarch + "");
+		final Bundle bundleUnderTest = installBundle(builder);
+		bundleUnderTest.start();
+		assertBundleActive(bundleUnderTest);
+	}
+
+	@Test
+	@Ignore ("Fails as wildcard not yet supported")
+	public void testBundleNativeCodeWithWildcard() throws Exception {
+		final SyntheticBundleBuilder builder = SyntheticBundleBuilder
+				.newBuilder();
+		builder.bundleSymbolicName("testBundleNativeCodeWithWildcard")
+				.bundleVersion("1.0.0")
+				.addManifestHeader("Bundle-NativeCode",
+						"lib/native/someNative.so; osname=MacOSX; processor=x86; *");
+		final Bundle bundleUnderTest = installBundle(builder);
+		enforceResolveBundle(bundleUnderTest);
+		final boolean resolved = isBundleResolved(bundleUnderTest);
+		// due to wildcard has to be resolved ALWAYS
+		Assert.assertEquals("Wildcard should always resolve", true, resolved);
 	}
 
 	private boolean isMacOSX() {
