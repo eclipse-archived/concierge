@@ -70,7 +70,8 @@ public class SyntheticBundleBuilderTest {
 		File f = TestUtils.createFileFromString("<xml>", "xml");
 		builder.bundleSymbolicName("testAddFiles").bundleVersion("1.0.0")
 				.addManifestHeader("Import-Package", "org.osgi.framework")
-				.addFile("plugin.xml", f);
+				.addFile("plugin.xml", f)
+				.addFile("plugin.properties", "name=value");
 		InputStream is = builder.asInputStream();
 		JarInputStream jis = new JarInputStream(is);
 		Manifest mf = jis.getManifest();
@@ -78,8 +79,10 @@ public class SyntheticBundleBuilderTest {
 				mf.getMainAttributes().getValue("Bundle-Version"));
 		Assert.assertEquals("org.osgi.framework", mf.getMainAttributes()
 				.getValue("Import-Package"));
-		JarEntry je = jis.getNextJarEntry();
-		Assert.assertEquals("plugin.xml", je.getName());
+		JarEntry je1 = jis.getNextJarEntry();
+		Assert.assertEquals("plugin.xml", je1.getName());
+		JarEntry je2 = jis.getNextJarEntry();
+		Assert.assertEquals("plugin.properties", je2.getName());
 		jis.close();
 		is.close();
 	}

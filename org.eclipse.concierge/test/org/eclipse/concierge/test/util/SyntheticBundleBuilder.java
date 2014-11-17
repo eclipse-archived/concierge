@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -24,14 +25,16 @@ public class SyntheticBundleBuilder {
 
 	private final Map<Attributes.Name, String> manifestHeaders;
 	private final Map<String, File> files;
+	private final Map<String, String> content;
 
 	public static SyntheticBundleBuilder newBuilder() {
 		return new SyntheticBundleBuilder();
 	}
 
 	public SyntheticBundleBuilder() {
-		// preserve files
+		// preserve files and added content
 		this.files = new HashMap<String, File>();
+		this.content = new HashMap<String, String>();
 		// pre-fill default headers
 		final Map<Attributes.Name, String> headers = new HashMap<Attributes.Name, String>();
 		headers.put(Attributes.Name.MANIFEST_VERSION, "1.0");
@@ -91,8 +94,20 @@ public class SyntheticBundleBuilder {
 		return this;
 	}
 
-	public SyntheticBundleBuilder addFile(final String resPath, final File f) {
-		this.files.put(resPath, f);
+	/**
+	 * Use addFile() for binary content.
+	 */
+	public SyntheticBundleBuilder addFile(final String resPath, final File file) {
+		this.files.put(resPath, file);
+		return this;
+	}
+
+	/**
+	 * Use addFile() for simple text content.
+	 */
+	public SyntheticBundleBuilder addFile(final String resPath,
+			final String content) {
+		this.content.put(resPath, content);
 		return this;
 	}
 
@@ -123,6 +138,21 @@ public class SyntheticBundleBuilder {
 				TestUtils.copyStream(fis, jarStream);
 				jarStream.closeEntry();
 				fis.close();
+			}
+
+			// copy content into JAR
+			for (Iterator<Map.Entry<String, String>> iter = this.content
+					.entrySet().iterator(); iter.hasNext();) {
+				final Map.Entry<String, String> entry = iter.next();
+				final String resPath = entry.getKey();
+				final String s = entry.getValue();
+				final InputStream stringInputStream = new ByteArrayInputStream(
+						s.getBytes(StandardCharsets.UTF_8));
+				final JarEntry je = new JarEntry(resPath);
+				jarStream.putNextEntry(je);
+				TestUtils.copyStream(stringInputStream, jarStream);
+				jarStream.closeEntry();
+				stringInputStream.close();
 			}
 
 			jarStream.close();

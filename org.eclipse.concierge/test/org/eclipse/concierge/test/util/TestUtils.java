@@ -1,12 +1,16 @@
 package org.eclipse.concierge.test.util;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Test utilities to avoid dependencies to external libraries.
@@ -27,6 +31,23 @@ public class TestUtils {
 		ps.close();
 		fos.close();
 		return file;
+	}
+
+	public static String createStringFromFile(final File file)
+			throws IOException {
+		InputStream in = new FileInputStream(file);
+		byte[] b = new byte[(int) file.length()];
+		int len = b.length;
+		int total = 0;
+		while (total < len) {
+			int result = in.read(b, total, len - total);
+			if (result == -1) {
+				break;
+			}
+			total += result;
+		}
+		in.close();
+		return new String(b, StandardCharsets.UTF_8);
 	}
 
 	public static void copyFile(File srcFile, File destFile) throws IOException {
@@ -89,4 +110,23 @@ public class TestUtils {
 		}
 	}
 
+	public static String getContentFromUrl(URL url) {
+		try {
+			StringBuffer sbuf = new StringBuffer();
+			InputStream is = url.openConnection().getInputStream();
+			BufferedReader reader = new BufferedReader(
+					new InputStreamReader(is));
+			String line = null;
+			while ((line = reader.readLine()) != null) {
+				System.out.println(line);
+				sbuf.append(line);
+			}
+			reader.close();
+			String content = sbuf.toString();
+			return content;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return "";
+		}
+	}
 }
