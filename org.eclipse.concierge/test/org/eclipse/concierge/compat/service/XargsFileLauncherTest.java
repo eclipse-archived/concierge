@@ -56,7 +56,7 @@ public class XargsFileLauncherTest {
 		p.put("p1", "v1");
 		p.put("p2", "v2");
 
-		final int N = 500000;
+		int N = 500000;
 
 		System.gc();
 		long startTime = System.currentTimeMillis();
@@ -123,25 +123,21 @@ public class XargsFileLauncherTest {
 	}
 
 	@Test
-	public void testGetPropertiesFromXargsCaseNoEquals() throws IOException {
-		// no name
+	public void testGetPropertiesFromXargsNoEquals() throws IOException {
 		Map<String, String> props = processProperties("-Dprop_v");
 		Assert.assertEquals(0, props.size());
 	}
 
 	@Test
-	public void testGetPropertiesFromXargsCaseNoName() throws IOException {
-		// no name
+	public void testGetPropertiesFromXargsNoName() throws IOException {
 		Map<String, String> props = processProperties("-D=v");
-		Assert.assertEquals(0, props.size());
-		// no name
+		Assert.assertEquals(0, props.size()); // no name
 		props = processProperties("-D+=v");
 		Assert.assertEquals(0, props.size());
 	}
 
 	@Test
 	public void testGetPropertiesFromXargsNoValue() throws IOException {
-		// no value
 		Map<String, String> props = processProperties("-Dprop=");
 		Assert.assertEquals(1, props.size());
 		Assert.assertEquals("", props.get("prop"));
@@ -158,9 +154,9 @@ public class XargsFileLauncherTest {
 
 	private File createFileFromString(final String initXargs)
 			throws IOException {
-		final File file = File.createTempFile("xargs-", ".xargs");
-		final FileOutputStream fos = new FileOutputStream(file);
-		final PrintStream ps = new PrintStream(fos);
+		File file = File.createTempFile("xargs-", ".xargs");
+		FileOutputStream fos = new FileOutputStream(file);
+		PrintStream ps = new PrintStream(fos);
 		ps.println(initXargs);
 		ps.close();
 		fos.close();
