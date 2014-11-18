@@ -58,9 +58,9 @@ public class XargsFileLauncher {
 
 		final Concierge concierge = (Concierge) new Factory()
 				.newFramework(passedProperties);
-		
+
 		concierge.init();
-		
+
 		// we will start Concierge immediately BEFORE installing
 		// any bundles into it.
 		// This will result in a natural order of installed bundles.
@@ -78,8 +78,9 @@ public class XargsFileLauncher {
 					0);
 			String token;
 			int initLevel = 1;
+			boolean skipProcessing = false;
 
-			while ((token = reader.readLine()) != null) {
+			while (!skipProcessing && ((token = reader.readLine()) != null)) {
 				token = token.trim();
 				if (token.equals("")) {
 					continue;
@@ -103,7 +104,8 @@ public class XargsFileLauncher {
 						}
 					});
 					if (files == null) {
-						System.err.println("NO FILES FOUND IN " + concierge.BUNDLE_LOCATION);
+						logError("NO FILES FOUND IN "
+								+ concierge.BUNDLE_LOCATION);
 						break;
 					}
 
@@ -111,10 +113,11 @@ public class XargsFileLauncher {
 						if (files[i].isDirectory()) {
 							continue;
 						}
-						final BundleImpl b = (BundleImpl) context.installBundle(files[i]
-								.getName());
+						final BundleImpl b = (BundleImpl) context
+								.installBundle(files[i].getName());
 						b.setStartLevel(initLevel);
-						final Revision rev = (Revision) b.adapt(BundleRevision.class);
+						final Revision rev = (Revision) b
+								.adapt(BundleRevision.class);
 						if (!rev.isFragment()) {
 							b.start();
 						}
@@ -142,12 +145,15 @@ public class XargsFileLauncher {
 					token = resolveWildcardName(token);
 					final Bundle bundle = (Bundle) memory.remove(token);
 					if (bundle == null) {
-						System.err.println("Bundle " + token
+						logError("Bundle " + token
 								+ " is marked to be started but has not been "
 								+ "installed before. Ignoring the command !");
 					} else {
 						bundle.start();
 					}
+				} else if (token.startsWith("-skip")) {
+					// skip the remaining part of the xargs file
+					skipProcessing = true;
 				}
 			}
 
@@ -173,9 +179,10 @@ public class XargsFileLauncher {
 				new FileInputStream(file)));
 
 		try {
+			String line;
 			String token;
-			while ((token = reader.readLine()) != null) {
-				token = token.trim();
+			while ((line = reader.readLine()) != null) {
+				token = line.trim();
 				if (token.equals("")) {
 					continue;
 				} else if (token.charAt(0) == '#') {
@@ -184,8 +191,24 @@ public class XargsFileLauncher {
 					token = getArg(token, 2);
 					// get key and value
 					int pos = token.indexOf("=");
-					if (pos > -1) {
-						String key = token.substring(0, pos);
+					if (pos < 0) {
+						logError("WRONG PROPERTY DEFINITION: "
+								+ "EQUALS for -Dname=value IS MISSING, IGNORE '"
+								+ line + "'");
+					} else if (pos == 0) {
+						logError("WRONG PROPERTY DEFINITION: "
+								+ "NAME for -Dname=value IS MISSING, IGNORE '"
+								+ line + "'");
+					} else if (pos > 0) {
+						// do we have "+=" syntax?
+						boolean doAdd = token.charAt(pos - 1) == '+';
+						String key = token.substring(0, doAdd ? pos - 1 : pos);
+						if (key.length() == 0) {
+							logError("WRONG PROPERTY DEFINITION: "
+									+ "NAME for -Dname+=value IS MISSING, IGNORE '"
+									+ line + "'");
+							continue;
+						}
 						String value = token.substring(pos + 1);
 						// handle multi line properties
 						while (value.endsWith("\\")) {
@@ -198,7 +221,12 @@ public class XargsFileLauncher {
 									.trim() + token.trim();
 						}
 						value = replaceVariable(value, properties);
-						properties.put(key, value);
+						if (doAdd) {
+							String oldValue = properties.get(key);
+							properties.put(key, oldValue + value);
+						} else {
+							properties.put(key, value);
+						}
 					}
 					continue;
 				} else if (token.startsWith("-profile")) {
@@ -307,5 +335,9 @@ public class XargsFileLauncher {
 			return sortedFiles.get(0);
 		}
 		return bundleName;
+	}
+
+	private void logError(String msg) {
+		System.err.println("[XargsFileLauncher] " + msg);
 	}
 }

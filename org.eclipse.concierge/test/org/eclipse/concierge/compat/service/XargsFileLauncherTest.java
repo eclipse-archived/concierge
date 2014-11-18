@@ -115,6 +115,38 @@ public class XargsFileLauncherTest {
 		Assert.assertEquals("v1v2v3v4v5", props.get("prop"));
 	}
 
+	@Test
+	public void testGetPropertiesFromXargsAddedByPlus() throws IOException {
+		Map<String, String> props = processProperties("-Dprop=v1\n-Dprop+=v2\n-Dprop+=v3");
+		Assert.assertEquals(1, props.size());
+		Assert.assertEquals("v1v2v3", props.get("prop"));
+	}
+
+	@Test
+	public void testGetPropertiesFromXargsCaseNoEquals() throws IOException {
+		// no name
+		Map<String, String> props = processProperties("-Dprop_v");
+		Assert.assertEquals(0, props.size());
+	}
+
+	@Test
+	public void testGetPropertiesFromXargsCaseNoName() throws IOException {
+		// no name
+		Map<String, String> props = processProperties("-D=v");
+		Assert.assertEquals(0, props.size());
+		// no name
+		props = processProperties("-D+=v");
+		Assert.assertEquals(0, props.size());
+	}
+
+	@Test
+	public void testGetPropertiesFromXargsNoValue() throws IOException {
+		// no value
+		Map<String, String> props = processProperties("-Dprop=");
+		Assert.assertEquals(1, props.size());
+		Assert.assertEquals("", props.get("prop"));
+	}
+
 	// private helper methods
 
 	private Map<String, String> processProperties(String s) throws IOException {
