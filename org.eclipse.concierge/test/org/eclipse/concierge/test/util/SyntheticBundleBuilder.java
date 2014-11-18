@@ -173,11 +173,19 @@ public class SyntheticBundleBuilder {
 	}
 
 	public File asFile() {
+		File destFile = new File("concierge-" + this.getBundleSymbolicName()
+				+ "-" + getBundleVersion() + ".jar");
+		String destFileName = destFile.getAbsolutePath();
+		File createdDestFile = asFile(destFileName);
+		return createdDestFile;
+	}
+
+	public File asFile(String destFileName) {
 		final InputStream is = this.asInputStream();
-		final File destFile;
 		try {
-			destFile = new File("concierge-" + this.getBundleSymbolicName()
-					+ "-" + getBundleVersion() + ".jar");
+			File destFile = new File(destFileName);
+			// ensure parent dir will be created
+			new File(destFile.getParent()).mkdirs();
 			TestUtils.copyStreamToFile(is, destFile);
 			return destFile;
 		} catch (IOException e) {
@@ -185,5 +193,4 @@ public class SyntheticBundleBuilder {
 		}
 		return null;
 	}
-
 }

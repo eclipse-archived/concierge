@@ -53,6 +53,19 @@ public class SyntheticBundleBuilderTest {
 	}
 
 	@Test
+	public void testAsFileWithDestFileName() throws IOException {
+		SyntheticBundleBuilder builder = SyntheticBundleBuilder.newBuilder();
+		builder.bundleSymbolicName("testAsFileWithDestFileName")
+				.bundleVersion("1.0.0")
+				.addManifestHeader("Import-Package", "org.osgi.framework");
+		File f = builder
+				.asFile("build/tests/testAsFileWithDestFileName-1.0.0.jar");
+		f.deleteOnExit();
+		Assert.assertNotNull(f);
+		Assert.assertTrue(f.exists());
+	}
+
+	@Test
 	public void testFluentInterface() throws IOException {
 		SyntheticBundleBuilder builder = SyntheticBundleBuilder.newBuilder();
 		builder.bundleSymbolicName("testFluentInterface").singleton()
