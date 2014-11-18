@@ -7,6 +7,8 @@
  *
  * Contributors:
  *     Jan S. Rellermeyer, IBM Research - initial API and implementation
+ *     Tim Verbelen - Bugfixing
+ *     Jochen Hiller - Bugfixing
  *******************************************************************************/
 package org.eclipse.concierge;
 
@@ -98,6 +100,11 @@ import org.osgi.resource.Wire;
 import org.osgi.service.log.LogService;
 import org.osgi.service.resolver.HostedCapability;
 
+/**
+ * @author Jan Rellermeyer - Initial Contribution
+ * @author Tim Verbelen - Bugfixing
+ * @author Jochen Hiller - Bugfixing
+ */
 public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 	/*
@@ -3520,7 +3527,15 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 		public long retrieveFileLength(final String classpath,
 				final String filename) throws IOException {
-			return (Long) findFile(classpath, filename, GET_CONTENT_LENGTH);
+			Object res = findFile(classpath, filename, GET_CONTENT_LENGTH);
+			if (res == null) {
+				System.err.println("Could not retrieveFileLength for filename=" + 
+						filename + " from bundle=" + this.toString());
+				return -1;
+			} else {
+				return (Long) res;
+ 			}
+//			return (Long) findFile(classpath, filename, GET_CONTENT_LENGTH);
 		}
 
 		private Object findFile(final String classpath, String filename,
