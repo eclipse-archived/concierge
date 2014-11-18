@@ -16,6 +16,7 @@ import org.eclipse.concierge.Concierge;
 import org.eclipse.concierge.compat.service.XargsFileLauncher;
 import org.eclipse.concierge.test.util.AbstractConciergeTestCase;
 import org.eclipse.concierge.test.util.LocalBundleStorage;
+import org.eclipse.concierge.test.util.SyntheticBundleBuilder;
 import org.eclipse.concierge.test.util.TestUtils;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -32,6 +33,7 @@ import org.osgi.framework.BundleException;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ConciergeXargsTest extends AbstractConciergeTestCase {
 
+	// TODO create bundles on the fly, with SyntheticBundleBuilder as file
 	@BeforeClass
 	public static void preloadRequiredBundles() throws Exception {
 		LocalBundleStorage storage = LocalBundleStorage.getInstance();
@@ -248,6 +250,29 @@ public class ConciergeXargsTest extends AbstractConciergeTestCase {
 	}
 
 	@Test
+	public void test33XArgsSkipBetween() throws Exception {
+		runOK("-istart ./target/plugins/concierge.test.version_0.1.0.jar\n"
+				+ "-istart ./target/plugins/concierge.test.version_1.0.0.jar\n"
+				+ "-istart ./target/plugins/concierge.test.version_1.1.0.jar\n"
+				+ "-skip", 3, true);
+		runOK("-istart ./target/plugins/concierge.test.version_0.1.0.jar\n"
+				+ "-istart ./target/plugins/concierge.test.version_1.0.0.jar\n"
+				+ "-skip\n"
+				+ "-istart ./target/plugins/concierge.test.version_1.1.0.jar",
+				2, true);
+		runOK("-istart ./target/plugins/concierge.test.version_0.1.0.jar\n"
+				+ "-skip\n"
+				+ "-istart ./target/plugins/concierge.test.version_1.0.0.jar\n"
+				+ "-istart ./target/plugins/concierge.test.version_1.1.0.jar",
+				1, true);
+		runOK("-skip\n"
+				+ "-istart ./target/plugins/concierge.test.version_0.1.0.jar\n"
+				+ "-istart ./target/plugins/concierge.test.version_1.0.0.jar\n"
+				+ "-istart ./target/plugins/concierge.test.version_1.1.0.jar",
+				0, true);
+	}
+
+	@Test
 	public void test40XArgsInstallAndStartEquinoxRegistry() throws Exception {
 		runOK("-Dcache.dir=./target/localCache\n"
 				+ "-Dplugins.dir=./target/plugins\n"
@@ -256,8 +281,8 @@ public class ConciergeXargsTest extends AbstractConciergeTestCase {
 				+ "-Dorg.osgi.framework.bootdelegation=sun.,com.sun.org.apache.xerces.internal.jaxp,\\\n"
 				+ " javax.xml.parsers,org.xml.sax,org.xml.sax.helpers,javax.xml.transform,javax.script\n"
 				+ "-Dorg.osgi.framework.system.packages.extra=javax.xml.parsers,org.xml.sax,org.xml.sax.helpers\n"
-				+ "-install ${plugins.dir}/org.eclipse.concierge.extension.permission_1.0.0.201408052201.jar\n"
-				+ "-istart ${plugins.dir}/org.eclipse.concierge.service.xmlparser_1.0.0.201407191653.jar\n"
+				+ "-install ${plugins.dir}/org.eclipse.concierge.extension.permission-1.0.0.alpha2.jar\n"
+				+ "-istart ${plugins.dir}/org.eclipse.concierge.service.xmlparser-1.0.0.alpha2.jar\n"
 				+ "-istart ${cache.dir}/org.eclipse.osgi.services_3.4.0.v20140312-2051.jar\n"
 				+ "-istart ${bundlesFixed.dir}/org.eclipse.equinox.supplement_1.6.0.v20141009-1504.jar\n"
 				+ "-istart ${cache.dir}/org.eclipse.equinox.util_1.0.500.v20130404-1337.jar\n"
@@ -332,5 +357,11 @@ public class ConciergeXargsTest extends AbstractConciergeTestCase {
 			xargs.delete();
 			stopFramework();
 		}
+	}
+
+	private void createBundle(String name, String version) {
+		SyntheticBundleBuilder builder = new SyntheticBundleBuilder();
+		builder.bundleSymbolicName(name).bundleVersion(version)
+				.addManifestHeader("Import-Package", "org.osgi.framework");
 	}
 }
