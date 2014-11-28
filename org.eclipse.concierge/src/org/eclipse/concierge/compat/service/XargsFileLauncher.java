@@ -17,6 +17,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
@@ -52,13 +53,24 @@ public class XargsFileLauncher {
 	 */
 	public Concierge processXargsFile(final File file) throws BundleException,
 			FileNotFoundException {
+		InputStream inputStream = new FileInputStream(file);
 		// we have to preserve the properties for later variable and wildcard
 		// replacement
-		final Map<String, String> passedProperties = getPropertiesFromXargsFile(file);
+		final Map<String, String> passedProperties = getPropertiesFromXargsInputStream(inputStream);
 
+		// now process again for install/start options with given properties
+		inputStream = new FileInputStream(file);
+		return processXargsInputStream(passedProperties, inputStream);
+	}
+
+	public Concierge processXargsInputStream(
+			final Map<String, String> passedProperties,
+			final InputStream inputStream) throws BundleException,
+			FileNotFoundException {
+
+		// create framework with given properties
 		final Concierge concierge = (Concierge) new Factory()
 				.newFramework(passedProperties);
-
 		concierge.init();
 
 		// we will start Concierge immediately BEFORE installing
@@ -71,7 +83,7 @@ public class XargsFileLauncher {
 		int maxLevel = 1;
 
 		final BufferedReader reader = new BufferedReader(new InputStreamReader(
-				new FileInputStream(file)));
+				inputStream));
 
 		try {
 			final HashMap<String, Bundle> memory = new HashMap<String, Bundle>(
@@ -172,11 +184,11 @@ public class XargsFileLauncher {
 		return concierge;
 	}
 
-	public Map<String, String> getPropertiesFromXargsFile(final File file)
-			throws FileNotFoundException {
+	public Map<String, String> getPropertiesFromXargsInputStream(
+			final InputStream inputStream) {
 		final Map<String, String> properties = new HashMap<String, String>();
 		final BufferedReader reader = new BufferedReader(new InputStreamReader(
-				new FileInputStream(file)));
+				inputStream));
 
 		try {
 			String line;

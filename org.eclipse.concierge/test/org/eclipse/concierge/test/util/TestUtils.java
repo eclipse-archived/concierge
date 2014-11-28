@@ -1,6 +1,7 @@
 package org.eclipse.concierge.test.util;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -31,6 +32,13 @@ public class TestUtils {
 		ps.close();
 		fos.close();
 		return file;
+	}
+
+	public static InputStream createInputStreamFromString(final String content)
+			throws IOException {
+		final InputStream stream = new ByteArrayInputStream(
+				content.getBytes(StandardCharsets.UTF_8));
+		return stream;
 	}
 
 	public static String createStringFromFile(final File file)

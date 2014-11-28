@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.concierge;
 
+import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -23,6 +24,7 @@ import java.net.URLClassLoader;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.net.URLStreamHandlerFactory;
+import java.nio.charset.StandardCharsets;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.cert.X509Certificate;
@@ -120,6 +122,7 @@ import org.osgi.service.resolver.Resolver;
  * maintains the central bundle and service registry.
  * 
  * @author Jan S. Rellermeyer
+ * @author Jochen Hiller - added argument parsing
  */
 public final class Concierge extends AbstractBundle implements Framework,
 		BundleRevision, FrameworkWiring, FrameworkStartLevel, BundleActivator {
@@ -192,11 +195,10 @@ public final class Concierge extends AbstractBundle implements Framework,
 	boolean LOG_QUIET;
 
 	/**
-	 * always decompress the bundles, great for testing 
+	 * always decompress the bundles, great for testing
 	 * 
-	 * FIXME: combine with
-	 * decompress embedded into a single property, 
-	 * e.g., with values: NEVER, EMBEDDED_JARS, ALWAYS
+	 * FIXME: combine with decompress embedded into a single property, e.g.,
+	 * with values: NEVER, EMBEDDED_JARS, ALWAYS
 	 */
 	boolean ALWAYS_DECOMPRESS;
 
@@ -234,11 +236,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 * debug outputs from services ?
 	 */
 	boolean DEBUG_SERVICES;
-
-	/**
-	 * path to the init.xargs file
-	 */
-	static String INIT_XARGS_FILE_PATH;
 
 	/**
 	 * the profile.
@@ -494,41 +491,127 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 	public static final String DIR_INTERNAL = "x-int";
 
+	/** Return code from main when OK. */
+	private static final int MAIN_RC_OK = 0;
+
+	/** Return code from main when printing usage message. */
+	private static final int MAIN_RC_USAGE = 1;
+
 	/**
-	 * start method.
+	 * Main method to start Concierge. This class will delegate that to an
+	 * internal method, which will create framework instance, but will not wait
+	 * until stopped. This allows better testability.
+	 */
+	public static void main(final String[] args) throws Exception {
+		Concierge framework = doMain(args);
+		if (framework != null) {
+			// wait until framework stopped
+			framework.waitForStop(0);
+			// exit with OK
+			System.exit(MAIN_RC_OK);
+		} else {
+			// exit with usage message
+			System.exit(MAIN_RC_USAGE);
+		}
+	}
+
+	/**
+	 * Processing of command line arguments. It will create a framework instance
+	 * based on given arguments.
 	 * 
 	 * @param args
 	 *            command line arguments.
 	 * @throws Exception
-	 * @throws Throwable
-	 *             if something goes wrong.
 	 */
-	public static void main(final String[] args) throws Exception {
+	public static Concierge doMain(final String[] args) throws Exception {
 		// TODO: populate micro-services
-
 		// TODO: re-enable profile and restart...
-		// TODO: implement the -install, -start, ...
 
-		// TODO: temporary hack
-
+		// TODO: temporary solution to use xargs file launcher for argument
+		// processing
 		final XargsFileLauncher xargsLauncher = new XargsFileLauncher();
-
-		// TODO: this is a temporary hack...
-		INIT_XARGS_FILE_PATH = System
-				.getProperty("org.eclipse.concierge.init.xargs");
-		if (INIT_XARGS_FILE_PATH == null) {
-			INIT_XARGS_FILE_PATH = "init.xargs";
+		String xargsFile = null;
+		final StringBuffer argsBuf = new StringBuffer();
+		for (int i = 0; (args != null) && (i < args.length); i++) {
+			if ("-help".equalsIgnoreCase(args[i])) {
+				// if -help show usage message
+				System.err
+						.println(""
+								+ "Concierge usage: org.eclipse.concierge.Concierge {arguments}\n"
+								+ "  {file.xargs}                                 "
+								+ "Loads xargs file, must end with .xargs\n"
+								+ "  {-install|-start|-istart} {bundle-jar-file}  "
+								+ "Install and start one bundle (can be used multiple times, in specified order)\n"
+								+ "  {-all}                                       "
+								+ "Install and start all bundles from current directory\n"
+								+ "  {-Dprop=value}                               "
+								+ "Specify one or more props just for Concierge (can be used multiple times)\n"
+								+ "Sample: org.eclipse.concierge.Concierge -Dorg.osgi.framework.bootdelegation=javax.xml.parsers -istart mybundle.jar\n");
+				// TODO allow -all with directory location
+				return null;
+			} else if (args[i].endsWith(".xargs")) {
+				// if arg is name of an xargs file: use this, stop further
+				// processing
+				xargsFile = args[i];
+				break;
+			} else {
+				argsBuf.append(args[i]);
+				if (args[i].startsWith("-D")) {
+					argsBuf.append('\n');
+				} else if (args[i].equalsIgnoreCase("-install")
+						|| args[i].equalsIgnoreCase("-istart")
+						|| args[i].equalsIgnoreCase("-start")) {
+					// append next argument to same line
+					if ((i - 1) < args.length) {
+						i++;
+						argsBuf.append(' ');
+						argsBuf.append(args[i]);
+						argsBuf.append('\n');
+					}
+				}
+			}
 		}
 
-		final File xargs = new File(INIT_XARGS_FILE_PATH);
+		// no arguments? Try to use init.xargs or other file
+		if ((xargsFile == null && argsBuf.length() == 0)) {
+			xargsFile = System.getProperty("org.eclipse.concierge.init.xargs");
+			if (xargsFile == null) {
+				xargsFile = "init.xargs";
+			}
+		}
+
+		// now start framework with given arguments
 		final Concierge fw;
-		if (xargs.exists()) {
-			fw = xargsLauncher.processXargsFile(xargs);
+		if (xargsFile != null) {
+			// take args from file
+			final File xargs = new File(xargsFile);
+			if (xargs.exists()) {
+				fw = xargsLauncher.processXargsFile(xargs);
+			} else {
+				System.err.println("Concierge: xargs file '" + xargs.toString()
+						+ "' not found, starting without arguments");
+				fw = (Concierge) new Factory().newFramework(null);
+				fw.init();
+				fw.start();
+			}
 		} else {
-			fw = (Concierge) new Factory().newFramework(null);
-			fw.init();
+			// some arguments have been defined
+			InputStream inputStream = new ByteArrayInputStream(argsBuf
+					.toString().getBytes(StandardCharsets.UTF_8));
+			// TODO support really props as command line args?
+			// we have to preserve the properties for later variable and
+			// wildcard
+			// replacement
+			final Map<String, String> passedProperties = xargsLauncher
+					.getPropertiesFromXargsInputStream(inputStream);
+
+			// now process again for install/start options with given properties
+			inputStream = new ByteArrayInputStream(argsBuf.toString().getBytes(
+					StandardCharsets.UTF_8));
+			fw = xargsLauncher.processXargsInputStream(passedProperties,
+					inputStream);
 		}
-		fw.waitForStop(0);
+		return fw;
 	}
 
 	Concierge(final Map<String, String> passedProperties) {
@@ -3101,9 +3184,10 @@ public final class Concierge extends AbstractBundle implements Framework,
 								}
 
 								public int getContentLength() {
-									return (int) bundle.getResourceLength(u, rev);
+									return (int) bundle.getResourceLength(u,
+											rev);
 								}
-								
+
 								/*
 								 * 
 								 * @see java.net.URLConnection#getInputStream()

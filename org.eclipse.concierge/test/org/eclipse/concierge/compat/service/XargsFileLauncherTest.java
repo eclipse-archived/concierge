@@ -1,12 +1,11 @@
 package org.eclipse.concierge.compat.service;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.concierge.test.util.TestUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -147,20 +146,8 @@ public class XargsFileLauncherTest {
 
 	private Map<String, String> processProperties(String s) throws IOException {
 		XargsFileLauncher l = new XargsFileLauncher();
-		File f = createFileFromString(s);
-		Map<String, String> props = l.getPropertiesFromXargsFile(f);
+		InputStream is = TestUtils.createInputStreamFromString(s);
+		Map<String, String> props = l.getPropertiesFromXargsInputStream(is);
 		return props;
 	}
-
-	private File createFileFromString(final String initXargs)
-			throws IOException {
-		File file = File.createTempFile("xargs-", ".xargs");
-		FileOutputStream fos = new FileOutputStream(file);
-		PrintStream ps = new PrintStream(fos);
-		ps.println(initXargs);
-		ps.close();
-		fos.close();
-		return file;
-	}
-
 }

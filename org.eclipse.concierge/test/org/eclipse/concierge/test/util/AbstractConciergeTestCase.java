@@ -99,6 +99,16 @@ public abstract class AbstractConciergeTestCase {
 		}
 	}
 
+	/**
+	 * stop the framework, but wait until it will be stopped by someone. Use
+	 * this if framework started, but will be closed interactively.
+	 */
+	public void stopFrameworkWaitForStop() throws Exception {
+		if (this.framework != null) {
+			this.framework.waitForStop(0);
+		}
+	}
+
 	// Utilities
 
 	/**
