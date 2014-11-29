@@ -10,9 +10,6 @@
  *******************************************************************************/
 package org.eclipse.concierge.test.util;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -20,12 +17,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
-import java.util.jar.Attributes;
-import java.util.jar.JarOutputStream;
-import java.util.jar.Manifest;
 
 import org.eclipse.concierge.Concierge;
 import org.eclipse.concierge.Factory;
@@ -33,7 +26,6 @@ import org.junit.Assert;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
-import org.osgi.framework.Constants;
 import org.osgi.framework.FrameworkEvent;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.launch.Framework;
@@ -82,7 +74,7 @@ public abstract class AbstractConciergeTestCase {
 
 		if (stayInShell()) {
 			// assume to get shell jar file in target folder
-			installAndStartBundle("./target/plugins/shell-1.0.0.jar");
+			installAndStartBundle("./target/plugins/org.eclipse.concierge.shell-1.0.0.alpha2.jar");
 		}
 	}
 
@@ -220,6 +212,13 @@ public abstract class AbstractConciergeTestCase {
 		}
 	}
 
+	/** Checks about Bundle ACTIVE state for all bundles. */
+	protected void assertBundlesActive(final Bundle[] bundles) {
+		for (int i = 0; i < bundles.length; i++) {
+			assertBundleActive(bundles[i]);
+		}
+	}
+
 	/** Checks about Bundle RESOLVED or ACTIVE state. */
 	protected void assertBundleResolved(final Bundle bundle) {
 		if (isBundleResolved(bundle)) {
@@ -242,9 +241,14 @@ public abstract class AbstractConciergeTestCase {
 		if (bundle.getState() == Bundle.ACTIVE) {
 			// all fine
 		} else {
-			Assert.fail("Bundle " + bundle.getSymbolicName() + " needs to be "
-					+ getBundleStateAsString(Bundle.ACTIVE) + " but was "
-					+ getBundleStateAsString(bundle.getState()));
+			if (isFragmentBundle(bundle) && isBundleResolved(bundle)) {
+				// all fine
+			} else {
+				Assert.fail("Bundle " + bundle.getSymbolicName()
+						+ " needs to be "
+						+ getBundleStateAsString(Bundle.ACTIVE) + " but was "
+						+ getBundleStateAsString(bundle.getState()));
+			}
 		}
 	}
 
@@ -260,38 +264,8 @@ public abstract class AbstractConciergeTestCase {
 	}
 
 	/**
-	 * This method will install a "pseudo" bundle into the framework. The bundle
-	 * will get its <code>META-INF/MANIFEST.MF</code> from given headers. The
-	 * bundle will be generared as JarOutputStream and installed from
-	 * corresponding InpuStream.
+	 * This method will install a "pseudo" bundle into the framework.
 	 */
-	protected Bundle _installBundle(final String bundleName,
-			final Map<String, String> headers) throws IOException,
-			BundleException {
-		// copy MANIFEST to a jar file in memory
-		final ByteArrayOutputStream out = new ByteArrayOutputStream();
-		final Manifest manifest = new Manifest();
-		manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION,
-				"1.0");
-		manifest.getMainAttributes().put(
-				new Attributes.Name(Constants.BUNDLE_MANIFESTVERSION), "2");
-		manifest.getMainAttributes().put(
-				new Attributes.Name(Constants.BUNDLE_SYMBOLICNAME), bundleName);
-
-		for (Iterator<Map.Entry<String, String>> iter = headers.entrySet()
-				.iterator(); iter.hasNext();) {
-			final Map.Entry<String, String> entry = iter.next();
-			manifest.getMainAttributes().put(
-					new Attributes.Name(entry.getKey()), entry.getValue());
-		}
-		final JarOutputStream jarStream = new JarOutputStream(out, manifest);
-		jarStream.close();
-		final InputStream is = new ByteArrayInputStream(out.toByteArray());
-		final Bundle b = bundleContext.installBundle(bundleName, is);
-		out.close();
-		return b;
-	}
-
 	protected Bundle installBundle(SyntheticBundleBuilder builder)
 			throws BundleException {
 		Bundle b = this.installBundle(builder.getBundleSymbolicName(),

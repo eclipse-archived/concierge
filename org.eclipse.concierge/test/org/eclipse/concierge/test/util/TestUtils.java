@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
@@ -126,15 +127,96 @@ public class TestUtils {
 					new InputStreamReader(is));
 			String line = null;
 			while ((line = reader.readLine()) != null) {
-				System.out.println(line);
 				sbuf.append(line);
 			}
 			reader.close();
 			String content = sbuf.toString();
 			return content;
-		} catch (IOException e) {
-			e.printStackTrace();
+		} catch (IOException ex) {
+			ex.printStackTrace();
 			return "";
 		}
+	}
+
+	/**
+	 * Will return empty string in case of errors.
+	 */
+	public static String getContentFromHttpGetBasicAuth(String urlString,
+			String username, String password) {
+		try {
+			URL url = new URL(urlString);
+			HttpURLConnection con = (HttpURLConnection) url.openConnection();
+			con.setRequestMethod("GET");
+			String userpass = username + ":" + password;
+			String basicAuth = "Basic " + base64encode(userpass.getBytes());
+			con.setRequestProperty("Authorization", basicAuth);
+
+			// TODO hmm. some content is missing at the beginning
+			InputStream is = con.getInputStream();
+			int responseCode = con.getResponseCode();
+			if (responseCode != HttpURLConnection.HTTP_OK) {
+				System.err.println("TestUtils: getContentFromHttpGet for '"
+						+ urlString + "'failed with rc=" + responseCode);
+				return "";
+			}
+
+			StringBuffer sbuf = new StringBuffer();
+
+			BufferedReader reader = new BufferedReader(
+					new InputStreamReader(is));
+			String line = null;
+			while ((line = reader.readLine()) != null) {
+				sbuf.append(line);
+				sbuf.append('\n');
+			}
+			reader.close();
+			String content = sbuf.toString();
+			return content;
+		} catch (IOException ex) {
+			ex.printStackTrace();
+			return "";
+		}
+	}
+
+	/**
+	 * Base64 Encode an array of bytes
+	 * 
+	 * @see https://gist.github.com/EmilHernvall/953733
+	 */
+	private static String base64encode(byte[] data) {
+		char[] tbl = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K',
+				'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
+				'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',
+				'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u',
+				'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6',
+				'7', '8', '9', '+', '/' };
+
+		StringBuilder buffer = new StringBuilder();
+		int pad = 0;
+		for (int i = 0; i < data.length; i += 3) {
+
+			int b = ((data[i] & 0xFF) << 16) & 0xFFFFFF;
+			if (i + 1 < data.length) {
+				b |= (data[i + 1] & 0xFF) << 8;
+			} else {
+				pad++;
+			}
+			if (i + 2 < data.length) {
+				b |= (data[i + 2] & 0xFF);
+			} else {
+				pad++;
+			}
+
+			for (int j = 0; j < 4 - pad; j++) {
+				int c = (b & 0xFC0000) >> 18;
+				buffer.append(tbl[c]);
+				b <<= 6;
+			}
+		}
+		for (int j = 0; j < pad; j++) {
+			buffer.append("=");
+		}
+
+		return buffer.toString();
 	}
 }
