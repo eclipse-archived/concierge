@@ -278,7 +278,12 @@ public abstract class AbstractBundle implements Bundle, BundleRevisions {
 	 * @category Bundle
 	 */
 	public final File getDataFile(final String filename) {
-		return context.getDataFile(filename);
+		// according to OSGi R5 spec 10.1.6.16: return null if fragment
+		if (context != null) {
+			return context.getDataFile(filename);
+		} else {
+			return null;
+		}
 	}
 
 	protected abstract boolean isSecurityEnabled();
