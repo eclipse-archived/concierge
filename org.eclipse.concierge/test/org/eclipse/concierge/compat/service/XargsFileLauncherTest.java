@@ -122,6 +122,14 @@ public class XargsFileLauncherTest {
 	}
 
 	@Test
+	public void testGetPropertiesFromXargsAddedByPlusNotInitialized()
+			throws IOException {
+		Map<String, String> props = processProperties("-Dprop+=v1\n-Dprop+=v2\n-Dprop+=v3");
+		Assert.assertEquals(1, props.size());
+		Assert.assertEquals("v1v2v3", props.get("prop"));
+	}
+
+	@Test
 	public void testGetPropertiesFromXargsNoEquals() throws IOException {
 		Map<String, String> props = processProperties("-Dprop_v");
 		Assert.assertEquals(0, props.size());

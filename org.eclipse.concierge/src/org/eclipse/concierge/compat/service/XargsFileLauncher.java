@@ -235,7 +235,8 @@ public class XargsFileLauncher {
 						value = replaceVariable(value, properties);
 						if (doAdd) {
 							String oldValue = properties.get(key);
-							properties.put(key, oldValue + value);
+							properties.put(key, (oldValue == null ? ""
+									: oldValue) + value);
 						} else {
 							properties.put(key, value);
 						}
