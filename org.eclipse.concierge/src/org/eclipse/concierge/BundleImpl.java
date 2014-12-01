@@ -3529,13 +3529,14 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				final String filename) throws IOException {
 			Object res = findFile(classpath, filename, GET_CONTENT_LENGTH);
 			if (res == null) {
-				System.err.println("Could not retrieveFileLength for filename=" + 
-						filename + " from bundle=" + this.toString());
+				if (framework.DEBUG_CLASSLOADING) {
+					System.err.println("Could not retrieveFileLength for filename=" + 
+							filename + " from bundle=" + this.toString());
+				}
 				return -1;
 			} else {
 				return (Long) res;
  			}
-//			return (Long) findFile(classpath, filename, GET_CONTENT_LENGTH);
 		}
 
 		private Object findFile(final String classpath, String filename,
@@ -3818,8 +3819,10 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				for (int i = 0; i < files.length; i++) {
 					final File toTest = files[i];
 
-					System.err.println("testing " + toTest.getAbsolutePath()
-							+ (toTest.isDirectory() ? "/" : ""));
+					if (framework.DEBUG_CLASSLOADING) {
+						System.err.println("testing " + toTest.getAbsolutePath()
+								+ (toTest.isDirectory() ? "/" : ""));
+					}
 
 					// get basename
 					final String basename = toTest.getName();

@@ -2736,8 +2736,10 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 				final List<BundleCapability> col = new ArrayList<BundleCapability>();
 
-				System.err.println("RESOLVING " + resource.getSymbolicName()
-						+ " - " + resource.getVersion() + " /.//" + resource);
+				if (DEBUG_BUNDLES) {
+					System.err.println("RESOLVING " + resource.getSymbolicName()
+							+ " - " + resource.getVersion() + " /.//" + resource);
+				}
 
 				final List<AbstractBundle> existing = new ArrayList<AbstractBundle>(
 						getBundleWithSymbolicName(resource.getSymbolicName()));
