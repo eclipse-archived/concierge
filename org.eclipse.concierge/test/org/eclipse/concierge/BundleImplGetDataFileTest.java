@@ -14,22 +14,21 @@ import java.io.File;
 
 import org.eclipse.concierge.test.util.AbstractConciergeTestCase;
 import org.eclipse.concierge.test.util.SyntheticBundleBuilder;
+import org.eclipse.concierge.test.util.TestUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
 /**
- * Tests which install bundles which refers to native code.
- * 
- * TODO add more tests and combinations for Bundle-NativeCode, for more OS/ARCH
- * types
+ * Tests the getDataFile() method implementation.
  * 
  * @author Jochen Hiller
  */
-public class FragmentGetDataFileTest extends AbstractConciergeTestCase {
+public class BundleImplGetDataFileTest extends AbstractConciergeTestCase {
 
 	private Bundle bundleUnderTest;
 	private Bundle fragmentUnderTest;
@@ -94,6 +93,23 @@ public class FragmentGetDataFileTest extends AbstractConciergeTestCase {
 
 		BundleContext context = fragmentUnderTest.getBundleContext();
 		Assert.assertNull(context);
+	}
+
+	/**
+	 * TODO hmm: does the data file has to be created by the framework? Or does
+	 * the caller has to ensure that the base folder will be created?
+	 */
+	@Test
+	@Ignore
+	public void testGetDataFileCreateAFile() throws Exception {
+		setupDefaultBundles();
+		bundleUnderTest.start();
+
+		File dir = bundleUnderTest.getDataFile("");
+		// will fail as data folder will NOT be automatically created
+		Assert.assertTrue(dir.exists());
+		File file = bundleUnderTest.getDataFile("file.txt");
+		TestUtils.copyStringToFile("# some text", file);
 	}
 
 }

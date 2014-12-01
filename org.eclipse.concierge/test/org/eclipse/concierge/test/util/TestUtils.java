@@ -97,6 +97,19 @@ public class TestUtils {
 		}
 	}
 
+	public static void copyStringToFile(String content, File destFile)
+			throws IOException {
+		// ensure that parent dirs are created
+		File parentDir = destFile.getParentFile();
+		if (parentDir != null) {
+			parentDir.mkdirs();
+		}
+		FileOutputStream fos = new FileOutputStream(destFile);
+		byte[] bytes = content.getBytes();
+		fos.write(bytes, 0, bytes.length);
+		fos.close();
+	}
+
 	public static void copyStreamToFile(InputStream inputStream, File destFile)
 			throws IOException {
 		// ensure that parent dirs are created
