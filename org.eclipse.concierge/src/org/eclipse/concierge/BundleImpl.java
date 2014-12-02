@@ -2638,7 +2638,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					for (final BundleWire wire : requireBundleWires) {
 						if (wire.getProvider().getBundle().getBundleId() == 0) {
 							// if provider is system bundle: nothing
-							// to do as system bundle is yet loaded
+							// to do as system bundle is already loaded
 						} else {
 							final Object result = ((Revision) wire
 									.getProvider()).classloader
@@ -2820,15 +2820,15 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 						}
 					}
 
-					if (requireBundleWires != null
-							&& (options & BundleWiring.LISTRESOURCES_LOCAL) == 0) {
-						for (final BundleWire wire : requireBundleWires) {
-							result.addAll(((Revision) wire.getProvider()).classloader
-									.listResources(path, filePattern, options,
-											new HashSet<String>()));
-						}
 
+				if (requireBundleWires != null
+						&& (options & BundleWiring.LISTRESOURCES_LOCAL) == 0) {
+					for (final BundleWire wire : requireBundleWires) {
+						result.addAll(((Revision) wire.getProvider()).classloader
+								.listResources(path, filePattern, options,
+										new HashSet<String>()));
 					}
+				}
 
 					// Step 5: search the bundle class path
 					// Step 6: search fragments bundle class path
@@ -3118,7 +3118,10 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 							}
 						}
 					}
+
 					if (useFragments && fragments != null) {
+						System.err.println("USING FRAGMENTS");
+
 						// look in fragments
 						for (final Revision fragment : fragments) {
 							if (fragment == null) {
@@ -3155,6 +3158,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			 * @param visited
 			 * @return
 			 */
+			@SuppressWarnings("unchecked")
 			private Object requireBundleLookup(final String pkg,
 					final String name, final boolean isClass,
 					final boolean multiple, final Vector<URL> resources,
@@ -3178,11 +3182,17 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 											multiple, resources, visited);
 							if (!multiple && result != null) {
 								return result;
+							} else if (result != null) {
+								resources.addAll((Vector<URL>) result);
 							}
 						}
 					}
 				}
 
+				System.err.println("CLASSLOADER FOR " + getBundle()
+						+ " GOT CALLED THROUGH REQUIRE BUNDLE AND LOOKING FOR RESOURCE " + name);
+
+				
 				if (exportIndex.contains(pkg)) {
 					// could be delegated when the export was imported as well,
 					// so check packageImportWires first
@@ -3201,10 +3211,10 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 								name, true, multiple, resources);
 						if (!multiple) {
 							return result;
+						} else if (result != null) {
+							resources.addAll((Vector<URL>) result);
 						}
-						// FIXME: ELSE???
 					}
-
 				}
 
 				// instead of inspecting exportIndex and imports, just delegate
