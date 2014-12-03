@@ -4223,7 +4223,14 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 			try {
 				final File file = new File(path + "/data", filename);
-				file.getParentFile().mkdirs();
+				// ensure directory is available
+				// handle filename = "", create /data folder in this case
+				if (filename.isEmpty()) {
+					file.mkdirs();
+				} else {
+					// TODO Hmm, create all subdirs too, or only "/data" folder?
+					file.getParentFile().mkdirs();
+				}
 				return file;
 			} catch (final Exception e) {
 				e.printStackTrace();

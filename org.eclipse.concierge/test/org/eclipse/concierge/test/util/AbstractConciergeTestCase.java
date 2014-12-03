@@ -42,7 +42,7 @@ public abstract class AbstractConciergeTestCase {
 	protected LocalBundleStorage localBundleStorage = LocalBundleStorage
 			.getInstance();
 
-	/** Start framework with default settings. */
+	/** Start framework with default settings, which cleans storage first. */
 	public void startFramework() throws Exception {
 		final Map<String, String> launchArgs = new HashMap<String, String>();
 		// start OSGi framework in clean mode as default

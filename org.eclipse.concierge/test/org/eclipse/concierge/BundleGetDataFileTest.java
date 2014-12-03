@@ -18,17 +18,16 @@ import org.eclipse.concierge.test.util.TestUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
 /**
- * Tests the getDataFile() method implementation.
+ * Tests the getDataFile() method implementation for Bundle and BundleContext.
  * 
- * @author Jochen Hiller
+ * @author Jochen Hiller - Initial contribution
  */
-public class BundleImplGetDataFileTest extends AbstractConciergeTestCase {
+public class BundleGetDataFileTest extends AbstractConciergeTestCase {
 
 	private Bundle bundleUnderTest;
 	private Bundle fragmentUnderTest;
@@ -55,61 +54,76 @@ public class BundleImplGetDataFileTest extends AbstractConciergeTestCase {
 	}
 
 	@Test
-	public void testInstallAndStartBundle() throws Exception {
+	public void testInstallAndStartDefaultBundles() throws Exception {
 		setupDefaultBundles();
 		bundleUnderTest.start();
 		assertBundleActive(bundleUnderTest);
+		// fragment must be resolved automatically
 		assertBundleResolved(fragmentUnderTest);
 	}
 
 	@Test
-	public void testInstallAndStartBundlesGetDataFile() throws Exception {
+	public void testGetDataFileEmptyString() throws Exception {
 		setupDefaultBundles();
 		bundleUnderTest.start();
-		assertBundleActive(bundleUnderTest);
-		assertBundleResolved(fragmentUnderTest);
 
 		File f1 = bundleUnderTest.getDataFile("");
 		Assert.assertNotNull(f1);
 		Assert.assertTrue(f1.getAbsolutePath().endsWith(
 				"storage/default/1/data"));
+		Assert.assertTrue(f1.isDirectory());
+		Assert.assertTrue(f1.exists());
 
+		// fragments do NOT have a data file
 		File f2 = fragmentUnderTest.getDataFile("");
 		Assert.assertNull(f2);
 	}
 
 	@Test
-	public void testInstallAndStartBundlesGetDataFileViaBundleContext()
-			throws Exception {
+	public void testGetDataFileEmptyStringViaBundleContext() throws Exception {
 		setupDefaultBundles();
 		bundleUnderTest.start();
-		assertBundleActive(bundleUnderTest);
-		assertBundleResolved(fragmentUnderTest);
 
 		File f1 = bundleUnderTest.getBundleContext().getDataFile("");
 		Assert.assertNotNull(f1);
 		Assert.assertTrue(f1.getAbsolutePath().endsWith(
 				"storage/default/1/data"));
+		Assert.assertTrue(f1.isDirectory());
+		Assert.assertTrue(f1.exists());
 
+		// fragments do NOT have a bundle context
 		BundleContext context = fragmentUnderTest.getBundleContext();
 		Assert.assertNull(context);
 	}
 
-	/**
-	 * TODO hmm: does the data file has to be created by the framework? Or does
-	 * the caller has to ensure that the base folder will be created?
-	 */
 	@Test
-	@Ignore
-	public void testGetDataFileCreateAFile() throws Exception {
+	public void testGetDataFileWithFiles1Level() throws Exception {
 		setupDefaultBundles();
 		bundleUnderTest.start();
 
-		File dir = bundleUnderTest.getDataFile("");
-		// will fail as data folder will NOT be automatically created
-		Assert.assertTrue(dir.exists());
-		File file = bundleUnderTest.getDataFile("file.txt");
-		TestUtils.copyStringToFile("# some text", file);
+		File f1 = bundleUnderTest.getDataFile("file.txt");
+		Assert.assertNotNull(f1);
+		Assert.assertTrue(f1.getAbsolutePath().endsWith(
+				"storage/default/1/data/file.txt"));
+		Assert.assertTrue(f1.getParentFile().isDirectory());
+		Assert.assertTrue(f1.getParentFile().exists());
+		TestUtils.copyStringToFile("# some text", f1);
+		f1.deleteOnExit();
+	}
+
+	@Test
+	public void testGetDataFileWithFiles3Level() throws Exception {
+		setupDefaultBundles();
+		bundleUnderTest.start();
+
+		File f1 = bundleUnderTest.getDataFile("a/b/file.txt");
+		Assert.assertNotNull(f1);
+		Assert.assertTrue(f1.getAbsolutePath().endsWith(
+				"storage/default/1/data/a/b/file.txt"));
+		Assert.assertTrue(f1.getParentFile().isDirectory());
+		Assert.assertTrue(f1.getParentFile().exists());
+		TestUtils.copyStringToFile("# some text", f1);
+		f1.deleteOnExit();
 	}
 
 }
