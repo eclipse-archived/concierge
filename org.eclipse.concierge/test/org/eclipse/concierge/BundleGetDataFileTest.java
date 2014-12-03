@@ -71,8 +71,8 @@ public class BundleGetDataFileTest extends AbstractConciergeTestCase {
 		Assert.assertNotNull(f1);
 		Assert.assertTrue(f1.getAbsolutePath().endsWith(
 				"storage/default/1/data"));
-		Assert.assertTrue(f1.isDirectory());
 		Assert.assertTrue(f1.exists());
+		Assert.assertTrue(f1.isDirectory());
 
 		// fragments do NOT have a data file
 		File f2 = fragmentUnderTest.getDataFile("");
@@ -88,8 +88,8 @@ public class BundleGetDataFileTest extends AbstractConciergeTestCase {
 		Assert.assertNotNull(f1);
 		Assert.assertTrue(f1.getAbsolutePath().endsWith(
 				"storage/default/1/data"));
-		Assert.assertTrue(f1.isDirectory());
 		Assert.assertTrue(f1.exists());
+		Assert.assertTrue(f1.isDirectory());
 
 		// fragments do NOT have a bundle context
 		BundleContext context = fragmentUnderTest.getBundleContext();
@@ -105,8 +105,8 @@ public class BundleGetDataFileTest extends AbstractConciergeTestCase {
 		Assert.assertNotNull(f1);
 		Assert.assertTrue(f1.getAbsolutePath().endsWith(
 				"storage/default/1/data/file.txt"));
-		Assert.assertTrue(f1.getParentFile().isDirectory());
 		Assert.assertTrue(f1.getParentFile().exists());
+		Assert.assertTrue(f1.getParentFile().isDirectory());
 		TestUtils.copyStringToFile("# some text", f1);
 		f1.deleteOnExit();
 	}
@@ -120,8 +120,8 @@ public class BundleGetDataFileTest extends AbstractConciergeTestCase {
 		Assert.assertNotNull(f1);
 		Assert.assertTrue(f1.getAbsolutePath().endsWith(
 				"storage/default/1/data/a/b/file.txt"));
-		Assert.assertTrue(f1.getParentFile().isDirectory());
 		Assert.assertTrue(f1.getParentFile().exists());
+		Assert.assertTrue(f1.getParentFile().isDirectory());
 		TestUtils.copyStringToFile("# some text", f1);
 		f1.deleteOnExit();
 	}
