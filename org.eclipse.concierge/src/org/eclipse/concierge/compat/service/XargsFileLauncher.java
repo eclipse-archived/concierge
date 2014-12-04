@@ -23,6 +23,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -106,9 +108,15 @@ public class XargsFileLauncher {
 					}
 					continue;
 				} else if (token.startsWith("-all")) {
+					token = getArg(token, 4);
+					final File jardir;
+					if (token.isEmpty()) {
+						jardir = new File(
+								new URL(concierge.BUNDLE_LOCATION).getFile());
+					} else {
+						jardir = new File(token);
+					}
 					final File files[];
-					final File jardir = new File(new URL(
-							concierge.BUNDLE_LOCATION).getFile());
 					files = jardir.listFiles(new FilenameFilter() {
 						public boolean accept(File arg0, String arg1) {
 							return arg1.toLowerCase().endsWith(".jar")
@@ -120,20 +128,27 @@ public class XargsFileLauncher {
 								+ concierge.BUNDLE_LOCATION);
 						break;
 					}
-
+					final List<Bundle> bundlesToStart = new ArrayList<Bundle>();
 					for (int i = 0; i < files.length; i++) {
 						if (files[i].isDirectory()) {
 							continue;
 						}
 						final BundleImpl b = (BundleImpl) context
-								.installBundle(files[i].getName());
+								.installBundle(files[i].getPath());
 						b.setStartLevel(initLevel);
+						bundlesToStart.add(b);
+					}
+					// TODO start bundles in start level order?
+					for (Iterator<Bundle> iter = bundlesToStart.iterator(); iter
+							.hasNext();) {
+						Bundle b = iter.next();
 						final Revision rev = (Revision) b
 								.adapt(BundleRevision.class);
 						if (!rev.isFragment()) {
 							b.start();
 						}
 					}
+
 					continue;
 				} else if (token.startsWith("-istart")) {
 					token = getArg(token, 7);

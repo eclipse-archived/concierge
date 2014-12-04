@@ -542,8 +542,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 								+ "Loads xargs file, must end with .xargs\n"
 								+ "  {-install|-start|-istart} {bundle-jar-file}  "
 								+ "Install and start one bundle (can be used multiple times, in specified order)\n"
-								+ "  {-all}                                       "
-								+ "Install and start all bundles from current directory\n"
+								+ "  {-all} {directory}                           "
+								+ "Install and start all bundles from specified directory\n"
 								+ "  {-Dprop=value}                               "
 								+ "Specify one or more props just for Concierge (can be used multiple times)\n"
 								+ "Sample: org.eclipse.concierge.Concierge -Dorg.osgi.framework.bootdelegation=javax.xml.parsers -istart mybundle.jar\n");
@@ -560,7 +560,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 					argsBuf.append('\n');
 				} else if (args[i].equalsIgnoreCase("-install")
 						|| args[i].equalsIgnoreCase("-istart")
-						|| args[i].equalsIgnoreCase("-start")) {
+						|| args[i].equalsIgnoreCase("-start")
+						|| args[i].equalsIgnoreCase("-all")) {
 					// append next argument to same line
 					if ((i - 1) < args.length) {
 						i++;
@@ -2737,8 +2738,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 				final List<BundleCapability> col = new ArrayList<BundleCapability>();
 
 				if (DEBUG_BUNDLES) {
-					System.err.println("RESOLVING " + resource.getSymbolicName()
-							+ " - " + resource.getVersion() + " /.//" + resource);
+					System.err.println("RESOLVING "
+							+ resource.getSymbolicName() + " - "
+							+ resource.getVersion() + " /.//" + resource);
 				}
 
 				final List<AbstractBundle> existing = new ArrayList<AbstractBundle>(
