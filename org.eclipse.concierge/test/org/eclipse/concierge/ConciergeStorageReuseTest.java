@@ -41,7 +41,7 @@ public class ConciergeStorageReuseTest extends AbstractConciergeTestCase {
 	}
 
 	@Test
-	@Ignore
+	@Ignore("Fails as restoreProfile not yet supported")
 	public void testStorageReuseOldStorage() throws Exception {
 		// start framework clean
 		startFramework();

@@ -57,7 +57,7 @@ public class ConciergeMainTest {
 	 * instead of file:.//some/path
 	 */
 	@Test
-	@Ignore
+	@Ignore("Fails due to missing check for bundles with absolute path")
 	public void testDoMainInstallBundleWithLeadingSlash() throws Exception {
 		SyntheticBundleBuilder builder = SyntheticBundleBuilder.newBuilder();
 		builder.bundleSymbolicName("testDoMainInstallBundleWithLeadingSlash");
