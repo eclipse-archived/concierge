@@ -1,6 +1,7 @@
 package org.eclipse.concierge;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,6 +9,7 @@ import java.util.regex.Pattern;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class SplitStringTest {
@@ -59,14 +61,12 @@ public class SplitStringTest {
 		assertEquals(res.length, 5);
 
 		assertEquals(res[0], "one");
-		assertEquals(res[1],
-				"two");
+		assertEquals(res[1], "two");
 		assertEquals(res[2], "three");
 		assertEquals(res[3], "four");
-		assertEquals(res[4],
-				"five");
+		assertEquals(res[4], "five");
 	}
-	
+
 	@Test
 	public void testCorrectness3() {
 		final String s = "   one      , two         ,        three,   four ,     five   ";
@@ -75,24 +75,24 @@ public class SplitStringTest {
 		assertEquals(res.length, 5);
 
 		assertEquals(res[0], "one");
-		assertEquals(res[1],
-				"two");
+		assertEquals(res[1], "two");
 		assertEquals(res[2], "three");
 		assertEquals(res[3], "four");
-		assertEquals(res[4],
-				"five");
+		assertEquals(res[4], "five");
 	}
-	
+
 	@Test
 	public void testNull() {
 		final String[] res = Utils.splitString(null, ',');
 		assertEquals(res.length, 0);
 	}
+
 	@Test
 	public void testEmpty() {
 		final String[] res = Utils.splitString("", ',');
 		assertEquals(res.length, 0);
 	}
+
 	@Test
 	public void testTrailingSeparator() {
 		String[] res;
@@ -103,10 +103,11 @@ public class SplitStringTest {
 		res = Utils.splitString("p1,p2,p3,", ',');
 		assertEquals(res.length, 3);
 	}
-	
+
 	// simple test against String.split which does not support quotes and
 	// escaping
 	@Test
+	@Ignore("Move to performance tests")
 	public void testPerformance0() {
 		int compare = -1;
 		int compare2 = 0;
@@ -135,17 +136,19 @@ public class SplitStringTest {
 		// assertTrue(time2 < time1);
 
 		System.out.println("difference (abs): " + (time2 - time1));
-		System.out.println("difference (%): " + (time2 - time1) / (float) Math.max(time1, time2) * 100);
+		System.out.println("difference (%): " + (time2 - time1)
+				/ (float) Math.max(time1, time2) * 100);
 	}
 
 	// test with quote support
 	@Test
+	@Ignore("Move to performance tests")
 	public void testPerformance1() {
 		long time = System.nanoTime();
 		String[] foo = null;
-		int compare=-1;
-		int compare2=0;
-		
+		int compare = -1;
+		int compare2 = 0;
+
 		for (int i = 0; i < 1000; i++) {
 			foo = SPLIT_AT_COMMA.split(longTest);
 			compare = foo.length;
@@ -168,16 +171,18 @@ public class SplitStringTest {
 		assertTrue(time2 < time1);
 
 		System.out.println("difference (abs): " + (time2 - time1));
-		System.out.println("difference (%): " + (time2 - time1) / (float) Math.max(time1, time2) * 100);
+		System.out.println("difference (%): " + (time2 - time1)
+				/ (float) Math.max(time1, time2) * 100);
 	}
 
 	// test with quote support and escaping
 	@Test
+	@Ignore("Move to performance tests")
 	public void testPerformance2() {
 		long time = System.nanoTime();
 		String[] foo = null;
-		int compare=-1;
-		int compare2=0;
+		int compare = -1;
+		int compare2 = 0;
 
 		for (int i = 0; i < 500; i++) {
 			foo = SPLIT_AT_COMMA_PLUS.split(longTest);
@@ -202,16 +207,18 @@ public class SplitStringTest {
 		assertTrue(time2 < time1);
 
 		System.out.println("difference (abs): " + (time2 - time1));
-		System.out.println("difference (%): " + (time2 - time1) / (float) Math.max(time1, time2) * 100);
+		System.out.println("difference (%): " + (time2 - time1)
+				/ (float) Math.max(time1, time2) * 100);
 	}
-	
-	@Test 
+
+	@Test
+	@Ignore("Move to performance tests")
 	public void testPerformance3() {
 		long time = System.nanoTime();
 		String[] foo = null;
-		int compare=-1;
-		int compare2=0;
-				
+		int compare = -1;
+		int compare2 = 0;
+
 		// test against previous implementation
 		time = System.nanoTime();
 		for (int i = 0; i < 1000; i++) {
@@ -237,7 +244,8 @@ public class SplitStringTest {
 		assertTrue(time2 < time1);
 
 		System.out.println("difference (abs): " + (time2 - time1));
-		System.out.println("difference (%): " + (time2 - time1) / (float) Math.max(time1, time2) * 100);
+		System.out.println("difference (%): " + (time2 - time1)
+				/ (float) Math.max(time1, time2) * 100);
 	}
 
 	static String[] splitString(String values, final String delimiter)
