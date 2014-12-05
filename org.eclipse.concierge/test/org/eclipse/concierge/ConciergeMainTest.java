@@ -36,6 +36,15 @@ public class ConciergeMainTest {
 	}
 
 	@Test
+	public void testDoMainXargsFileViaProperty() throws Exception {
+		System.setProperty("org.eclipse.concierge.init.xargs",
+				"someunknownfileviaproperty.xargs");
+		Concierge framework = Concierge.doMain(new String[] {});
+		Assert.assertNotNull(framework);
+		framework.stop();
+	}
+
+	@Test
 	public void testDoMainValidXargsFile() throws Exception {
 		File f = TestUtils.createFileFromString("# ", "xargs");
 		Concierge framework = Concierge.doMain(new String[] { f.toString() });
