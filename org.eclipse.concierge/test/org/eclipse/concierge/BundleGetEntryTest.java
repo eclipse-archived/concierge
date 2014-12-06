@@ -21,6 +21,8 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleEvent;
+import org.osgi.framework.BundleListener;
 
 /**
  * Tests the getEntry() and getEntryPath() method implementations for Bundle and
@@ -74,25 +76,25 @@ public class BundleGetEntryTest extends AbstractConciergeTestCase {
 		setupDefaultBundles();
 		bundleUnderTest.start();
 		assertBundleActive(bundleUnderTest);
-		checkBundleResources();
+		checkBundleResources(bundleUnderTest);
 	}
 
 	@Test
 	public void testBundleGetEntryInstalledState() throws Exception {
 		setupDefaultBundles();
 		assertBundleInstalled(bundleUnderTest);
-		checkBundleResources();
+		checkBundleResources(bundleUnderTest);
 	}
 
-	private void checkBundleResources() {
+	private void checkBundleResources(Bundle b) {
 		// get resources from bundle
-		URL res1 = bundleUnderTest.getEntry("/plugin.properties");
+		URL res1 = b.getEntry("/plugin.properties");
 		Assert.assertNotNull(res1);
 		Assert.assertEquals("# props", TestUtils.getContentFromUrl(res1));
-		URL res2 = bundleUnderTest.getEntry("/plugin.xml");
+		URL res2 = b.getEntry("/plugin.xml");
 		Assert.assertNotNull(res2);
 		Assert.assertEquals("<xml>", TestUtils.getContentFromUrl(res2));
-		URL res3 = bundleUnderTest.getEntry("/dir/subdir/file.txt");
+		URL res3 = b.getEntry("/dir/subdir/file.txt");
 		Assert.assertNotNull(res3);
 		Assert.assertEquals("# dir/subdir/file.txt",
 				TestUtils.getContentFromUrl(res3));
@@ -126,5 +128,58 @@ public class BundleGetEntryTest extends AbstractConciergeTestCase {
 		Assert.assertNotNull(res3);
 		Assert.assertEquals("# dir/subdir/fragment.txt",
 				TestUtils.getContentFromUrl(res3));
+	}
+
+	@Test
+	@Ignore("Does not work due to wrong installBundle() implementation")
+	public void testGetEntryFromBundleListenerInstalledEvent() throws Exception {
+		try {
+			SyntheticBundleBuilder builder = SyntheticBundleBuilder
+					.newBuilder();
+			builder.bundleSymbolicName("bundle");
+			builder.addFile("plugin.properties", "# props");
+			// register a bundle listener
+			framework.getBundleContext().addBundleListener(
+					new BundleListener() {
+						public void bundleChanged(BundleEvent event) {
+							if (event.getType() == BundleEvent.INSTALLED) {
+								// get resources from bundle
+								URL res1 = event.getBundle().getEntry(
+										"/plugin.properties");
+								Assert.assertNotNull(res1);
+								Assert.assertEquals("# props",
+										TestUtils.getContentFromUrl(res1));
+
+							}
+						}
+					});
+			// now trigger install
+			bundleUnderTest = installBundle(builder);
+		} finally {
+			// TODO wait 1 sec otherwise other tests will fail
+			Thread.sleep(1000);
+		}
+	}
+
+	@Test
+	public void testGetEntryFromBundleListenerResolverEvent() throws Exception {
+		SyntheticBundleBuilder builder = SyntheticBundleBuilder.newBuilder();
+		builder.bundleSymbolicName("bundle");
+		builder.addFile("plugin.properties", "# props");
+		// register a bundle listener
+		framework.getBundleContext().addBundleListener(new BundleListener() {
+			public void bundleChanged(BundleEvent event) {
+				if (event.getType() == BundleEvent.RESOLVED) {
+					// get resources from bundle
+					URL res1 = event.getBundle().getEntry("/plugin.properties");
+					Assert.assertNotNull(res1);
+					Assert.assertEquals("# props",
+							TestUtils.getContentFromUrl(res1));
+
+				}
+			}
+		});
+		// now trigger install
+		bundleUnderTest = installBundle(builder);
 	}
 }
