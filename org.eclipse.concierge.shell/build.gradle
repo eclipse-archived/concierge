@@ -1,0 +1,21 @@
+jar {
+    manifest {
+		from('META-INF/MANIFEST.MF')
+        attributes 'Implementation-Title': 'Eclipse Concierge Shell Bundle',
+ 			       'Implementation-Version': version
+	}
+}
+
+publishing {
+    publications {
+   	    mavenJava(MavenPublication) {
+	   	    groupId 'org.eclipse.concierge'
+            artifactId 'org.eclipse.concierge.service.shell'
+            version version
+       	    from components.java
+	       	artifact sourceJar {
+                classifier "sources"
+            }
+       	}
+   	}
+}

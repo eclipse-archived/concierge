@@ -1,0 +1,33 @@
+// TODO align with maven defaults
+sourceSets {
+    main {
+        resources {
+            srcDirs = [ "." ]
+			include "META-INF/services/**", "about.html", "about_files/**"
+        }
+    }
+}
+
+jar {
+    manifest {
+		from('META-INF/MANIFEST.MF')
+		// TODO does not work
+        attributes 'Bundle-Version': version
+        attributes 'Implementation-Title': 'Eclipse Concierge XMLParser Service',
+ 			       'Implementation-Version': version
+	}
+}
+
+publishing {
+    publications {
+   	    mavenJava(MavenPublication) {
+	   	    groupId 'org.eclipse.concierge'
+            artifactId 'org.eclipse.concierge.service.xmlparser'
+            version version
+       	    from components.java
+	       	artifact sourceJar {
+                classifier "sources"
+            }
+       	}
+   	}
+}

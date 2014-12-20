@@ -1,0 +1,22 @@
+jar {
+    manifest {
+		from('META-INF/MANIFEST.MF')
+        attributes 'Bundle-Version': version
+        attributes 'Implementation-Title': 'Eclipse Concierge Permission Extension Fragment',
+ 			       'Implementation-Version': version
+	}
+}
+
+publishing {
+    publications {
+   	    mavenJava(MavenPublication) {
+	   	    groupId 'org.eclipse.concierge'
+            artifactId 'org.eclipse.concierge.extension.permission'
+            version version
+       	    from components.java
+	       	artifact sourceJar {
+                classifier "sources"
+            }
+       	}
+   	}
+}

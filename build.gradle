@@ -1,0 +1,113 @@
+// Build script for Concierge
+
+allprojects {
+	apply plugin: 'java'
+	apply plugin: 'maven-publish'
+	apply plugin: 'distribution'
+	
+	group = 'org.eclipse.concierge'
+	// TODO:  + '.v' + buildTime()
+	version = '1.0.0.alpha2'	
+}
+
+subprojects {
+
+	clean {
+    	delete "storage"
+    	delete "target"
+	}
+
+	sourceCompatibility = 1.5
+	targetCompatibility = 1.5
+	
+	// TODO align directory structure to Maven based one
+	sourceSets {
+    	main {
+        	java {
+            	srcDir 'src'
+        	}
+	    }
+    	test {
+        	java {
+            	srcDir 'test'
+	        }
+		}
+	}
+
+	compileJava {
+		// disable warning: bootstrap class path not set in conjunction with -source 1.5
+		options.compilerArgs << '-Xlint:-options'
+		// TODO fix warnings, then enable
+		// options.compilerArgs << '-Xlint:unchecked'
+		// TODO fix deprecated warnings, then enable
+		// options.compilerArgs << '-Xlint:deprecation'
+	}
+
+	compileTestJava {
+		// disable warning: bootstrap class path not set in conjunction with -source 1.5
+		options.compilerArgs << '-Xlint:-options'
+	}
+
+	dependencies {
+	    testCompile group: 'junit', name: 'junit', version: '4.+'
+	}
+
+	task sourceJar(type: Jar) {
+ 	   from sourceSets.main.allJava
+	}
+
+	repositories {
+		mavenCentral()
+	}
+}
+
+
+project(':org.eclipse.concierge.extension.permission') {
+    dependencies {
+        compile project(':org.eclipse.concierge')
+    }
+}
+project(':org.eclipse.concierge.service.permission') {
+    dependencies {
+        compile project(':org.eclipse.concierge')
+    }
+}
+project(':org.eclipse.concierge.service.packageadmin') {
+    dependencies {
+        compile project(':org.eclipse.concierge')
+    }
+}
+project(':org.eclipse.concierge.service.startlevel') {
+    dependencies {
+        compile project(':org.eclipse.concierge')
+    }
+}
+project(':org.eclipse.concierge.service.xmlparser') {
+    dependencies {
+        compile project(':org.eclipse.concierge')
+    }
+}
+project(':org.eclipse.concierge.shell') {
+    dependencies {
+        compile project(':org.eclipse.concierge')
+    }
+}
+project(':org.eclipse.concierge.tests.integration') {
+    dependencies {
+        compile project(':org.eclipse.concierge')
+    }
+}
+
+
+// task to create a gradle wrapper with used gradle version
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.2.1'
+    jarFile = '.gradle-wrapper/gradle-wrapper.jar'
+}
+
+// helper methods
+def buildTime() {
+    def date = new Date()
+    def formattedDate = date.format('yyyyMMdd-HHmm')
+    return formattedDate
+}

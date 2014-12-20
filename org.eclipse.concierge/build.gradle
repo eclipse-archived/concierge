@@ -1,0 +1,32 @@
+// TODO align directory structure to Maven based one
+sourceSets {
+    main {
+        resources {
+            srcDirs = [ "." ]
+			include "META-INF/services/**", "about.html", "about_files/**"
+        }
+    }
+}
+
+jar {
+    manifest {
+		from('META-INF/MANIFEST.MF')
+        attributes 'Bundle-Version': version
+        attributes 'Implementation-Title': 'Eclipse Concierge OSGi R5 Framework',
+ 			       'Implementation-Version': version
+	}
+}
+
+publishing {
+    publications {
+   	    mavenJava(MavenPublication) {
+	   	    groupId 'org.eclipse.concierge'
+            artifactId 'org.eclipse.concierge'
+            version version
+       	    from components.java
+	       	artifact sourceJar {
+                classifier "sources"
+            }
+       	}
+   	}
+}
