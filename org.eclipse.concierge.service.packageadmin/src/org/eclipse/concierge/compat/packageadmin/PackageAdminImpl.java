@@ -286,6 +286,13 @@ final class PackageAdminImpl implements PackageAdmin {
 	 */
 	public Bundle[] getFragments(final Bundle bundle) {
 		final BundleWiring wiring = bundle.adapt(BundleWiring.class);
+		// this will happen if a bundle has no current revision, e.g.
+		// is INSTALLED only
+		if (wiring == null) {
+			// System.err.println("o.e.c.service.packageadmin: getFragments has no wiring for bundle "
+			// + bundle.getSymbolicName());
+			return null;
+		}
 		final List<BundleWire> wires = wiring
 				.getProvidedWires(HostNamespace.HOST_NAMESPACE);
 
