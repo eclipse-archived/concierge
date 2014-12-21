@@ -2,6 +2,46 @@ apply plugin: 'distribution'
 
 version = '1.0.0.alpha2'
 
+// copy markdown, and process them for using stripdown
+class StripdownFilter extends FilterReader {
+//  static String pre = "PRE"
+//  static String post  = "POST"
+  StripdownFilter(Reader input) {
+    super(new StringReader(
+    '''<!DOCTYPE html>
+<html>
+<title>Eclipse Concierge Documentation</title>
+
+<xmp theme="united" style="display:none;">
+'''
+    + input.text + 
+    '''
+</xmp>
+
+<script src="http://strapdownjs.com/v/0.2/strapdown.js"></script>
+</html>
+'''))
+  }
+}
+
+
+task markdownCopy(type: Copy) {
+  from 'src/markdown'
+  into 'build/gen-html'
+  include('**/*.markdown')
+  rename { it - '.markdown' + '.html'}
+  filter StripdownFilter
+}
+task strapdownCopy(type: Copy) {
+  from 'src/markdown'
+  into 'build/gen-html'
+  include('**/v/**')
+}
+
+markdownCopy.dependsOn strapdownCopy
+distZip.dependsOn markdownCopy
+distTar.dependsOn markdownCopy
+
 distributions {
 	main {
 		baseName 'concierge'
@@ -17,6 +57,9 @@ distributions {
                 from { project(':org.eclipse.concierge.service.xmlparser').jar }
                 from { project(':org.eclipse.concierge.shell').jar }
             }
+			into('docs') {
+                from ('build/gen-html/docs')
+			}
 		}
 	}
 }
