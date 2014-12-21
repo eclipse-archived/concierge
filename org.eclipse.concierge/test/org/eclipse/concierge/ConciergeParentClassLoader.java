@@ -16,6 +16,7 @@ import org.eclipse.concierge.test.util.AbstractConciergeTestCase;
 import org.eclipse.concierge.test.util.SyntheticBundleBuilder;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleException;
@@ -38,7 +39,8 @@ public class ConciergeParentClassLoader extends AbstractConciergeTestCase {
 
 	private void setupDefaultBundle() throws BundleException {
 		SyntheticBundleBuilder builder = new SyntheticBundleBuilder();
-		builder.bundleSymbolicName("bundle");
+		builder.bundleSymbolicName("bundle").addManifestHeader(
+				"Import-Package", "javafx.application");
 		bundleUnderTest = installBundle(builder);
 		bundleUnderTest.start();
 		assertBundleActive(bundleUnderTest);
@@ -49,6 +51,8 @@ public class ConciergeParentClassLoader extends AbstractConciergeTestCase {
 			throws Exception {
 		HashMap<String, String> launchArgs = new HashMap<String, String>();
 		launchArgs.put(Constants.FRAMEWORK_BOOTDELEGATION, "javafx.*");
+		launchArgs.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA,
+				"javafx.application");
 		startFrameworkClean(launchArgs);
 		setupDefaultBundle();
 
@@ -62,12 +66,15 @@ public class ConciergeParentClassLoader extends AbstractConciergeTestCase {
 	}
 
 	@Test
+	@Ignore("Does not run on Hudson")
 	public void testLoadClassJavaFxWithExtParentClassLoader() throws Exception {
 		HashMap<String, String> launchArgs = new HashMap<String, String>();
 		launchArgs.put(Constants.FRAMEWORK_BOOTDELEGATION, "javafx.*");
 		// define ext as parent class loader
 		launchArgs.put(Constants.FRAMEWORK_BUNDLE_PARENT,
 				Constants.FRAMEWORK_BUNDLE_PARENT_EXT);
+		launchArgs.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA,
+				"javafx.application");
 		startFrameworkClean(launchArgs);
 		setupDefaultBundle();
 
