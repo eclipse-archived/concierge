@@ -2787,7 +2787,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				final ArrayList<String> result = new ArrayList<String>();
 
 				if (wiring != null) {
-					if ((options & BundleWiring.FINDENTRIES_RECURSE) != 0) {
+					if ((options & BundleWiring.LISTRESOURCES_RECURSE) != 0) {
 						for (final Map.Entry<String, BundleWire> entry : packageImportWires
 								.entrySet()) {
 							final String importPackage = entry.getKey();
