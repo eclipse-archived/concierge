@@ -2782,7 +2782,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 				System.err.println();
 				System.err.println("NOW LISTING RESOURCES FOR " + path
-						+ " pattern " + filePattern);
+						+ " pattern " + filePattern+" at "+this.getBundle().getSymbolicName());
 
 				final ArrayList<String> result = new ArrayList<String>();
 
@@ -2804,8 +2804,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 									result.addAll(((Revision) delegation
 											.getProvider()).classloader
-											.listResources(importPackage
-													.replace('.', '/'),
+											.listResources(importPackage.replace('.', '/'),
 													filePattern, options,
 													visited));
 									visited.add(importPackage);
@@ -3118,7 +3117,11 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 							(options & BundleWiring.LISTRESOURCES_RECURSE) != 0);
 					if (urls != null) {
 						for (final URL url : urls) {
-							result.add(url.getPath().substring(1));
+							// ignore already visited packages
+							String pkg = url.getPath().substring(1, url.getPath().lastIndexOf("/")).replace("/", ".");
+							if(!visited.contains(pkg)){
+								result.add(url.getPath().substring(1));
+							}
 						}
 					}
 				}
