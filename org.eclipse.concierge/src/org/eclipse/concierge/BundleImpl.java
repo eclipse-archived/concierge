@@ -1541,8 +1541,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 						.iterator();
 				while (iter.hasNext()) {
 					final BundleRequirement req = iter.next();
-					if (exportIndex.contains(req.getAttributes().get(
-							PackageNamespace.PACKAGE_NAMESPACE))) {
+					if (exportIndex.contains(req.getDirectives().get(
+							Concierge.DIR_INTERNAL))) {
 						iter.remove();
 					}
 				}
@@ -2129,8 +2129,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 						.getRequirements(PackageNamespace.PACKAGE_NAMESPACE);
 				final Set<String> importPkgs = new HashSet<String>();
 				for (final Requirement pkgImport : imports) {
-					importPkgs.add((String) pkgImport.getAttributes().get(
-							PackageNamespace.PACKAGE_NAMESPACE));
+					importPkgs.add((String) pkgImport.getDirectives().get(
+							Concierge.DIR_INTERNAL));
 				}
 				importPkgs.remove("org.osgi.framework");
 
@@ -2138,8 +2138,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					final List<BundleRequirement> wiredImports = wiring
 							.getRequirements(PackageNamespace.PACKAGE_NAMESPACE);
 					for (final Requirement wiredImport : wiredImports) {
-						importPkgs.remove(wiredImport.getAttributes().get(
-								PackageNamespace.PACKAGE_NAMESPACE));
+						importPkgs.remove(wiredImport.getDirectives().get(
+								Concierge.DIR_INTERNAL));
 					}
 
 					if (!importPkgs.isEmpty()) {
