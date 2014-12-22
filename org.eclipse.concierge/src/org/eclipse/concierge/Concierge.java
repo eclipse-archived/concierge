@@ -2977,6 +2977,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 									final List<BundleWire> wires = wiring
 											.getRequiredWires(PackageNamespace.PACKAGE_NAMESPACE);
 
+									final HashSet<Object> requireSet = new HashSet<Object>();
 									for (final BundleWire wire : wires) {
 										final Object pkg = wire
 												.getCapability()
@@ -2987,6 +2988,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 											impliedConstraints.add(wire
 													.getCapability());
 											caps.add(wire.getCapability());
+											requireSet.add(pkg);
 										}
 									}
 									final List<BundleCapability> caps2 = wiring
@@ -2996,7 +2998,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 										final Object pkg = cap2
 												.getAttributes()
 												.get(PackageNamespace.PACKAGE_NAMESPACE);
-										if (usesSet.contains(pkg)) {
+										if (usesSet.contains(pkg)
+												&& !requireSet.contains(pkg)) { // don't include cap if it was already imported as requirement
 											impliedConstraints
 													.add((BundleCapability) cap2);
 											caps.add((BundleCapability) cap2);
