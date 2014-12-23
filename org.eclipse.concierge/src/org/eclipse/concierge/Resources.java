@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.concierge;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -662,7 +663,7 @@ public class Resources {
 		}
 
 		public ClassLoader getClassLoader() {
-			if (!isCurrent()) {
+			if (!isInUse()) {
 				return null;
 			}
 

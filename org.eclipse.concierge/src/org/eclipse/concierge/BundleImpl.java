@@ -763,12 +763,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				updateLastModified();
 
 				if (currentRevision != null) {
-					try {
-						currentRevision.close();
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+					// do not close here, e.g. old wirings should still be available
 					currentRevision.cleanup(false);
 				}
 			}
@@ -2053,9 +2048,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				wiring = null;
 				packageImportWires = null;
 				requireBundleWires = null;
+				fragments = null;
 			}
-
-			fragments = null;
 
 			if (!uninstall) {
 				currentRevision = (Revision) revisions.get(0);
