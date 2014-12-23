@@ -1467,7 +1467,11 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 				stop0(true);
 				try {
-					Concierge.this.start();
+					if(state == Bundle.STARTING){
+						Concierge.this.init();
+					} else if(state == Bundle.ACTIVE){
+						Concierge.this.start();
+					}
 				} catch (final BundleException be) {
 					// FIXME: to log
 					be.printStackTrace();
