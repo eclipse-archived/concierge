@@ -2780,11 +2780,13 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 						.endsWith("/") ? path.substring(0, path.length() - 1)
 						: path));
 
-				System.err.println();
-				System.err.println("NOW LISTING RESOURCES FOR " + path
-						+ " pattern " + filePattern+" at "+this.getBundle().getSymbolicName());
+				//System.err.println();
+				//System.err.println("NOW LISTING RESOURCES FOR " + path
+				//		+ " pattern " + filePattern+" IN "+this.getBundle().getSymbolicName());
 
-				final ArrayList<String> result = new ArrayList<String>();
+				// HashSet here will make sure old entries are not overridden on add()
+				// in case of multiple required bundles and split packages
+				final HashSet<String> result = new HashSet<String>();
 
 				if (wiring != null) {
 					if ((options & BundleWiring.LISTRESOURCES_RECURSE) != 0) {
@@ -2798,23 +2800,20 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 								if (!cap.hasExcludes()
 										|| cap.filter(classOf(filePattern))) {
 
-									System.err
-											.println("################ successfully delegating to "
-													+ delegation.getProvider());
-
-									result.addAll(((Revision) delegation
-											.getProvider()).classloader
-											.listResources(importPackage.replace('.', '/'),
-													filePattern, options,
-													visited));
+									// if LISTRESOURCES_LOCAL not set : add to results 
+									if ((options & BundleWiring.LISTRESOURCES_LOCAL) == 0) {
+										result.addAll(((Revision) delegation
+												.getProvider()).classloader
+												.listResources(importPackage.replace('.', '/'),
+														filePattern, options,
+														visited));
+									}
+									// always search imports to ignore overridden packages from imports
 									visited.add(importPackage);
 								}
 							}
 						}
 
-						System.err.println("MISSING POTENTIAL MATCHES: "
-								+ packageImportWires + " with " + pkg);
-						// System.exit(1);
 					} else {
 						final BundleWire delegation = packageImportWires
 								.get(pkg);
@@ -2823,35 +2822,35 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 									.getCapability();
 							if (!cap.hasExcludes()
 									|| cap.filter(classOf(filePattern))) {
-								result.addAll(((Revision) delegation
-										.getProvider()).classloader
-										.listResources(path, filePattern,
-												options, visited));
+								if ((options & BundleWiring.LISTRESOURCES_LOCAL) == 0) {
+									result.addAll(((Revision) delegation
+											.getProvider()).classloader
+											.listResources(path, filePattern,
+													options, visited));
+								}
+								visited.add(pkg);
 							}
 						}
 					}
-				}
-
-				if (requireBundleWires != null) {
-					for (final BundleWire wire : requireBundleWires) {
-						result.addAll(((Revision) wire.getProvider()).classloader
-								.listResources(path, filePattern, options,
-										visited));
+				
+	
+					if (requireBundleWires != null
+							&& (options & BundleWiring.LISTRESOURCES_LOCAL) == 0) {
+						for (final BundleWire wire : requireBundleWires) {
+							result.addAll(((Revision) wire.getProvider()).classloader
+									.listResources(path, filePattern, options, new HashSet<String>()));
+						}
 					}
+				
 				}
 
-				// Step 5: search the bundle class path
-				// Step 6: search fragments bundle class path
+				// List own (and attached fragment) resources
 				result.addAll(listOwnResources(path, filePattern, options,
 						visited));
 
-				// Step 7: if the package is exported, fail
-				if (exportIndex.contains(pkg)) {
-					return result;
-				}
 
 				/*
-				 * // Step 8: check dynamic imports if
+				 * check dynamic imports if
 				 * (!dynamicImports.isEmpty()) {
 				 * 
 				 * for (final Iterator<BundleRequirement> iter = dynamicImports
@@ -2902,7 +2901,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				 * bundleCap.getRevision()).classloader .findResource1(pkg,
 				 * name, isClass, multiple, resources); } } } }
 				 */
-				return result;
+				
+				return new ArrayList<String>(result);
 			}
 
 			/**
@@ -3121,7 +3121,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 							String pkg = url.getPath().substring(1, url.getPath().lastIndexOf("/")).replace("/", ".");
 							if(!visited.contains(pkg)){
 								result.add(url.getPath().substring(1));
-							}
+							} 
 						}
 					}
 				}
@@ -3137,7 +3137,11 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 											(options & BundleWiring.LISTRESOURCES_RECURSE) != 0);
 							if (urls != null) {
 								for (final URL url : urls) {
-									result.add(url.getPath().substring(1));
+									// ignore already visited packages
+									String pkg = url.getPath().substring(1, url.getPath().lastIndexOf("/")).replace("/", ".");
+									if(!visited.contains(pkg)){
+										result.add(url.getPath().substring(1));
+									} 
 								}
 							}
 						}
@@ -3187,10 +3191,10 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 							for (int i = 0; i < classpath.length; i++) {
 								final URL url = fragment.lookupFile(
 										classpath[i], name);
-								if (!multiple) {
-									return url;
-								} else {
-									if (url != null) {
+								if(url!=null){
+									if (!multiple) {
+										return url;
+									} else {
 										results.add(url);
 									}
 								}
@@ -3216,7 +3220,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			private Object requireBundleLookup(final String pkg,
 					final String name, final boolean isClass,
 					final boolean multiple, final Vector<URL> resources,
-					final Set<Bundle> visited) {
+					final Set<Bundle> visited) throws ClassNotFoundException{
 				if (visited.contains(BundleImpl.this)) {
 					return null;
 				}
@@ -3240,12 +3244,22 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 						}
 					}
 				}
-
+				
 				if (exportIndex.contains(pkg)) {
-					if (isClass) {
-						return findOwnClass(name);
+					// could be delegated when the export was imported as well, 
+					// so check packageImportWires first
+					BundleClassLoader exportLoader;
+					final BundleWire delegation = packageImportWires.get(pkg);
+					if (delegation != null) {
+						exportLoader = ((Revision)delegation.getProvider()).classloader;
 					} else {
-						final Object result = findOwnResources(name, true,
+						exportLoader = this;
+					}
+					
+					if (isClass) {
+						return exportLoader.findOwnClass(name);
+					} else {
+						final Object result = exportLoader.findOwnResources(name, true,
 								multiple, resources);
 						if (!multiple) {
 							return result;
@@ -3254,6 +3268,10 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					}
 
 				}
+				
+				// instead of inspecting exportIndex and imports, just delegate findResources?
+				//return findResource0(pkg, name, isClass, multiple);
+				
 				return null;
 			}
 
@@ -3633,7 +3651,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			while (enums.hasMoreElements()) {
 				final JarEntry ze = enums.nextElement();
 				final String name;
-				if (cpOffset == 0) {
+				if (cpOffset == 0 || cpOffset >= ze.getName().length()) {
 					name = ze.getName().replace('\\', '/');
 				} else {
 					name = ze.getName().substring(cpOffset).replace('\\', '/');
