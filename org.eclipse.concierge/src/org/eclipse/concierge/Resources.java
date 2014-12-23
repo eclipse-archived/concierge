@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.concierge;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -598,6 +597,11 @@ public class Resources {
 		 * @see org.osgi.framework.wiring.BundleWiring#isCurrent()
 		 */
 		public boolean isCurrent() {
+			// always current if it is the system bundle
+			if(revision.getBundle().getBundleId()==0){
+				return true;
+			}
+			
 			return ((AbstractBundle) revision.getBundle()).currentRevision == revision
 					&& revision.getWiring() == this;
 		}

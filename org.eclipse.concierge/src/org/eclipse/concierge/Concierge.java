@@ -1884,8 +1884,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 * @category BundleRevision
 	 */
 	public BundleWiring getWiring() {
-		// FIXME: implement
-		return new ConciergeBundleWiring(this, null);
+		// TODO also keep the wirings of the system bundle separately?
+		return (BundleWiring) wirings.get(this);
 	}
 
 	/**
@@ -2439,10 +2439,10 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 			// apply solution
 			for (final Resource resource : solution.keySet()) {
+				final List<Wire> wires = solution.get(resource);
+
 				if (resource instanceof Revision) {
 					final Revision revision = (Revision) resource;
-
-					final List<Wire> wires = solution.get(resource);
 
 					final boolean isFragment = revision.isFragment();
 
@@ -2511,6 +2511,19 @@ public final class Concierge extends AbstractBundle implements Framework,
 					}
 
 					wirings.put(resource, wiring);
+				} else {
+					// this is the system bundle
+					// manually add the wires to wirings
+					Concierge systemBundle = (Concierge) resource;
+					ConciergeBundleWiring wiring = (ConciergeBundleWiring)wirings.get(resource);
+					if(wiring == null){
+						wiring = new ConciergeBundleWiring(systemBundle, wires);
+						wirings.put(systemBundle, wiring);
+					} else {
+						for(Wire wire : wires){
+							wiring.addWire((BundleWire)wire);
+						}
+					}
 				}
 			}
 
