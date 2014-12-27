@@ -17,6 +17,17 @@ jar {
 	}
 }
 
+// make stripped jar with no debug information
+// pack200 --repack --strip-debug <stripped-jar> <original-jar>
+task strippedJar(type: Exec, dependsOn: jar) {
+    def inputFile = new File(jar.destinationDir, jar.archiveName)
+    def outputFile = new File(jar.destinationDir, jar.archiveName.replace('.jar', '-nodebug.jar'))
+
+	outputs.files outputFile
+
+    commandLine 'pack200', '--repack', '--strip-debug', outputFile.absolutePath, inputFile.absolutePath
+}
+
 publishing {
     publications {
    	    mavenJava(MavenPublication) {

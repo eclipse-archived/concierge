@@ -24,7 +24,7 @@ task markdownCopyInternal(type: Copy) {
 }
 
 distZip.dependsOn markdownCopy, markdownCopyInternal
-distTar.dependsOn markdownCopy
+distTar.dependsOn markdownCopy, markdownCopyInternal
 
 distributions {
 	main {
@@ -32,6 +32,7 @@ distributions {
 		contents {
 			into('framework') {
                 from { project(':org.eclipse.concierge').jar }
+                from { project(':org.eclipse.concierge').strippedJar }
 			}
 			into('bundles') {
                 from { project(':org.eclipse.concierge.extension.permission').jar }
