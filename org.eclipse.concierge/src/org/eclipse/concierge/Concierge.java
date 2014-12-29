@@ -546,7 +546,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 								+ "Install and start all bundles from specified directory\n"
 								+ "  {-Dprop=value}                               "
 								+ "Specify one or more props just for Concierge (can be used multiple times)\n"
-								+ "Sample: org.eclipse.concierge.Concierge -Dorg.osgi.framework.bootdelegation=javax.xml.parsers -istart mybundle.jar\n");
+								+ "Sample: org.eclipse.concierge.Concierge -Dorg.osgi.framework.bootdelegation=sun.*,javax.* -istart mybundle.jar\n");
 				// TODO allow -all with directory location
 				return null;
 			} else if (args[i].endsWith(".xargs")) {
@@ -4408,7 +4408,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 			if (LOG_ENABLED && DEBUG_SERVICES) {
 				logger.log(LogService.LOG_INFO,
-						"Framework: REQUESTED SERVICES " + clazz + " " + filter);
+						"Framework: REQUESTED SERVICES " 
+								+ ((clazz == null) ? "(no class)" : clazz) + " " 
+								+ ((filter == null) ? "(no filter)" : "filter=" + filter) );
 				logger.log(LogService.LOG_INFO, "\tRETURNED " + result);
 			}
 
