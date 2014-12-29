@@ -2,15 +2,23 @@
 
 ## Gradle based build system
 
-Concierge will be build using [Gradle](http://gradle.org/). The gradle wrapper scripts will be used, to simplify installation. The wrapper scripts are checked in into repository as `./gradlew` and `./gradlew.bat`. The required files to start and download gradle are in folder `.gradle-wrapper`, do not touch. Updates of gradle version can be done by changing the wrapper task in `build.gradle`.
+Concierge will be build using [Gradle](http://gradle.org/). The gradle wrapper scripts will be used, to simplify installation. The wrapper scripts are checked in into repository as `./gradlew` and `./gradlew.bat`. The required files to start and download gradle are in folder `.gradle-wrapper`, do not touch. 
 
-```
+```gradle
 // task to create a gradle wrapper with used gradle version
 task wrapper(type: Wrapper) {
     gradleVersion = '2.2.1'
     jarFile = '.gradle-wrapper/gradle-wrapper.jar'
 }
 ```
+
+Updates of gradle version can be done by changing the wrapper task in `./build.gradle` to an updated version and running the task `./gradlew wrapper` again.
+
+```
+$ ./gradlew wrapper
+```
+
+## Build Concierge using Gradle
 
 A complete build can be done using
 
@@ -24,9 +32,9 @@ This will clean workspace, build and run tests, and will create a distribution f
 
 Files added to the distribution can be added to the folder `distribution/src/main/dist`. These files will automatically added to distribution folder.
 
-In folder `distribution/src/markdown` are all documentation files in markdown format. They will be transformed to HTML using gradle script. For displaying markdown files [Strapdown](http://strapdownjs.com/) will be used.
+In folder `distribution/src/markdown` are all documentation files in markdown format. They will be transformed to HTML using gradle tasks. For displaying markdown files [Strapdown](http://strapdownjs.com/) will be used.
 
-Internal documentation (for Concierge developers/committers) is included in folder `distribution/src/markdown/docs/internal`.
+Documentation for Concierge developers/committers is included in folder `distribution/src/markdown/docs/internal`.
 
 ## Hudson based Continuous Integration build
 
@@ -42,9 +50,12 @@ The build job has to set the proxy settings to get gradle-version downloaded fro
 
 ## Open Issues
 
-* Add license files to distribtion
 * Create maven artifacts
   * Which group id, which artifact ids?
+    * Proposal: groupId: "org.eclise.concierge"
+    * Artifact-ids: full qualified name, e.g. "org.eclipse.concierge",
+      "org.eclipse.concierge.service.startlevel"
+    * or: "framework", "service-startlevel"
   * Install into local maven repo
   * Install SNAPSHOT builds into Eclipse Maven repo
   * Install RELEASE builds into Eclipse Maven repo
