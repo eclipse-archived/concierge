@@ -20,12 +20,3 @@ task execute(type:JavaExec) {
    main = 'PrepareTargetFolder'
    classpath = sourceSets.test.runtimeClasspath
 }
-
-jar {
-    manifest {
-		from('META-INF/MANIFEST.MF')
-        attributes 'Bundle-Version': version
-        attributes 'Implementation-Title': 'Eclipse Concierge OSGi R5 Framework',
- 			       'Implementation-Version': version
-	}
-}

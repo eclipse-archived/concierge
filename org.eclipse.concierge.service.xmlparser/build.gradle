@@ -8,16 +8,6 @@ sourceSets {
     }
 }
 
-jar {
-    manifest {
-		from('META-INF/MANIFEST.MF')
-		// TODO does not work
-        attributes 'Bundle-Version': version
-        attributes 'Implementation-Title': 'Eclipse Concierge XMLParser Service',
- 			       'Implementation-Version': version
-	}
-}
-
 publishing {
     publications {
    	    mavenJava(MavenPublication) {

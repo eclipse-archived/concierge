@@ -1,11 +1,3 @@
-jar {
-    manifest {
-		from('META-INF/MANIFEST.MF')
-        attributes 'Implementation-Title': 'Eclipse Concierge Shell Bundle',
- 			       'Implementation-Version': version
-	}
-}
-
 publishing {
     publications {
    	    mavenJava(MavenPublication) {

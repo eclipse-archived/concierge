@@ -1,12 +1,3 @@
-jar {
-    manifest {
-		from('META-INF/MANIFEST.MF')
-        attributes 'Bundle-Version': version
-        attributes 'Implementation-Title': 'Eclipse Concierge Permission Extension Fragment',
- 			       'Implementation-Version': version
-	}
-}
-
 publishing {
     publications {
    	    mavenJava(MavenPublication) {

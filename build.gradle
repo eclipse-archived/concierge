@@ -1,16 +1,35 @@
 // Build script for Concierge
 
-allprojects {
-	apply plugin: 'java'
-	apply plugin: 'maven-publish'
-	apply plugin: 'distribution'
-	
-	group = 'org.eclipse.concierge'
-	// TODO:  + '.v' + buildTime()
-	version = '1.0.0.alpha2'	
+plugins {
+	// TODO create p2 repo with this tool?
+	// see: https://github.com/stempler/bnd-platform
+	// id 'org.standardout.bnd-platform' version '1.2.0'
+
+	// see: https://github.com/netzwerg/gradle-release-plugin
+    id 'ch.netzwerg.release' version '0.2.0'
 }
 
-subprojects {
+// only include in top level project
+apply plugin: 'ch.netzwerg.release'
+
+// project.version will be read from version.txt
+// must be called as function as not initialized in all phases
+def getProjectVersion() {
+	return project.version
+}
+
+allprojects {
+	apply plugin: 'distribution'
+
+	group = 'org.eclipse.concierge'
+	version = getProjectVersion()
+}
+
+
+// configure all java projects
+configure(subprojects.findAll {it.name != 'distribution'}) {
+	apply plugin: 'java'
+	apply plugin: 'maven-publish'
 
 	clean {
     	delete "storage"
@@ -25,6 +44,10 @@ subprojects {
     	main {
         	java {
             	srcDir 'src'
+        	}
+	        resources {
+    	        srcDirs = [ ".", "../distribution/src/config" ]
+				include "META-INF/services/**", "about.html", "about_files/**"
         	}
 	    }
     	test {
@@ -54,6 +77,19 @@ subprojects {
 
 	task sourceJar(type: Jar) {
  	   from sourceSets.main.allJava
+	}
+
+	jar {
+    	manifest {
+			from('META-INF/MANIFEST.MF') {
+				eachEntry { details ->
+					if (details.key == 'Bundle-Version') {
+                    	details.value = details.value.replace ("qualifier", qualifier())
+						// println details.key + "=" + details.value
+    	            }
+        		}
+        	}
+		}
 	}
 
 	repositories {
@@ -98,6 +134,13 @@ project(':org.eclipse.concierge.tests.integration') {
     }
 }
 
+// release management
+release {
+  dependsOn distZip // 'distZip' could e.g be used in combination with the 'application' plugin
+  push = false // 'true' would e.g. be useful when triggering the release task on a CI server
+  suffix = '-SNAPSHOT' // '.DEV' or '' (empty) could be useful alternatives
+}
+
 
 // task to create a gradle wrapper with used gradle version
 task wrapper(type: Wrapper) {
@@ -106,8 +149,12 @@ task wrapper(type: Wrapper) {
 }
 
 // helper methods
+def qualifier() {
+	return buildTime()
+}
+
 def buildTime() {
     def date = new Date()
-    def formattedDate = date.format('yyyyMMdd-HHmm')
+    def formattedDate = date.format('yyyyMMddHHmmss')
     return formattedDate
 }

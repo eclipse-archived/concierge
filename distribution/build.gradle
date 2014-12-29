@@ -2,9 +2,6 @@ import org.apache.tools.ant.filters.*
 
 apply plugin: 'distribution'
 
-version = '1.0.0.alpha2'
-
-
 task markdownCopy(type: Copy) {
   from 'src/markdown'
   into 'build/gen-html'
@@ -14,17 +11,17 @@ task markdownCopy(type: Copy) {
   filter(ConcatFilter, append: file('src/config/strapdown-post-dirlevel1.txt'))
 }
 
-task markdownCopyInternal(type: Copy) {
+task markdownCopyContributor(type: Copy) {
   from 'src/markdown'
   into 'build/gen-html'
-  include('docs/internal/*.markdown')
+  include('docs/contributor/*.markdown')
   rename { it - '.markdown' + '.html'}
   filter(ConcatFilter, prepend: file('src/config/strapdown-pre.txt'))
   filter(ConcatFilter, append: file('src/config/strapdown-post-dirlevel2.txt'))
 }
 
-distZip.dependsOn markdownCopy, markdownCopyInternal
-distTar.dependsOn markdownCopy, markdownCopyInternal
+distZip.dependsOn markdownCopy, markdownCopyContributor
+distTar.dependsOn markdownCopy, markdownCopyContributor
 
 distributions {
 	main {
