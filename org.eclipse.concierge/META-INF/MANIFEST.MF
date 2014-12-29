@@ -1,9 +1,13 @@
 Manifest-Version: 1.0
 Main-Class: org.eclipse.concierge.Concierge
 Bundle-ManifestVersion: 2
-Bundle-Name: org.eclipse.concierge
 Bundle-SymbolicName: org.eclipse.concierge
-Bundle-Version: 1.0.0.alpha1
+Bundle-Name: Eclipse Concierge Framework
+Bundle-Version: 1.0.0.qualifier
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
+Bundle-Activator: org.eclipse.concierge.Concierge
+Bundle-Vendor: Eclipse.org/Concierge
+Bundle-License: http://www.eclipse.org/legal/epl-v10.html
 Export-Package: org.osgi.framework;version="1.7.0",
  org.osgi.framework.hooks.bundle;version="1.1.0",
  org.osgi.framework.hooks.resolver;version="1.0.0",
@@ -20,7 +24,6 @@ Export-Package: org.osgi.framework;version="1.7.0",
  org.osgi.service.startlevel;version="1.1.0",
  org.osgi.service.url;version="1.0.0",
  org.osgi.util.tracker;version="1.5.1"
-Bundle-Activator: org.eclipse.concierge.Concierge
 Import-Package: org.osgi.framework;version="1.7.0",
  org.osgi.framework.hooks.bundle;version="1.1.0",
  org.osgi.framework.hooks.resolver;version="1.0.0",
@@ -37,3 +40,4 @@ Import-Package: org.osgi.framework;version="1.7.0",
  org.osgi.service.startlevel;version="1.1.0",
  org.osgi.service.url;version="1.0.0",
  org.osgi.util.tracker;version="1.5.1"
+ 
