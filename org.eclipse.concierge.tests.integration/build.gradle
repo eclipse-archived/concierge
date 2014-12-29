@@ -1,11 +1,5 @@
 // TODO align directory structure to Maven based one
 sourceSets {
-    main {
-        resources {
-            srcDirs = [ "." ]
-			include "about.html", "about_files/**"
-        }
-    }
     test {
         java {
 	        // TODO how to get test base classes best?

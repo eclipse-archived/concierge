@@ -12,6 +12,9 @@ plugins {
 // only include in top level project
 apply plugin: 'ch.netzwerg.release'
 
+def qualifier = buildTime()
+
+
 // project.version will be read from version.txt
 // must be called as function as not initialized in all phases
 def getProjectVersion() {
@@ -84,13 +87,20 @@ configure(subprojects.findAll {it.name != 'distribution'}) {
 			from('META-INF/MANIFEST.MF') {
 				eachEntry { details ->
 					if (details.key == 'Bundle-Version') {
-                    	details.value = details.value.replace ("qualifier", qualifier())
+                    	details.value = details.value.replace ("qualifier", qualifier)
 						// println details.key + "=" + details.value
     	            }
         		}
         	}
 		}
 	}
+
+	// name jar file to given bundle symbolic name and version, NOT to project version
+	// as project version is for overall packaging
+	// we maintain the bundle version manually (or using bndtools)
+	jar.archiveName = jar.manifest.getEffectiveManifest().getAttributes().get("Bundle-SymbolicName") \
+						+ "-" + jar.manifest.getEffectiveManifest().getAttributes().get("Bundle-Version") \
+						+ ".jar"
 
 	repositories {
 		mavenCentral()
@@ -149,10 +159,6 @@ task wrapper(type: Wrapper) {
 }
 
 // helper methods
-def qualifier() {
-	return buildTime()
-}
-
 def buildTime() {
     def date = new Date()
     def formattedDate = date.format('yyyyMMddHHmmss')

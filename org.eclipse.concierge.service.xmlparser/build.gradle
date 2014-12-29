@@ -1,13 +1,3 @@
-// TODO align with maven defaults
-sourceSets {
-    main {
-        resources {
-            srcDirs = [ "." ]
-			include "META-INF/services/**", "about.html", "about_files/**"
-        }
-    }
-}
-
 publishing {
     publications {
    	    mavenJava(MavenPublication) {
