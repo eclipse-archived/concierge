@@ -26,6 +26,12 @@ allprojects {
 
 	group = 'org.eclipse.concierge'
 	version = getProjectVersion()
+
+	// create all TARs as tar.gz compressed
+	tasks.withType(Tar){
+    	compression = Compression.GZIP
+    	extension = 'tar.gz'
+	}
 }
 
 

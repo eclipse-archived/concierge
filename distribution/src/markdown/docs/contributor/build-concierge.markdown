@@ -23,10 +23,28 @@ $ ./gradlew wrapper
 A complete build can be done using
 
 ```
-$ ./gradlew clean build distZip installDist
+$ ./gradlew clean build distZip distTar installDist
 ```
 
-This will clean workspace, build and run tests, and will create a distribution file named `distribution/build/distributions/concierge-<version>.zip`. By `installDist` it will be unpacked into `distribution/build/install` to easily check artifact results.
+This will clean workspace, build and run tests, and will create a distribution file named `distribution/build/distributions/concierge-<version>.zip` and `...tar.gz`. By `installDist` it will be unpacked into `distribution/build/install` to easily check artifact results.
+
+## Versioning
+
+The framework and the bundles jars will be named to Bundle-SymbolicName and Bundle-Version, e.g. `org.eclipse.concierge-1.0.0.20141230122000.jar`. The Manifest.MF will specify the `Bundle-Version: 1.0.0.qualifier`, qualifier will be replaced by the current build date/time (MANIFEST driven approach). The version maintenance is up to the individual bundles/framework dependent on compatibility of changes.
+
+The version for the distribution will be defined in `version.txt`. The used release plugin will automatically read in this file and use it as `project.version` property. When this file will have a `-SNAPSHOT` ending, it will be considered as a SNAPSHOT version. When doing a release (by calling `./gradlew release`) it will remove SNAPSHOT, make a release build, create a tag in git, and increase the version to next number.
+
+TODO
+
+
+http://download.eclipse.org/concierge/releases
+http://download.eclipse.org/concierge/snapshot
+
+sftp jhiller@build.eclipse.org
+cd /home/data/httpd/download.eclipse.org
+cd concierge
+ls -al
+
 
 ## Distribution files
 
@@ -34,19 +52,20 @@ Files added to the distribution can be added to the folder `distribution/src/mai
 
 In folder `distribution/src/markdown` are all documentation files in markdown format. They will be transformed to HTML using gradle tasks. For displaying markdown files [Strapdown](http://strapdownjs.com/) will be used.
 
-Documentation for Concierge developers/committers is included in folder `distribution/src/markdown/docs/internal`.
+Documentation for Concierge developers/committers is included in folder `distribution/src/markdown/docs/contributor`.
 
 ## Hudson based Continuous Integration build
 
-There is a Hudson instance (HIPP) hosted at Eclipse at hudson.eclipse.org/concierge/. All committers have access to this instance, please login with your Eclipse committer account.
+There is a Hudson instance (HIPP) hosted at [Eclipse Hudson Infrastructure](http://hudson.eclipse.org/concierge/). All committer have access to this instance, please login with your Eclipse committer account.
 
 There is a job doing a build by checking git master branch for changes. This script will start the gradle-wrapper by a shell build task using
 
 ```
-./gradlew -Dhttps.proxyHost=proxy.eclipse.org -Dhttps.proxyPort=9898 -Dhttps.nonProxyHosts=*.eclipse.org clean build distZip installDist
+./gradlew -Dhttps.proxyHost=proxy.eclipse.org -Dhttps.proxyPort=9898 -Dhttps.nonProxyHosts=*.eclipse.org clean build distZip distTar installDist
 ```
 
 The build job has to set the proxy settings to get gradle-version downloaded from Internet.
+The Files to archive will be set to `distribution/build/distributions/*`.
 
 ## Open Issues
 
@@ -60,9 +79,7 @@ The build job has to set the proxy settings to get gradle-version downloaded fro
   * Install SNAPSHOT builds into Eclipse Maven repo
   * Install RELEASE builds into Eclipse Maven repo
 * SNAPHSHOT vs. RELEASE builds
-  * version 1.0.0.alpha1/2 to 1.0.0.SNAPSHOT, 1.0.0.RC1
-  * replace MANIFEST.MF bundle version with versions ???
-  * one version for each bundle, or always same versions?
+  * make a release build
 * Hudson: get the gradle Hudson/Jenkins plugin installed
   * See https://bugs.eclipse.org/bugs/show_bug.cgi?id=449992
 * Add task for updating Copyright notice in all .java files
