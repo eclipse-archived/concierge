@@ -8,7 +8,6 @@ logFile=publish.log
 
 version=`cat version.txt`
 echo "VERSION=$version"
-if [ ]
 if [[ "$version" == *-SNAPSHOT ]] ; then
   BUILD_LOC_TYPE=snapshots
 else
