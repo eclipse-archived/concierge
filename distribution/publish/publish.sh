@@ -1,5 +1,8 @@
 #!/bin/bash
-# Copy this script to Hudson job "ConciergeDistributionPublishSnapshot"
+# start this script by a Hudson shell script:
+
+# chmod u+x ./distribution/publish/publish.sh
+# ./distribution/publish/publish.sh
 
 set -x
 
@@ -11,7 +14,7 @@ echo "VERSION=$version"
 if [[ "$version" == *-SNAPSHOT ]] ; then
   BUILD_LOC_TYPE=snapshots
 else
-  BUILD_LOC_TYPE=release
+  BUILD_LOC_TYPE=releases
 fi
 echo "BUILD_LOC_TYPE=$BUILD_LOC_TYPE"
 
@@ -36,7 +39,7 @@ mv -fv *.zip *.tar.gz ../$BUILD_LOC_TYPE/ >>$logFile
 now=`date '+%Y/%m/%d %H:%M:%S'`
 echo "$now: finished publishing last successful build" >>$logFile
 
-mv -f $logFile ../snapshots/
+mv -f $logFile ../$BUILD_LOC_TYPE/
 
 cd ..
 if [ -d $BUILD_LOC/tmp ] ; then rm -rf $BUILD_LOC/tmp/* ; rmdir $BUILD_LOC/tmp ; fi
