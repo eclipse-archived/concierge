@@ -2025,18 +2025,12 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 		}
 
 		/**
-		 * FIXME: this is no longer correct. Split the responsibilities!
-		 * 
-		 * perform a cleanup. All exported packages that are removed from the
-		 * framework's package registry. All imported packages are returned.
-		 * 
 		 * @param uninstall
 		 *            if false, the bundle is only prepared for an update or
 		 *            refresh. If true, it is prepared for the uninstalled
 		 *            state.
 		 */
 		void cleanup(final boolean uninstall) {
-			// framework.removeCapabilities(capabilities.getAllValues());
 			framework.removeCapabilities(this);
 
 			// if this is the final cleanup, remove this resource from all other
@@ -2776,14 +2770,6 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 						.endsWith("/") ? path.substring(0, path.length() - 1)
 						: path));
 
-				// System.err.println();
-				// System.err.println("NOW LISTING RESOURCES FOR " + path
-				// + " pattern " +
-				// filePattern+" IN "+this.getBundle().getSymbolicName());
-
-				// HashSet here will make sure old entries are not overridden on
-				// add()
-				// in case of multiple required bundles and split packages
 				final HashSet<String> result = new HashSet<String>();
 
 				if (wiring != null) {
@@ -2797,10 +2783,6 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 										.getCapability();
 								if (!cap.hasExcludes()
 										|| cap.filter(classOf(filePattern))) {
-
-									System.err
-											.println("################ successfully delegating to "
-													+ delegation.getProvider());
 
 									// if LISTRESOURCES_LOCAL not set : add to
 									// results
@@ -2853,61 +2835,6 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					// if (!visited.isEmpty()) {
 					result.addAll(listOwnResources(path, filePattern, options,
 							visited));
-					// }
-
-					/*
-					 * check dynamic imports if (!dynamicImports.isEmpty()) {
-					 * 
-					 * for (final Iterator<BundleRequirement> iter =
-					 * dynamicImports .iterator(); iter.hasNext();) { final
-					 * BundleRequirement dynImport = iter.next();
-					 * 
-					 * // TODO: think of something better final String
-					 * dynImportPackage = dynImport
-					 * .getDirectives().get(Concierge.DIR_INTERNAL);
-					 * 
-					 * // TODO: first check if dynImport could apply to the //
-					 * requested package!!! if (RFC1960Filter.stringCompare(
-					 * dynImportPackage.toCharArray(), 0, pkg.toCharArray(), 0)
-					 * != 0) { continue; }
-					 * 
-					 * final boolean wildcard = Namespace.CARDINALITY_MULTIPLE
-					 * .equals(dynImport .getDirectives()
-					 * .get(Namespace.REQUIREMENT_CARDINALITY_DIRECTIVE));
-					 * List<BundleCapability> matches; matches =
-					 * framework.resolveDynamic(Revision.this, pkg,
-					 * dynImportPackage, dynImport, wildcard); if (matches !=
-					 * null && matches.size() > 0) { final BundleCapability
-					 * bundleCap = matches.get(0);
-					 * 
-					 * final BundleWire wire = new ConciergeBundleWire(
-					 * bundleCap, dynImport); if (wiring == null) {
-					 * setWiring(new ConciergeBundleWiring( Revision.this,
-					 * null)); } wiring.addWire(wire);
-					 * 
-					 * ((ConciergeBundleWiring) bundleCap.getRevision()
-					 * .getWiring()).addWire(wire);
-					 * 
-					 * packageImportWires .put((String) bundleCap
-					 * .getAttributes()
-					 * .get(PackageNamespace.PACKAGE_NAMESPACE), wire);
-					 * 
-					 * if (!wildcard) { // FIXME: iter.remove(); }
-					 * 
-					 * final BundleRevision rev = bundleCap.getRevision(); if
-					 * (!(rev instanceof Revision)) { if (isClass) { return
-					 * framework.systemBundleClassLoader .loadClass(name); }
-					 * else { if (multiple) { try { final Enumeration<URL> e =
-					 * framework.systemBundleClassLoader .getResources(name);
-					 * while (e.hasMoreElements()) {
-					 * resources.add(e.nextElement()); } } catch (final
-					 * IOException ioe) { // nothing we can do about it //
-					 * FIXME: to log } } else { return
-					 * framework.systemBundleClassLoader .getResource(name); } }
-					 * } else { return ((Revision)
-					 * bundleCap.getRevision()).classloader .findResource1(pkg,
-					 * name, isClass, multiple, resources); } } } }
-					 */
 				}
 				return new HashSet<String>(result);
 
@@ -3131,11 +3058,6 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 									.substring(1, pos));
 							if (!visited.contains(pkg)) {
 								result.add(url.getPath().substring(1));
-							} else {
-								// FIXME: debug output
-								System.err.println("VISITED IS " + visited
-										+ " MATCHES " + pkg + " SKIPPING "
-										+ url.getPath());
 							}
 						}
 					}
@@ -3157,11 +3079,6 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 											.getPath().substring(1, pos));
 									if (!visited.contains(pkg)) {
 										result.add(url.getPath().substring(1));
-									} else {
-										// FIXME: debug output
-										System.err.println("VISITED IS "
-												+ visited + " MATCHES " + pkg
-												+ " SKIPPING " + url.getPath());
 									}
 								}
 							}
@@ -3972,11 +3889,6 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 		} catch (final IOException ioe) {
 			ioe.printStackTrace();
 		}
-	}
-
-	// FIXME: for debugging only
-	public String printFragments() {
-		return currentRevision.fragments.toString();
 	}
 
 }
