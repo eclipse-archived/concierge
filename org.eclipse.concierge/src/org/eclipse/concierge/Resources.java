@@ -711,7 +711,7 @@ public class Resources {
 				return null;
 			}
 
-			return Collections.unmodifiableList(((Revision) revision).classloader.listResources(path, filePattern, options, new HashSet<String>()));
+			return Collections.unmodifiableSet(((Revision) revision).classloader.listResources(path, filePattern, options, new HashSet<String>()));
 		}
 
 		public List<Capability> getResourceCapabilities(final String namespace) {
