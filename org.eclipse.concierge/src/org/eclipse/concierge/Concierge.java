@@ -1365,11 +1365,14 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 */
 	private void restoreProfile() {
 		try {
-			System.out.println("restoring profile " + PROFILE);
+			if (DEBUG_BUNDLES) {
+				logger.log(LogService.LOG_DEBUG, "restoring profile " + PROFILE);
+			}
 			final File file = new File(STORAGE_LOCATION, "meta");
 			if (!file.exists()) {
 				warning("Profile " + PROFILE
 						+ " not found, performing clean start ...");
+				restart = false;
 				return;
 			}
 
@@ -1389,14 +1392,16 @@ public final class Concierge extends AbstractBundle implements Framework,
 						try {
 							final AbstractBundle bundle = new BundleImpl(this,
 									meta);
-							// FIXME: debug output
-							System.out.println("RESTORED BUNDLE "
-									+ bundle.location);
+							if (DEBUG_BUNDLES) {
+								logger.log(LogService.LOG_DEBUG,
+										"RESTORED BUNDLE " + bundle.location);
+							}
 							bundles.add(bundle);
 							bundleID_bundles.put(new Long(bundle.bundleId),
 									bundle);
 						} catch (final Exception e) {
-							e.printStackTrace();
+							logger.log(LogService.LOG_ERROR,
+									"Framework restart", e);
 						}
 					}
 				}

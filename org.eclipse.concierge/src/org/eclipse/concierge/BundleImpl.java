@@ -235,7 +235,6 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 	}
 
 	// framework restart case
-	// TODO: fix it
 	public BundleImpl(final Concierge framework, final File metadata)
 			throws IOException, BundleException {
 		this.framework = framework;
@@ -245,6 +244,12 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				metadata));
 		// read current revision from metadata
 		this.currentRevisionNumber = in.readInt();
+
+		this.bundleId = in.readLong();
+		this.location = in.readUTF();
+
+		this.storageLocation = framework.STORAGE_LOCATION + bundleId
+				+ File.separatorChar;
 
 		// locate current revision
 		final File file = new File(storageLocation, BUNDLE_FILE_NAME
@@ -273,12 +278,10 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					manifest, classpathStrings);
 		} else {
 			in.close();
-			throw new BundleException("Bundle revision " + currentRevision
-					+ " does not exist", BundleException.READ_ERROR);
+			throw new BundleException("Bundle revision "
+					+ currentRevisionNumber + " does not exist",
+					BundleException.READ_ERROR);
 		}
-
-		this.bundleId = in.readLong();
-		this.location = in.readUTF();
 
 		this.startlevel = in.readInt();
 		this.state = Bundle.INSTALLED;
@@ -297,10 +300,6 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 	 * update the bundle's metadata on the storage.
 	 */
 	void updateMetadata() {
-		if (currentRevision.isFragment()) {
-			return;
-		}
-
 		DataOutputStream out = null;
 		try {
 			out = new DataOutputStream(new FileOutputStream(new File(

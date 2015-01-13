@@ -80,6 +80,10 @@ public class XargsFileLauncher {
 		// This will result in a natural order of installed bundles.
 		concierge.start();
 
+		if (concierge.restart) {
+			return concierge;
+		}
+		
 		final BundleContext context = concierge.getBundleContext();
 
 		int maxLevel = 1;
