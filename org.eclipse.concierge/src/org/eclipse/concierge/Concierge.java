@@ -92,6 +92,7 @@ import org.osgi.framework.hooks.service.ListenerHook.ListenerInfo;
 import org.osgi.framework.hooks.weaving.WeavingException;
 import org.osgi.framework.hooks.weaving.WeavingHook;
 import org.osgi.framework.launch.Framework;
+import org.osgi.framework.namespace.AbstractWiringNamespace;
 import org.osgi.framework.namespace.BundleNamespace;
 import org.osgi.framework.namespace.HostNamespace;
 import org.osgi.framework.namespace.IdentityNamespace;
@@ -335,7 +336,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 	private final MultiMap<String, Revision> fragmentIndex = new MultiMap<String, Revision>(
 			1);
 
-	private ArrayList<BundleImpl> extensionBundles = new ArrayList<BundleImpl>(
+	private final ArrayList<BundleImpl> extensionBundles = new ArrayList<BundleImpl>(
 			0);
 
 	/**
@@ -437,10 +438,12 @@ public final class Concierge extends AbstractBundle implements Framework,
 	protected static final Comparator<? super Capability> BUNDLE_VERSION = new Comparator<Capability>() {
 
 		public int compare(final Capability cap1, final Capability cap2) {
-			Version cap1Version = (Version) cap1.getAttributes().get(
-					PackageNamespace.CAPABILITY_BUNDLE_VERSION_ATTRIBUTE);
-			Version cap2Version = (Version) cap2.getAttributes().get(
-					PackageNamespace.CAPABILITY_BUNDLE_VERSION_ATTRIBUTE);
+			final Version cap1Version = (Version) cap1
+					.getAttributes()
+					.get(AbstractWiringNamespace.CAPABILITY_BUNDLE_VERSION_ATTRIBUTE);
+			final Version cap2Version = (Version) cap2
+					.getAttributes()
+					.get(AbstractWiringNamespace.CAPABILITY_BUNDLE_VERSION_ATTRIBUTE);
 
 			return cap2Version.compareTo(cap1Version);
 		}
@@ -468,9 +471,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 				return score;
 			}
 
-			Version cap1Version = (Version) cap1.getAttributes().get(
+			final Version cap1Version = (Version) cap1.getAttributes().get(
 					PackageNamespace.CAPABILITY_VERSION_ATTRIBUTE);
-			Version cap2Version = (Version) cap2.getAttributes().get(
+			final Version cap2Version = (Version) cap2.getAttributes().get(
 					PackageNamespace.CAPABILITY_VERSION_ATTRIBUTE);
 
 			score = cap2Version.compareTo(cap1Version);
@@ -503,7 +506,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 * until stopped. This allows better testability.
 	 */
 	public static void main(final String[] args) throws Exception {
-		Concierge framework = doMain(args);
+		final Concierge framework = doMain(args);
 		if (framework != null) {
 			// wait until framework stopped
 			framework.waitForStop(0);
@@ -532,7 +535,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 		final XargsFileLauncher xargsLauncher = new XargsFileLauncher();
 		String xargsFile = null;
 		final StringBuffer argsBuf = new StringBuffer();
-		for (int i = 0; (args != null) && (i < args.length); i++) {
+		for (int i = 0; args != null && i < args.length; i++) {
 			if ("-help".equalsIgnoreCase(args[i])) {
 				// if -help show usage message
 				System.err
@@ -563,7 +566,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 						|| args[i].equalsIgnoreCase("-start")
 						|| args[i].equalsIgnoreCase("-all")) {
 					// append next argument to same line
-					if ((i - 1) < args.length) {
+					if (i - 1 < args.length) {
 						i++;
 						argsBuf.append(' ');
 						argsBuf.append(args[i]);
@@ -574,7 +577,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 		}
 
 		// no arguments? Try to use init.xargs or other file
-		if ((xargsFile == null && argsBuf.length() == 0)) {
+		if (xargsFile == null && argsBuf.length() == 0) {
 			xargsFile = System.getProperty("org.eclipse.concierge.init.xargs");
 			if (xargsFile == null) {
 				xargsFile = "init.xargs";
@@ -1319,8 +1322,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 * 
 	 */
 	private void storeProfile() {
-		final BundleImpl[] bundleArray = (BundleImpl[]) bundles
-				.toArray(new BundleImpl[bundles.size()]);
+		final BundleImpl[] bundleArray = bundles.toArray(new BundleImpl[bundles
+				.size()]);
 		for (int i = 0; i < bundleArray.length; i++) {
 			if (bundleArray[i].state != Bundle.UNINSTALLED) {
 				bundleArray[i].updateMetadata();
@@ -1823,8 +1826,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 						toProcess[toProcess.length - j - 1].stopBundle();
 					}
 				} catch (final BundleException be) {
-					if (be.getNestedException() != null)
+					if (be.getNestedException() != null) {
 						be.getNestedException().printStackTrace();
+					}
 					be.printStackTrace();
 					notifyFrameworkListeners(FrameworkEvent.ERROR,
 							up ? toProcess[j] : toProcess[toProcess.length - j
@@ -1850,7 +1854,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 	public List<BundleCapability> getDeclaredCapabilities(final String namespace) {
 		final ArrayList<BundleCapability> filteredCapabilities = new ArrayList<BundleCapability>();
 		if (namespace != null) {
-			for (BundleCapability c : systemBundleCapabilities) {
+			for (final BundleCapability c : systemBundleCapabilities) {
 				if (c.getNamespace().equals(namespace)) {
 					filteredCapabilities.add(c);
 				}
@@ -2087,8 +2091,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 		final ArrayList<BundleRevision> resources = new ArrayList<BundleRevision>();
 		boolean resolved = true;
 
-		for (final Bundle bundle : (bundles == null ? Concierge.this.bundles
-				: bundles)) {
+		for (final Bundle bundle : bundles == null ? Concierge.this.bundles
+				: bundles) {
 			if (bundle.getState() == UNINSTALLED) {
 				resolved = false;
 				continue;
@@ -2130,7 +2134,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 				}
 			}
 		} catch (final Throwable t) {
-			for (ResolverHook hook : hooks.keySet()) {
+			for (final ResolverHook hook : hooks.keySet()) {
 				hook.end();
 			}
 			throw t;
@@ -2229,11 +2233,11 @@ public final class Concierge extends AbstractBundle implements Framework,
 								cap, filterStr)) {
 					// we have a match
 					// FIXME: cleanup...
-					if ((((BundleCapability) cap)).getRevision().getBundle()
+					if (((BundleCapability) cap).getRevision().getBundle()
 							.getState() == Bundle.INSTALLED) {
 						// need to resolve first
 						if (!resolve(
-								Collections.singletonList((((BundleCapability) cap))
+								Collections.singletonList(((BundleCapability) cap)
 										.getRevision()), false)) {
 							continue;
 						}
@@ -2468,9 +2472,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 								} else {
 									// host is system bundle, check
 									// extensionBundles
-									if (extensionBundles
-											.contains((BundleImpl) revision
-													.getBundle())) {
+									if (extensionBundles.contains(revision
+											.getBundle())) {
 										attached = true;
 									}
 								}
@@ -2513,14 +2516,14 @@ public final class Concierge extends AbstractBundle implements Framework,
 				} else {
 					// this is the system bundle
 					// manually add the wires to wirings
-					Concierge systemBundle = (Concierge) resource;
+					final Concierge systemBundle = (Concierge) resource;
 					ConciergeBundleWiring wiring = (ConciergeBundleWiring) wirings
 							.get(resource);
 					if (wiring == null) {
 						wiring = new ConciergeBundleWiring(systemBundle, wires);
 						wirings.put(systemBundle, wiring);
 					} else {
-						for (Wire wire : wires) {
+						for (final Wire wire : wires) {
 							wiring.addWire((BundleWire) wire);
 						}
 					}
@@ -2972,7 +2975,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 							seen.add(cap);
 
 							final String usesStr = cap.getDirectives().get(
-									PackageNamespace.CAPABILITY_USES_DIRECTIVE);
+									Namespace.CAPABILITY_USES_DIRECTIVE);
 
 							if (usesStr != null) {
 								final String[] usesConstraints = Utils
@@ -3164,7 +3167,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 		Concierge frameworkInstance = null;
 
-		public void setConcierge(Concierge concierge) {
+		public void setConcierge(final Concierge concierge) {
 			this.frameworkInstance = concierge;
 		}
 
@@ -3408,7 +3411,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 		final String fragmentHostName = fragment.getFragmentHost();
 		if (fragmentHostName.equals(Constants.SYSTEM_BUNDLE_SYMBOLICNAME)
 				|| fragmentHostName.equals(FRAMEWORK_SYMBOLIC_NAME)) {
-			extensionBundles.remove((BundleImpl) fragment.getBundle());
+			extensionBundles.remove(fragment.getBundle());
 		}
 	}
 
@@ -3431,7 +3434,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 					.hasNext();) {
 				final Requirement req = iter.next()
 						.getRequirements(HostNamespace.HOST_NAMESPACE).get(0);
-				if (!(matches(req, cap))) {
+				if (!matches(req, cap)) {
 					iter.remove();
 				}
 			}
@@ -4413,9 +4416,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 			if (LOG_ENABLED && DEBUG_SERVICES) {
 				logger.log(LogService.LOG_INFO,
 						"Framework: REQUESTED SERVICES "
-								+ ((clazz == null) ? "(no class)" : clazz)
+								+ (clazz == null ? "(no class)" : clazz)
 								+ " "
-								+ ((filter == null) ? "(no filter)" : "filter="
+								+ (filter == null ? "(no filter)" : "filter="
 										+ filter));
 				logger.log(LogService.LOG_INFO, "\tRETURNED " + result);
 			}
@@ -4445,11 +4448,12 @@ public final class Concierge extends AbstractBundle implements Framework,
 			ServiceReference<?>[] list = null;
 			try {
 				list = getServiceReferences(clazz, null, true);
-			} catch (InvalidSyntaxException e) {
+			} catch (final InvalidSyntaxException e) {
 			}
 
-			if (list == null)
+			if (list == null) {
 				return null;
+			}
 
 			final ServiceReference<?>[] candidates = list;
 
@@ -4913,8 +4917,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 			}
 
 			if (defaultAttribute != null && defaultAttribute instanceof String) {
-				final boolean success = attributeIndex.remove(
-						(String) defaultAttribute, cap);
+				final boolean success = attributeIndex.remove(defaultAttribute,
+						cap);
 				if (success) {
 					if (attributeIndex.isEmpty()) {
 						defaultAttributeIndex.remove(namespace);

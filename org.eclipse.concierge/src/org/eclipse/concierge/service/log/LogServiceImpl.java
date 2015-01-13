@@ -64,7 +64,7 @@ public final class LogServiceImpl implements LogService, LogReaderService {
 	/**
 	 * the constants for the log levels.
 	 */
-	private static final String[] LEVELS = { "NULL", "ERROR", "WARNING",
+	protected static final String[] LEVELS = { "NULL", "ERROR", "WARNING",
 			"INFO", "DEBUG" };
 
 	public LogServiceImpl(final int buffersize, final int loglevel,
@@ -233,7 +233,7 @@ public final class LogServiceImpl implements LogService, LogReaderService {
 
 		private final static int THRESHOLD = 5;
 
-		private static LogEntryImpl getEntry(final int level,
+		protected static LogEntryImpl getEntry(final int level,
 				final String message, final Throwable throwable,
 				final ServiceReference sref) {
 			synchronized (entryRecyclingList) {
@@ -244,7 +244,7 @@ public final class LogServiceImpl implements LogService, LogReaderService {
 			}
 		}
 
-		private static void releaseEntry(final LogEntryImpl entry) {
+		protected static void releaseEntry(final LogEntryImpl entry) {
 			synchronized (entryRecyclingList) {
 				if (entryRecyclingList.size() < THRESHOLD) {
 					entry.log(0, null, null, null);

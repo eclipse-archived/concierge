@@ -117,7 +117,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 		Method classloader;
 		Method fileloader;
 		try {
-			Class<?> dexFileClass = Class.forName("dalvik.system.DexFile");
+			final Class<?> dexFileClass = Class
+					.forName("dalvik.system.DexFile");
 
 			classloader = dexFileClass.getMethod("loadClass", new Class[] {
 					String.class, ClassLoader.class });
@@ -289,8 +290,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					manifest.getMainAttributes(), Constants.BUNDLE_CLASSPATH,
 					new String[] { "." });
 
-			if (framework.ALWAYS_DECOMPRESS
-					|| (framework.DECOMPRESS_EMBEDDED && classpathStrings.length > 1)) {
+			if (framework.ALWAYS_DECOMPRESS || framework.DECOMPRESS_EMBEDDED
+					&& classpathStrings.length > 1) {
 				final File contentDir = new File(storageLocation
 						+ CONTENT_DIRECTORY_NAME + revisionNumber);
 				if (contentDir.exists()) {
@@ -1265,7 +1266,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					}
 				}
 			}
-		} catch (IOException e) {
+		} catch (final IOException e) {
 		}
 
 		return -1;
@@ -2118,7 +2119,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 						.getRequirements(PackageNamespace.PACKAGE_NAMESPACE);
 				final Set<String> importPkgs = new HashSet<String>();
 				for (final Requirement pkgImport : imports) {
-					importPkgs.add((String) pkgImport.getDirectives().get(
+					importPkgs.add(pkgImport.getDirectives().get(
 							Concierge.DIR_INTERNAL));
 				}
 				importPkgs.remove("org.osgi.framework");
@@ -2317,10 +2318,11 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					&& activationList.get(0) == BundleImpl.this) {
 				activationChain.set(new ArrayList<AbstractBundle>());
 				for (int i = activationList.size() - 1; i >= 0; i--) {
-					final BundleImpl toActivate = ((BundleImpl) activationList
-							.get(i));
-					if (toActivate.beingLazy)
+					final BundleImpl toActivate = (BundleImpl) activationList
+							.get(i);
+					if (toActivate.beingLazy) {
 						toActivate.triggerActivation();
+					}
 				}
 				activationChain.set(null);
 			}
@@ -2491,7 +2493,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					final Vector<URL> results = (Vector<URL>) findResource0(
 							packageOf(pseudoClassname(strippedName)),
 							strippedName, false, true);
-					return (results == null || results.isEmpty()) ? null
+					return results == null || results.isEmpty() ? null
 							: results.elements();
 				} catch (final ClassNotFoundException e) {
 					// does not happen
@@ -3036,7 +3038,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 								new Object[] { classname.replace('.', '/'),
 										this });
 					}
-				} catch (Exception e) {
+				} catch (final Exception e) {
 					return null;
 				}
 				return null;
@@ -3053,7 +3055,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 							(options & BundleWiring.LISTRESOURCES_RECURSE) != 0);
 					if (urls != null) {
 						for (final URL url : urls) {
-							int pos = url.getPath().lastIndexOf('/');
+							final int pos = url.getPath().lastIndexOf('/');
 							final String pkg = pseudoClassname(url.getPath()
 									.substring(1, pos));
 							if (!visited.contains(pkg)) {
@@ -3074,7 +3076,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 											(options & BundleWiring.LISTRESOURCES_RECURSE) != 0);
 							if (urls != null) {
 								for (final URL url : urls) {
-									int pos = url.getPath().lastIndexOf('/');
+									final int pos = url.getPath().lastIndexOf(
+											'/');
 									final String pkg = pseudoClassname(url
 											.getPath().substring(1, pos));
 									if (!visited.contains(pkg)) {
@@ -3218,12 +3221,12 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				return null;
 			}
 
-			private void definePackage(String pkg) {
+			private void definePackage(final String pkg) {
 				// TODO fill in version/spec/vendor attributes according to
 				// bundle manifest headers?
 				try {
 					definePackage(pkg, null, null, null, null, null, null, null);
-				} catch (IllegalArgumentException e) {
+				} catch (final IllegalArgumentException e) {
 					// ignore
 				}
 			}
@@ -3407,7 +3410,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			}
 
 			if (headerCache != null) {
-				HeaderDictionary cached = headerCache.get(locale);
+				final HeaderDictionary cached = headerCache.get(locale);
 				if (cached != null) {
 					return cached;
 				}
@@ -3491,7 +3494,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 		public long retrieveFileLength(final String classpath,
 				final String filename) throws IOException {
-			Object res = findFile(classpath, filename, GET_CONTENT_LENGTH);
+			final Object res = findFile(classpath, filename, GET_CONTENT_LENGTH);
 			if (res == null) {
 				if (framework.DEBUG_CLASSLOADING) {
 					framework.logger.log(
@@ -3533,7 +3536,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					return null;
 				}
 
-				InputStream in = jarFile.getInputStream(entry);
+				final InputStream in = jarFile.getInputStream(entry);
 				if (in == null) {
 					// classpath is a directory
 					final ZipEntry entry2 = jarFile.getEntry(classpath + "/"
@@ -3799,7 +3802,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 							results.add(createURL(
 									absPath.substring(absPath
 											.indexOf(storageLocation)
-											+ (storageLocation).length() + 1)
+											+ storageLocation.length() + 1)
 									// TODO File.separatorChar instead of "/" ?
 											+ (toTest.isDirectory() ? "/" : ""),
 									null));

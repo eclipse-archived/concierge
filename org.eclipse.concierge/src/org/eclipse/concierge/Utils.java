@@ -34,11 +34,11 @@ public final class Utils {
 	@SuppressWarnings("deprecation")
 	private static final String SPECIFICATION_VERSION = Constants.PACKAGE_SPECIFICATION_VERSION;
 
-	public static String[] splitString(String values, final char delimiter) {
+	public static String[] splitString(final String values, final char delimiter) {
 		return splitString(values, delimiter, Integer.MAX_VALUE);
 	}
 
-	static String[] splitString(String values, final char delimiter,
+	static String[] splitString(final String values, final char delimiter,
 			final int limit) {
 		if (values == null || values.length() == 0) {
 			return EMPTY_STRING_ARRAY;
@@ -88,9 +88,10 @@ public final class Utils {
 				}
 
 				// copy from pointer to current - 1
-				int count = endPointer - pointer + 1;
-				if (count > 0)
+				final int count = endPointer - pointer + 1;
+				if (count > 0) {
 					tokens.add(new String(chars, pointer, count));
+				}
 
 				curr++;
 
@@ -117,9 +118,10 @@ public final class Utils {
 			endPointer--;
 		}
 
-		int count = endPointer - pointer + 1;
-		if (count > 0)
+		final int count = endPointer - pointer + 1;
+		if (count > 0) {
 			tokens.add(new String(chars, pointer, count));
+		}
 
 		return tokens.toArray(new String[tokens.size()]);
 	}

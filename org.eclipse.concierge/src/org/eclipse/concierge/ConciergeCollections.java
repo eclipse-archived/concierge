@@ -377,7 +377,7 @@ public interface ConciergeCollections {
 		 */
 		private static final long serialVersionUID = 2467542232248099702L;
 
-		public DeltaTrackingRemoveOnlyList(Collection<E> result) {
+		public DeltaTrackingRemoveOnlyList(final Collection<E> result) {
 			super(result);
 		}
 
