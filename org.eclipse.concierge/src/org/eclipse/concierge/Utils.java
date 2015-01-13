@@ -89,7 +89,7 @@ public final class Utils {
 
 				// copy from pointer to current - 1
 				int count = endPointer - pointer + 1;
-				if(count > 0) 
+				if (count > 0)
 					tokens.add(new String(chars, pointer, count));
 
 				curr++;
@@ -118,7 +118,7 @@ public final class Utils {
 		}
 
 		int count = endPointer - pointer + 1;
-		if(count > 0) 
+		if (count > 0)
 			tokens.add(new String(chars, pointer, count));
 
 		return tokens.toArray(new String[tokens.size()]);

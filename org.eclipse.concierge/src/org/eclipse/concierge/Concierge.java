@@ -601,8 +601,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 					.toString().getBytes(StandardCharsets.UTF_8));
 			// TODO support really props as command line args?
 			// we have to preserve the properties for later variable and
-			// wildcard
-			// replacement
+			// wildcard replacement
 			final Map<String, String> passedProperties = xargsLauncher
 					.getPropertiesFromXargsInputStream(inputStream);
 
@@ -1467,9 +1466,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 				stop0(true);
 				try {
-					if(state == Bundle.STARTING){
+					if (state == Bundle.STARTING) {
 						Concierge.this.init();
-					} else if(state == Bundle.ACTIVE){
+					} else if (state == Bundle.ACTIVE) {
 						Concierge.this.start();
 					}
 				} catch (final BundleException be) {
@@ -2515,13 +2514,14 @@ public final class Concierge extends AbstractBundle implements Framework,
 					// this is the system bundle
 					// manually add the wires to wirings
 					Concierge systemBundle = (Concierge) resource;
-					ConciergeBundleWiring wiring = (ConciergeBundleWiring)wirings.get(resource);
-					if(wiring == null){
+					ConciergeBundleWiring wiring = (ConciergeBundleWiring) wirings
+							.get(resource);
+					if (wiring == null) {
 						wiring = new ConciergeBundleWiring(systemBundle, wires);
 						wirings.put(systemBundle, wiring);
 					} else {
-						for(Wire wire : wires){
-							wiring.addWire((BundleWire)wire);
+						for (Wire wire : wires) {
+							wiring.addWire((BundleWire) wire);
 						}
 					}
 				}
@@ -2755,9 +2755,10 @@ public final class Concierge extends AbstractBundle implements Framework,
 				final List<BundleCapability> col = new ArrayList<BundleCapability>();
 
 				if (DEBUG_BUNDLES) {
-					System.err.println("RESOLVING "
-							+ resource.getSymbolicName() + " - "
-							+ resource.getVersion() + " /.//" + resource);
+					logger.log(LogService.LOG_DEBUG,
+							"RESOLVING " + resource.getSymbolicName() + " - "
+									+ resource.getVersion() + " /.//"
+									+ resource);
 				}
 
 				final List<AbstractBundle> existing = new ArrayList<AbstractBundle>(
@@ -2767,8 +2768,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 				if (existing.isEmpty()) {
 					return true;
 				}
-
-				System.err.println("RAW EXISTING ARE " + existing);
 
 				for (final AbstractBundle bundle : existing) {
 					if (bundle.state != Bundle.INSTALLED) {
@@ -2782,20 +2781,10 @@ public final class Concierge extends AbstractBundle implements Framework,
 										.get(IdentityNamespace.CAPABILITY_SINGLETON_DIRECTIVE))) {
 							col.add(existingIdentity);
 						}
-					} else {
-						System.err.println("\t " + bundle
-								+ " is only INSTALLED");
 					}
 				}
 
-				System.err.println("EXISTING ARE " + col);
-
 				if (hooks != null && hooks.isEmpty()) {
-
-					if (!col.isEmpty()) {
-						System.err.println("REJECTED NO HOOKS>>>>>>>>");
-					}
-
 					return col.isEmpty();
 				}
 
@@ -2807,13 +2796,19 @@ public final class Concierge extends AbstractBundle implements Framework,
 				}
 
 				if (!collisions.isEmpty()) {
-					System.err.println("REJECTED BY HOOKS>>>>>>>>");
-
-					// throw new BundleException("Singleton collision " +
-					// identity
-					// + " with existing bundles " + collisions,
-					// BundleException.DUPLICATE_BUNDLE_ERROR);
 					return false;
+				}
+
+				for (final BundleCapability cap : col) {
+					final ConciergeCollections.RemoveOnlyList<BundleCapability> identityList = new ConciergeCollections.RemoveOnlyList<BundleCapability>(
+							Collections.singletonList(identity));
+					for (final ResolverHook hook : hooks.keySet()) {
+						hook.filterSingletonCollisions(cap, identityList);
+					}
+
+					if (!identityList.isEmpty()) {
+						return false;
+					}
 				}
 
 				return true;
@@ -3016,7 +3011,16 @@ public final class Concierge extends AbstractBundle implements Framework,
 												.getAttributes()
 												.get(PackageNamespace.PACKAGE_NAMESPACE);
 										if (usesSet.contains(pkg)
-												&& !requireSet.contains(pkg)) { // don't include cap if it was already imported as requirement
+												&& !requireSet.contains(pkg)) { // don't
+																				// include
+																				// cap
+																				// if
+																				// it
+																				// was
+																				// already
+																				// imported
+																				// as
+																				// requirement
 											impliedConstraints
 													.add((BundleCapability) cap2);
 											caps.add((BundleCapability) cap2);
@@ -4408,9 +4412,11 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 			if (LOG_ENABLED && DEBUG_SERVICES) {
 				logger.log(LogService.LOG_INFO,
-						"Framework: REQUESTED SERVICES " 
-								+ ((clazz == null) ? "(no class)" : clazz) + " " 
-								+ ((filter == null) ? "(no filter)" : "filter=" + filter) );
+						"Framework: REQUESTED SERVICES "
+								+ ((clazz == null) ? "(no class)" : clazz)
+								+ " "
+								+ ((filter == null) ? "(no filter)" : "filter="
+										+ filter));
 				logger.log(LogService.LOG_INFO, "\tRETURNED " + result);
 			}
 

@@ -598,10 +598,10 @@ public class Resources {
 		 */
 		public boolean isCurrent() {
 			// always current if it is the system bundle
-			if(revision.getBundle().getBundleId()==0){
+			if (revision.getBundle().getBundleId() == 0) {
 				return true;
 			}
-			
+
 			return ((AbstractBundle) revision.getBundle()).currentRevision == revision
 					&& revision.getWiring() == this;
 		}
@@ -711,7 +711,10 @@ public class Resources {
 				return null;
 			}
 
-			return Collections.unmodifiableSet(((Revision) revision).classloader.listResources(path, filePattern, options, new HashSet<String>()));
+			return Collections
+					.unmodifiableSet(((Revision) revision).classloader
+							.listResources(path, filePattern, options,
+									new HashSet<String>()));
 		}
 
 		public List<Capability> getResourceCapabilities(final String namespace) {

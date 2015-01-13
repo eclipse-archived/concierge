@@ -2820,15 +2820,14 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 						}
 					}
 
-
-				if (requireBundleWires != null
-						&& (options & BundleWiring.LISTRESOURCES_LOCAL) == 0) {
-					for (final BundleWire wire : requireBundleWires) {
-						result.addAll(((Revision) wire.getProvider()).classloader
-								.listResources(path, filePattern, options,
-										new HashSet<String>()));
+					if (requireBundleWires != null
+							&& (options & BundleWiring.LISTRESOURCES_LOCAL) == 0) {
+						for (final BundleWire wire : requireBundleWires) {
+							result.addAll(((Revision) wire.getProvider()).classloader
+									.listResources(path, filePattern, options,
+											new HashSet<String>()));
+						}
 					}
-				}
 
 					// Step 5: search the bundle class path
 					// Step 6: search fragments bundle class path
@@ -3004,6 +3003,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 								} catch (final LinkageError le) {
 									System.err.println("ERROR in " + toString()
 											+ ":");
+									le.printStackTrace();
 									throw le;
 								}
 							}
@@ -3120,8 +3120,6 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					}
 
 					if (useFragments && fragments != null) {
-						System.err.println("USING FRAGMENTS");
-
 						// look in fragments
 						for (final Revision fragment : fragments) {
 							if (fragment == null) {
@@ -3189,10 +3187,6 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					}
 				}
 
-				System.err.println("CLASSLOADER FOR " + getBundle()
-						+ " GOT CALLED THROUGH REQUIRE BUNDLE AND LOOKING FOR RESOURCE " + name);
-
-				
 				if (exportIndex.contains(pkg)) {
 					// could be delegated when the export was imported as well,
 					// so check packageImportWires first
@@ -3500,10 +3494,10 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			Object res = findFile(classpath, filename, GET_CONTENT_LENGTH);
 			if (res == null) {
 				if (framework.DEBUG_CLASSLOADING) {
-					System.err
-							.println("Could not retrieveFileLength for filename="
-									+ filename
-									+ " from bundle="
+					framework.logger.log(
+							LogService.LOG_DEBUG,
+							"Could not retrieveFileLength for filename="
+									+ filename + " from bundle="
 									+ this.toString());
 				}
 				return -1;
@@ -3787,9 +3781,10 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					final File toTest = files[i];
 
 					if (framework.DEBUG_CLASSLOADING) {
-						System.err.println("testing "
-								+ toTest.getAbsolutePath()
-								+ (toTest.isDirectory() ? "/" : ""));
+						framework.logger.log(
+								LogService.LOG_DEBUG,
+								"testing " + toTest.getAbsolutePath()
+										+ (toTest.isDirectory() ? "/" : ""));
 					}
 
 					// get basename
