@@ -186,7 +186,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 	private Locale lastDefaultLocale;
 
-	private int nextRev = -1;
+	private int currentRevisionNumber = -1;
 
 	public BundleImpl(final Concierge framework,
 			final BundleContext installingContext, final String location,
@@ -237,11 +237,46 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 	// framework restart case
 	// TODO: fix it
 	public BundleImpl(final Concierge framework, final File metadata)
-			throws IOException {
+			throws IOException, BundleException {
 		this.framework = framework;
+
 		// this.content = new JarBundle(new JarFile(file));
 		final DataInputStream in = new DataInputStream(new FileInputStream(
 				metadata));
+		// read current revision from metadata
+		this.currentRevisionNumber = in.readInt();
+
+		// locate current revision
+		final File file = new File(storageLocation, BUNDLE_FILE_NAME
+				+ currentRevisionNumber);
+		final File contentDir = new File(storageLocation
+				+ CONTENT_DIRECTORY_NAME + currentRevisionNumber);
+
+		if (file.exists() && file.isFile()) {
+			final JarFile jarFile = new JarFile(file);
+			final Manifest manifest = jarFile.getManifest();
+			final String[] classpathStrings = readProperties(
+					manifest.getMainAttributes(), Constants.BUNDLE_CLASSPATH,
+					new String[] { "." });
+
+			this.currentRevision = new JarBundleRevision(currentRevisionNumber,
+					jarFile, manifest, classpathStrings);
+		} else if (contentDir.exists() && contentDir.isDirectory()) {
+			final Manifest manifest = new Manifest(new FileInputStream(
+					new File(contentDir, JarFile.MANIFEST_NAME)));
+			final String[] classpathStrings = readProperties(
+					manifest.getMainAttributes(), Constants.BUNDLE_CLASSPATH,
+					new String[] { "." });
+
+			this.currentRevision = new ExplodedJarBundleRevision(
+					currentRevisionNumber, contentDir.getAbsolutePath(),
+					manifest, classpathStrings);
+		} else {
+			in.close();
+			throw new BundleException("Bundle revision " + currentRevision
+					+ " does not exist", BundleException.READ_ERROR);
+		}
+
 		this.bundleId = in.readLong();
 		this.location = in.readUTF();
 
@@ -259,6 +294,38 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 	}
 
 	/**
+	 * update the bundle's metadata on the storage.
+	 */
+	void updateMetadata() {
+		if (currentRevision.isFragment()) {
+			return;
+		}
+
+		DataOutputStream out = null;
+		try {
+			out = new DataOutputStream(new FileOutputStream(new File(
+					storageLocation, "meta")));
+			out.writeInt(currentRevisionNumber);
+			out.writeLong(bundleId);
+			out.writeUTF(location);
+			out.writeInt(startlevel);
+			out.writeShort(autostart);
+			out.writeBoolean(lazyActivation);
+			out.writeLong(lastModified);
+		} catch (final IOException ioe) {
+			ioe.printStackTrace();
+		} finally {
+			if (out != null) {
+				try {
+					out.close();
+				} catch (final Exception e) {
+					// ignore
+				}
+			}
+		}
+	}
+
+	/**
 	 * Reads and processes input stream: - writes bundle to storage - processes
 	 * manifest
 	 * 
@@ -269,7 +336,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 	private Revision readAndProcessInputStream(final InputStream inStream)
 			throws BundleException {
 
-		final int revisionNumber = ++nextRev;
+		final int revisionNumber = ++currentRevisionNumber;
 
 		try {
 			// write the JAR file to the storage
@@ -1189,37 +1256,6 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 	@Override
 	protected boolean isSecurityEnabled() {
 		return framework.isSecurityEnabled();
-	}
-
-	/**
-	 * update the bundle's metadata on the storage.
-	 */
-	void updateMetadata() {
-		if (currentRevision.isFragment()) {
-			return;
-		}
-
-		DataOutputStream out = null;
-		try {
-			out = new DataOutputStream(new FileOutputStream(new File(
-					storageLocation, "meta")));
-			out.writeLong(bundleId);
-			out.writeUTF(location);
-			out.writeInt(startlevel);
-			out.writeShort(autostart);
-			out.writeBoolean(lazyActivation);
-			out.writeLong(lastModified);
-		} catch (final IOException ioe) {
-			ioe.printStackTrace();
-		} finally {
-			if (out != null) {
-				try {
-					out.close();
-				} catch (final Exception e) {
-					// ignore
-				}
-			}
-		}
 	}
 
 	final InputStream getURLResource(final URL url, final int rev)

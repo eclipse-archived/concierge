@@ -12,4 +12,6 @@ package org.eclipse.concierge.compat.service;
 
 public class ConfigFileLauncher {
 
+	// TODO: implement
+	
 }

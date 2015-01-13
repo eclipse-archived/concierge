@@ -306,7 +306,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 	/**
 	 * class name string -> service reference.
 	 */
-	// FIXME: synchronized...
 	final MultiMap<String, ServiceReference<?>> serviceRegistry = new MultiMap<String, ServiceReference<?>>(
 			3);
 
@@ -364,7 +363,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 	/**
 	 * restart ?
 	 */
-	private final boolean restart = false;
+	public boolean restart = false;
 
 	// system bundle
 
@@ -528,7 +527,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 */
 	public static Concierge doMain(final String[] args) throws Exception {
 		// TODO: populate micro-services
-		// TODO: re-enable profile and restart...
 
 		// TODO: temporary solution to use xargs file launcher for argument
 		// processing
@@ -561,7 +559,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 				argsBuf.append(args[i]);
 				if (args[i].startsWith("-D")) {
 					argsBuf.append('\n');
-				} else if (args[i].equalsIgnoreCase("-install")
+				} else if (args[i].equalsIgnoreCase("-profile")
+						|| args[i].equalsIgnoreCase("-install")
 						|| args[i].equalsIgnoreCase("-istart")
 						|| args[i].equalsIgnoreCase("-start")
 						|| args[i].equalsIgnoreCase("-all")) {
@@ -743,6 +742,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 		defaultProperties.put(Constants.FRAMEWORK_OS_NAME,
 				(obj = System.getProperty("os.name")) != null ? obj
 						: "undefined");
+
 		// Normalize to framework.processor according to OSGi R5 spec table 4.4
 		if ("Mac OS X".equals(System.getProperty("os.name"))) {
 			defaultProperties.put(Constants.FRAMEWORK_OS_NAME, "MacOSX");
@@ -812,6 +812,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 			};
 		}
 
+		properties.setProperty(Constants.SUPPORTS_FRAMEWORK_EXTENSION,
+				Boolean.toString(false));
+
 		Method m = null;
 		if (getClass().getClassLoader() instanceof URLClassLoader) {
 			try {
@@ -819,25 +822,28 @@ public final class Concierge extends AbstractBundle implements Framework,
 						new Class[] { URL.class });
 				m.setAccessible(true);
 				properties.setProperty(Constants.SUPPORTS_FRAMEWORK_EXTENSION,
-						"true");
+						Boolean.toString(true));
 				SUPPORTS_EXTENSIONS = true;
 			} catch (final Exception e) {
-				e.printStackTrace();
-				// ignore
+				logger.log(
+						LogService.LOG_WARNING,
+						"Could not hijack classloader for framework extensions",
+						e);
 			}
 		}
 		addURL = m;
 
 		// apply constants
-		properties.setProperty(Constants.FRAMEWORK_VERSION, "1.5");
+		properties.setProperty(Constants.FRAMEWORK_VERSION, version.toString());
 		properties
-				.setProperty(Constants.FRAMEWORK_VENDOR, "Jan S. Rellermeyer");
+				.setProperty(Constants.FRAMEWORK_VENDOR, "Eclipse Foundation");
 
 		properties.setProperty(Constants.SUPPORTS_BOOTCLASSPATH_EXTENSION,
-				"false");
-		properties.setProperty(Constants.SUPPORTS_FRAMEWORK_FRAGMENT, "true");
+				Boolean.toString(false));
+		properties.setProperty(Constants.SUPPORTS_FRAMEWORK_FRAGMENT,
+				Boolean.toString(true));
 		properties.setProperty(Constants.SUPPORTS_FRAMEWORK_REQUIREBUNDLE,
-				"true");
+				Boolean.toString(true));
 
 		// set instance properties
 		PROFILE = properties.getProperty("org.eclipse.concierge.profile",
@@ -884,7 +890,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 		try {
 			BEGINNING_STARTLEVEL = Integer.parseInt(bsl);
 		} catch (final NumberFormatException nfe) {
-			nfe.printStackTrace();
+			warning("Invalid initial startlevel " + bsl);
 			System.err
 					.println("FALLING BACK TO DEFAULT BEGINNING STARTLEVEL (=1)");
 			BEGINNING_STARTLEVEL = 1;
@@ -1002,7 +1008,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 		}
 
 		// set UUID
-		// FIXME: need workaround for Java 1.4
 		properties.setProperty(Constants.FRAMEWORK_UUID, UUID.randomUUID()
 				.toString());
 
@@ -1017,11 +1022,12 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 		// clean the storage if requested
 		final File storage = new File(STORAGE_LOCATION);
-		if (Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT.equals(properties
-				.getProperty(Constants.FRAMEWORK_STORAGE_CLEAN))) {
-
-			if (storage.exists()) {
+		if (storage.exists()) {
+			if (Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT.equals(properties
+					.getProperty(Constants.FRAMEWORK_STORAGE_CLEAN))) {
 				deleteDirectory(storage);
+			} else {
+				restart = true;
 			}
 		}
 
@@ -1194,6 +1200,10 @@ public final class Concierge extends AbstractBundle implements Framework,
 		}
 
 		state = Bundle.STARTING;
+
+		if (restart) {
+			restoreProfile();
+		}
 	}
 
 	private void exportSystemBundlePackages(final String[] pkgs)
@@ -1343,6 +1353,54 @@ public final class Concierge extends AbstractBundle implements Framework,
 			out.writeInt(startlevel);
 			out.writeLong(nextBundleID);
 			out.close();
+		} catch (final IOException ioe) {
+			ioe.printStackTrace();
+		}
+	}
+
+	/**
+	 * restore a profile.
+	 * 
+	 * @return the startlevel or -1 if the profile could not be restored.
+	 */
+	private void restoreProfile() {
+		try {
+			System.out.println("restoring profile " + PROFILE);
+			final File file = new File(STORAGE_LOCATION, "meta");
+			if (!file.exists()) {
+				warning("Profile " + PROFILE
+						+ " not found, performing clean start ...");
+				return;
+			}
+
+			final DataInputStream in = new DataInputStream(new FileInputStream(
+					file));
+			BEGINNING_STARTLEVEL = in.readInt();
+			nextBundleID = in.readLong();
+			in.close();
+
+			final File storageDir = new File(STORAGE_LOCATION);
+			final File[] bundleDirs = storageDir.listFiles();
+
+			for (int i = 0; i < bundleDirs.length; i++) {
+				if (bundleDirs[i].isDirectory()) {
+					final File meta = new File(bundleDirs[i], "meta");
+					if (meta.exists()) {
+						try {
+							final AbstractBundle bundle = new BundleImpl(this,
+									meta);
+							// FIXME: debug output
+							System.out.println("RESTORED BUNDLE "
+									+ bundle.location);
+							bundles.add(bundle);
+							bundleID_bundles.put(new Long(bundle.bundleId),
+									bundle);
+						} catch (final Exception e) {
+							e.printStackTrace();
+						}
+					}
+				}
+			}
 		} catch (final IOException ioe) {
 			ioe.printStackTrace();
 		}
@@ -1887,7 +1945,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 * @category BundleRevision
 	 */
 	public BundleWiring getWiring() {
-		// TODO also keep the wirings of the system bundle separately?
 		return (BundleWiring) wirings.get(this);
 	}
 
@@ -3219,10 +3276,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 											rev);
 								}
 
-								/*
-								 * 
-								 * @see java.net.URLConnection#getInputStream()
-								 */
 								public InputStream getInputStream()
 										throws IOException {
 									if (!isConnected) {
@@ -3303,58 +3356,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 	BundleContextImpl createBundleContext(final AbstractBundle bundle) {
 		return new BundleContextImpl(bundle);
-	}
-
-	/**
-	 * restore a profile.
-	 * 
-	 * @return the startlevel or -1 if the profile could not be restored.
-	 */
-	@SuppressWarnings("unused")
-	private int restoreProfile() {
-		try {
-			System.out.println("restoring profile " + PROFILE);
-			final File file = new File(STORAGE_LOCATION, "meta");
-			if (!file.exists()) {
-				System.out.println("Profile " + PROFILE
-						+ " not found, performing clean start ...");
-				return -1;
-			}
-
-			final DataInputStream in = new DataInputStream(new FileInputStream(
-					file));
-			final int targetStartlevel = in.readInt();
-			nextBundleID = in.readLong();
-			in.close();
-
-			final File storageDir = new File(STORAGE_LOCATION);
-			final File[] bundleDirs = storageDir.listFiles();
-
-			for (int i = 0; i < bundleDirs.length; i++) {
-				if (bundleDirs[i].isDirectory()) {
-					final File meta = new File(bundleDirs[i], "meta");
-					if (meta.exists()) {
-						try {
-							final AbstractBundle bundle = new BundleImpl(this,
-									meta);
-							System.out.println("RESTORED BUNDLE "
-									+ bundle.location);
-							bundles.add(bundle);
-							bundleID_bundles.put(new Long(bundle.bundleId),
-									bundle);
-						} catch (final Exception e) {
-							e.printStackTrace();
-						}
-					}
-				}
-			}
-			return targetStartlevel;
-
-		} catch (final IOException ioe) {
-			ioe.printStackTrace();
-		}
-
-		return 0;
 	}
 
 	List<AbstractBundle> getBundleWithSymbolicName(final String symbolicName) {
