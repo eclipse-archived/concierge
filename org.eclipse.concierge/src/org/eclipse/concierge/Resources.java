@@ -323,7 +323,7 @@ public class Resources {
 
 	}
 
-	private static abstract class AbstractWireImpl<C extends Capability, R extends Requirement> {
+	private static abstract class AbstractWireImpl<C extends Capability, R extends Requirement> implements Wire {
 
 		protected final C capability;
 
@@ -348,6 +348,20 @@ public class Resources {
 		public R getRequirement() {
 			return requirement;
 		}
+		
+		public boolean equals(final Object o) {
+			if (o instanceof AbstractWireImpl) {
+				return o == this;
+			}
+			if (o instanceof Wire) {
+				final Wire w = (Wire) o;
+				return w.getRequirer().equals(requirement.getResource())
+						&& w.getRequirement().equals(requirement)
+						&& w.getProvider().equals(capability.getResource())
+						&& w.getCapability().equals(capability);
+			}
+			return false;
+		}
 
 		@Override
 		public String toString() {
@@ -356,7 +370,7 @@ public class Resources {
 	}
 
 	static class ConciergeWire extends
-			AbstractWireImpl<Capability, Requirement> implements Wire {
+			AbstractWireImpl<Capability, Requirement> {
 
 		protected ConciergeWire(final Capability capability,
 				final Requirement requirement) {

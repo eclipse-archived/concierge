@@ -180,7 +180,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 	/**
 	 * logging enabled.
 	 */
-	boolean LOG_ENABLED = true;
+	boolean LOG_ENABLED;
 
 	/**
 	 * log service.
@@ -766,7 +766,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 			}
 		}
 
-		// TODO: use "reasonable defaults"...
 		defaultProperties
 				.setProperty(
 						Constants.FRAMEWORK_SYSTEMPACKAGES,
