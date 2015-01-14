@@ -1,0 +1,2 @@
+org.eclipse.concierge.compat.LegacyBundleProcessing org.eclipse.concierge.compat.service.BundleManifestOne 1.0.0
+org.eclipse.concierge.compat.LegacyBundleProcessing org.eclipse.concierge.compat.service.BundleManifestTwo 2.0.0

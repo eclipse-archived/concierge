@@ -67,8 +67,7 @@ import org.eclipse.concierge.Resources.BundleCapabilityImpl;
 import org.eclipse.concierge.Resources.BundleRequirementImpl;
 import org.eclipse.concierge.Resources.ConciergeBundleWire;
 import org.eclipse.concierge.Resources.ConciergeBundleWiring;
-import org.eclipse.concierge.compat.service.BundleManifestOne;
-import org.eclipse.concierge.compat.service.BundleManifestTwo;
+import org.eclipse.concierge.compat.LegacyBundleProcessing;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
@@ -1515,10 +1514,19 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 			this.dynamicImports = new ArrayList<BundleRequirement>();
 
+			LegacyBundleProcessing proc;
+
 			switch (mfVer) {
 			default:
-				// TODO: get BundleManifestOne service
-				final Tuple<List<BundleCapability>, List<BundleRequirement>> tuple = new BundleManifestOne()
+				proc = framework.getService(LegacyBundleProcessing.class,
+						LegacyBundleProcessing.VERSION_ONE);
+				if (proc == null) {
+					throw new BundleException(
+							"Bundle manifest version 1 is not supported by this deployment",
+							BundleException.UNSUPPORTED_OPERATION);
+				}
+
+				final Tuple<List<BundleCapability>, List<BundleRequirement>> tuple = proc
 						.processManifest(this, manifest);
 
 				for (final BundleCapability cap : tuple.getFormer()) {
@@ -1541,8 +1549,15 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 				break;
 			case 2:
-				// TODO: get BundleManifestTwo service
-				final Tuple<List<BundleCapability>, List<BundleRequirement>> tuple2 = new BundleManifestTwo()
+				proc = framework.getService(LegacyBundleProcessing.class,
+						LegacyBundleProcessing.VERSION_TWO);
+				if (proc == null) {
+					throw new BundleException(
+							"Bundle manifest version 2 is not supported by this deployment",
+							BundleException.UNSUPPORTED_OPERATION);
+				}
+
+				final Tuple<List<BundleCapability>, List<BundleRequirement>> tuple2 = proc
 						.processManifest(this, manifest);
 
 				for (final BundleCapability cap : tuple2.getFormer()) {

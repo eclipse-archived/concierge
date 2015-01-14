@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.concierge;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -18,6 +19,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -58,7 +60,7 @@ import org.eclipse.concierge.ConciergeCollections.ParseResult;
 import org.eclipse.concierge.Resources.BundleCapabilityImpl;
 import org.eclipse.concierge.Resources.ConciergeBundleWiring;
 import org.eclipse.concierge.Resources.HostedBundleCapability;
-import org.eclipse.concierge.compat.service.BundleManifestTwo;
+import org.eclipse.concierge.compat.LegacyBundleProcessing;
 import org.eclipse.concierge.compat.service.XargsFileLauncher;
 import org.eclipse.concierge.service.log.LogServiceImpl;
 import org.osgi.framework.AllServiceListener;
@@ -526,8 +528,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 * @throws Exception
 	 */
 	public static Concierge doMain(final String[] args) throws Exception {
-		// TODO: populate micro-services
-
 		// TODO: temporary solution to use xargs file launcher for argument
 		// processing
 		final XargsFileLauncher xargsLauncher = new XargsFileLauncher();
@@ -703,6 +703,34 @@ public final class Concierge extends AbstractBundle implements Framework,
 		defaultProperties.setProperty(FRAMEWORK_EXECUTIONENVIRONMENT,
 				myEEs.toString());
 
+		// load micro-services
+		try {
+			final InputStream in = getClass().getClassLoader()
+					.getResourceAsStream("META-INF/micro-services");
+			final BufferedReader reader = new BufferedReader(
+					new InputStreamReader(in));
+
+			String line;
+			while ((line = reader.readLine()) != null) {
+				try {
+					final String[] tokens = Utils.splitString(line, ' ');
+					final Dictionary<String, Object> props = new Hashtable<String, Object>();
+					props.put(Constants.VERSION_ATTRIBUTE,
+							Version.parseVersion(tokens[2]));
+					final Class<?> cls = Class.forName(tokens[1]);
+					final Object service = cls.newInstance();
+					final ServiceReference<?> ref = new ServiceReferenceImpl<Object>(
+							this, this, service, props,
+							new String[] { tokens[0] });
+					serviceRegistry.insert(tokens[0], ref);
+				} catch (final Exception e) {
+					e.printStackTrace();
+				}
+			}
+		} catch (final IOException ioe) {
+			ioe.printStackTrace();
+		}
+
 		// populate osgi.ee namespace
 		try {
 			if (seVersionList.length() > 0) {
@@ -720,16 +748,22 @@ public final class Concierge extends AbstractBundle implements Framework,
 				systemBundleCapabilities.add(eeCap);
 			}
 		} catch (final BundleException be) {
-			// TODO: to log
+			// too early for log service
 			be.printStackTrace();
 		}
 
 		if (feeStr != null) {
-			// TODO: get microservice
-			final List<BundleCapability> feeCaps = new BundleManifestTwo()
-					.translateToCapability(this,
-							FRAMEWORK_EXECUTIONENVIRONMENT, feeStr);
-			systemBundleCapabilities.addAll(feeCaps);
+			final LegacyBundleProcessing proc = getService(
+					LegacyBundleProcessing.class,
+					LegacyBundleProcessing.VERSION_TWO);
+			if (proc == null) {
+				warning("Framework execution environment is ignored because no bundle manifest version 2 processor is available in this deployment");
+			} else {
+				final List<BundleCapability> feeCaps = proc
+						.translateToCapability(this,
+								FRAMEWORK_EXECUTIONENVIRONMENT, feeStr);
+				systemBundleCapabilities.addAll(feeCaps);
+			}
 		}
 
 		// TODO: use "reasonable defaults"...
@@ -1040,8 +1074,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 		startlevel = 0;
 		// enable event handling
 
-		// have bundle objects for all installed bundles
-
 		// set the collision policy
 		final String bsnversion = properties
 				.getProperty(Constants.FRAMEWORK_BSNVERSION);
@@ -1157,7 +1189,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 						+ Constants.SYSTEM_BUNDLE_SYMBOLICNAME);
 		systemBundleCapabilities.add(sysbundleDefaultHostCap);
 
-		// concierge specific org.wiring.host property
+		// concierge-specific org.wiring.host property
 		final BundleCapabilityImpl sysbundleHostCap = new BundleCapabilityImpl(
 				this,
 				"osgi.wiring.host; osgi.wiring.host=org.eclipse.concierge");
@@ -1202,6 +1234,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 		state = Bundle.STARTING;
 
 		if (restart) {
+			// have bundle objects for all installed bundles
 			restoreProfile();
 		}
 	}
@@ -1226,7 +1259,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 		}
 	}
 
-	private String sanitizeVersion(final String verStr) {
+	private static String sanitizeVersion(final String verStr) {
 		int dot = 0;
 		final int len = verStr.length();
 		final char[] chars = verStr.toCharArray();
@@ -1400,8 +1433,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 							bundleID_bundles.put(new Long(bundle.bundleId),
 									bundle);
 						} catch (final Exception e) {
-							logger.log(LogService.LOG_ERROR,
-									"Framework restart", e);
+							// too early for logger
+							e.printStackTrace();
 						}
 					}
 				}
@@ -1489,8 +1522,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 			// Reset the used Concierge instance in URL stream handler factory
 			conciergeURLStreamHandlerFactory.setConcierge(null);
-
-			// TODO: more resources to clear?
 
 			stopEvent = new FrameworkEvent(
 					update ? FrameworkEvent.STOPPED_UPDATE
@@ -3970,6 +4001,20 @@ public final class Concierge extends AbstractBundle implements Framework,
 		}
 
 		return list.toArray(new Bundle[list.size()]);
+	}
+
+	@SuppressWarnings({ "unchecked" })
+	protected <T> T getService(final Class<T> cls, final Version version) {
+		final List<ServiceReference<?>> refs = serviceRegistry.lookup(cls
+				.getName());
+		for (final ServiceReference<?> ref : refs) {
+			final Version other = (Version) ref
+					.getProperty(Constants.VERSION_ATTRIBUTE);
+			if (other != null && other.compareTo(version) == 0) {
+				return (T) ((ServiceReferenceImpl<?>) ref).service;
+			}
+		}
+		return null;
 	}
 
 	/*

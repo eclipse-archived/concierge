@@ -17,11 +17,15 @@ import org.eclipse.concierge.Concierge;
 import org.eclipse.concierge.ConciergeCollections.Tuple;
 import org.eclipse.concierge.BundleImpl.Revision;
 import org.osgi.framework.BundleException;
+import org.osgi.framework.Version;
 import org.osgi.framework.wiring.BundleCapability;
 import org.osgi.framework.wiring.BundleRequirement;
 
 public interface LegacyBundleProcessing {
 
+	static Version VERSION_ONE = Version.parseVersion("1.0.0");
+	static Version VERSION_TWO = Version.parseVersion("2.0.0");
+	
 	Tuple<List<BundleCapability>, List<BundleRequirement>> processManifest(
 			Revision revision, Manifest manifest) throws BundleException;
 
