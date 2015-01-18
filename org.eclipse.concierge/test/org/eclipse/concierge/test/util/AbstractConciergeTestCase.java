@@ -97,12 +97,25 @@ public abstract class AbstractConciergeTestCase {
 
 				// TODO we have from time to time problems when shutdown the
 				// framework, that next tests are failing
-				// for CI build we can define a timeout to wait here. A good value is 100ms
-				int timeout = Integer.valueOf(System.getProperty(
-						"org.eclipse.concierge.tests.waitAfterFrameworkShutdown", "-1"));
-				if (timeout > 0) {
-					Thread.sleep(timeout);
+				// for CI build we can define a timeout to wait here. A good
+				// value is 100ms
+
+				String propName = "org.eclipse.concierge.tests.waitAfterFrameworkShutdown";
+				String propValue = System.getProperty(propName);
+				System.err.println(propName + "=" + propValue);
+
+				int timeout = -1;
+				if ((propValue != null) && (propValue.length() > 0)) {
+					try {
+						timeout = Integer.valueOf(propValue);
+					} catch (NumberFormatException ex) {
+						// ignore
+					}
+					if (timeout > 0) {
+						Thread.sleep(timeout);
+					}
 				}
+
 			}
 		}
 	}
