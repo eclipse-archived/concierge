@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.concierge.test.util;
 
+import java.io.File;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -73,8 +74,13 @@ public abstract class AbstractConciergeTestCase {
 		this.bundleContext = this.framework.getBundleContext();
 
 		if (stayInShell()) {
-			// assume to get shell jar file in target folder
-			installAndStartBundle("./target/plugins/org.eclipse.concierge.shell-1.0.0.alpha2.jar");
+			String shellJarName = "./test/resources/org.eclipse.concierge.shell-1.0.0.jar";
+			if (!new File(shellJarName).exists()) {
+				System.err.println("Oops, could not find shell bundle at " + shellJarName);
+			} else {
+				// assume to get shell jar file in target folder
+				installAndStartBundle(shellJarName);
+			}
 		}
 	}
 

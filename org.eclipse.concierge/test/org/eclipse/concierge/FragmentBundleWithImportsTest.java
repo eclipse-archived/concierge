@@ -28,14 +28,34 @@ import org.osgi.framework.Bundle;
  * This tests will check whether fragment bundles will be resolved when using
  * import package statements. These import package statements can match the host
  * one's or will have a conflict with host based on version or other directives.
+ * 
+ * The test is setup this way:
+ * 
+ * <pre>
+ * Bundle "Provider": Export-Package = package1;version="1.2.3"
+ * Bundle "Host":     Import-Package = package1
+ * Bundle "Fragment": Import-Package = package1
+ * </pre>
  *
+ * The Import-Package statements will be specified with different versions, to
+ * check whether this resolvement from Fragment to Host to Provider bundle is
+ * possible or not.
+ * 
+ * TODO This tests does fail due to temporary change in
+ * BundleImpl.checkConflicts, Line 2348.
+ * 
  * TODO add more tests for directives
  * 
  * @author Jochen Hiller - Initial Contribution
  */
 @RunWith(Parameterized.class)
-@Ignore ("TODO Does not work after last changes, clarify")
+@Ignore("TODO Does not work due to temporary change in BundleImpl.Revision.checkConflicts")
 public class FragmentBundleWithImportsTest extends AbstractConciergeTestCase {
+
+	@Override
+	protected boolean stayInShell() {
+		return true;
+	}
 
 	@Parameters(name = "{index}: {0} should be resolved: {3}")
 	public static Collection<Object[]> data() {
@@ -54,13 +74,10 @@ public class FragmentBundleWithImportsTest extends AbstractConciergeTestCase {
 						{ "Import of fragment is exact the host",
 								"package1;version=\"1.2.3\"",
 								"package1;version=\"1.2.3\"", true },
-				// TODO this should be resolved
-				// {
-				// "Import of host is exact the provider, fragment is less than",
-				// "package1;version=\"1.2.3\"",
-				// "package1;version=\"1.0.0\"", true },
-
-				});
+						{
+								"Import of host is exact the provider, fragment is less than",
+								"package1;version=\"1.2.3\"",
+								"package1;version=\"1.0.0\"", true }, });
 	}
 
 	private String hostImportPackage;
@@ -80,9 +97,8 @@ public class FragmentBundleWithImportsTest extends AbstractConciergeTestCase {
 
 		// provider bundle for hosting a package
 		SyntheticBundleBuilder builder = SyntheticBundleBuilder.newBuilder();
-		builder.bundleSymbolicName("FragmentBundleWithImportsTest.provider")
-				.addManifestHeader("Export-Package",
-						"package1;version=\"1.2.3\"");
+		builder.bundleSymbolicName("Provider").addManifestHeader(
+				"Export-Package", "package1;version=\"1.2.3\"");
 		Bundle providerBundle = installBundle(builder);
 		providerBundle.start();
 		assertBundleActive(providerBundle);
@@ -114,8 +130,8 @@ public class FragmentBundleWithImportsTest extends AbstractConciergeTestCase {
 	private Bundle installHostBundle(String importPackageHeader)
 			throws Exception {
 		SyntheticBundleBuilder builder = SyntheticBundleBuilder.newBuilder();
-		builder.bundleSymbolicName("FragmentBundleWithImportsTest.host")
-				.addManifestHeader("Import-Package", importPackageHeader);
+		builder.bundleSymbolicName("Host").addManifestHeader("Import-Package",
+				importPackageHeader);
 		Bundle hostBundle = installBundle(builder);
 		return hostBundle;
 	}
@@ -126,9 +142,8 @@ public class FragmentBundleWithImportsTest extends AbstractConciergeTestCase {
 	private Bundle installFragmentBundle(String importPackageHeader)
 			throws Exception {
 		SyntheticBundleBuilder builder = SyntheticBundleBuilder.newBuilder();
-		builder.bundleSymbolicName("FragmentBundleWithImportsTest.fragment")
-				.addManifestHeader("Fragment-Host",
-						"FragmentBundleWithImportsTest.host")
+		builder.bundleSymbolicName("Fragment")
+				.addManifestHeader("Fragment-Host", "Host")
 				.addManifestHeader("Import-Package", importPackageHeader);
 		Bundle fragmentBundle = installBundle(builder);
 		return fragmentBundle;
