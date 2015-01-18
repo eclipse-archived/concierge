@@ -102,7 +102,7 @@ public abstract class AbstractConciergeTestCase {
 
 				String propName = "org.eclipse.concierge.tests.waitAfterFrameworkShutdown";
 				String propValue = System.getProperty(propName);
-				System.err.println(propName + "=" + propValue);
+				// System.err.println(propName + "=" + propValue);
 
 				int timeout = -1;
 				if ((propValue != null) && (propValue.length() > 0)) {
