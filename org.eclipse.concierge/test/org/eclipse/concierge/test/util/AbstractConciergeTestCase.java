@@ -76,7 +76,8 @@ public abstract class AbstractConciergeTestCase {
 		if (stayInShell()) {
 			String shellJarName = "./test/resources/org.eclipse.concierge.shell-1.0.0.jar";
 			if (!new File(shellJarName).exists()) {
-				System.err.println("Oops, could not find shell bundle at " + shellJarName);
+				System.err.println("Oops, could not find shell bundle at "
+						+ shellJarName);
 			} else {
 				// assume to get shell jar file in target folder
 				installAndStartBundle(shellJarName);
@@ -93,6 +94,15 @@ public abstract class AbstractConciergeTestCase {
 				this.framework.stop();
 				FrameworkEvent event = framework.waitForStop(10000);
 				Assert.assertEquals(FrameworkEvent.STOPPED, event.getType());
+
+				// TODO we have from time to time problems when shutdown the
+				// framework, that next tests are failing
+				// for CI build we can define a timeout to wait here. A good value is 100ms
+				int timeout = Integer.valueOf(System.getProperty(
+						"org.eclipse.concierge.tests.waitAfterFrameworkShutdown", "-1"));
+				if (timeout > 0) {
+					Thread.sleep(timeout);
+				}
 			}
 		}
 	}
