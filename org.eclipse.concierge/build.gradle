@@ -1,3 +1,10 @@
+// add . folder to test classpath, to lookup META-INF/micro-services
+sourceSets {
+    test {
+	    runtimeClasspath += files('.')
+    }
+}
+
 // make stripped jar with no debug information
 // pack200 --repack --strip-debug <stripped-jar> <original-jar>
 task strippedJar(type: Exec, dependsOn: jar) {
