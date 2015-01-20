@@ -12,7 +12,9 @@ package org.eclipse.concierge;
 
 import java.io.File;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 
 import org.eclipse.concierge.test.util.AbstractConciergeTestCase;
 import org.eclipse.concierge.test.util.SyntheticBundleBuilder;
@@ -128,6 +130,9 @@ public class BundlesWithExplodedJarContentTest extends
 	@Test
 	public void testBundleWithExplodedJarContentGetEntry() throws Exception {
 		setupDefaultBundle();
+		// the files MUST be in file system
+		String explodedFolder = "./storage/default/1/content0";
+		Assert.assertTrue(new File(explodedFolder).isDirectory());
 		// Now test whether resource can be retrieved
 		URL url1 = bundleUnderTest.getEntry("plugin.xml");
 		Assert.assertNotNull(url1);
@@ -147,9 +152,27 @@ public class BundlesWithExplodedJarContentTest extends
 	public void testBundleWithExplodedJarContentGetEntryPaths()
 			throws Exception {
 		setupDefaultBundle();
+		// the files MUST be in file system
+		String explodedFolder = "./storage/default/1/content0";
+		Assert.assertTrue(new File(explodedFolder).isDirectory());
 		// getEntryPaths
 		Enumeration<String> urls = bundleUnderTest.getEntryPaths("/");
 		checkEntryPaths(urls);
+		urls = bundleUnderTest.getEntryPaths("/");
+		List<String> urlsAsList = asList(urls);
+		Assert.assertEquals(4, urlsAsList.size());
+		Assert.assertTrue(urlsAsList.contains("plugin.xml"));
+		Assert.assertTrue(urlsAsList.contains("plugin.properties"));
+		Assert.assertTrue(urlsAsList.contains("lib/"));
+		Assert.assertTrue(urlsAsList.contains("META-INF/"));
+		Enumeration<String> urlsLib = bundleUnderTest.getEntryPaths("/lib/");
+		List<String> urlsLibAsList = asList(urlsLib);
+		Assert.assertEquals(1, urlsLibAsList.size());
+		Assert.assertTrue(urlsLibAsList.contains("lib/some.jar"));
+		Enumeration<String> urlsMetaInf = bundleUnderTest.getEntryPaths("/META-INF/");
+		List<String> urlsMetaInfAsList = asList(urlsMetaInf);
+		Assert.assertEquals(1, urlsMetaInfAsList.size());
+		Assert.assertTrue(urlsMetaInfAsList.contains("META-INF/MANIFEST.MF"));
 	}
 
 	private void checkEntryPaths(Enumeration<String> urls) {
@@ -174,7 +197,15 @@ public class BundlesWithExplodedJarContentTest extends
 				}
 			}
 		}
+	}
 
+	private List<String> asList(Enumeration<String> e) {
+		List<String> l = new ArrayList<String>();
+		while (e.hasMoreElements()) {
+			String s = e.nextElement();
+			l.add(s);
+		}
+		return l;
 	}
 
 }

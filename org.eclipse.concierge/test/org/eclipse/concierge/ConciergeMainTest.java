@@ -72,7 +72,8 @@ public class ConciergeMainTest {
 		builder.bundleSymbolicName("testDoMainInstallBundleWithLeadingSlash");
 		File f = builder.asFile();
 		f.deleteOnExit();
-		Concierge framework = Concierge.doMain(new String[] { "-install",
+		Concierge framework = Concierge.doMain(new String[] {
+				"-Dorg.osgi.framework.storage.clean=onFirstInit", "-install",
 				f.toString() });
 		Assert.assertNotNull(framework);
 		framework.stop();

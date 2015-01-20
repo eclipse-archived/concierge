@@ -100,9 +100,6 @@ public class ConciergeMainOptionAllTest extends AbstractConciergeTestCase {
 	/** Test now if they can be started with -all option. */
 	@Test
 	public void testAllWithSortedBundles() throws Exception {
-		// TDDO test does work if previous tests will be finalized correctly
-		// TODO some problem in framework shutdown
-		Thread.sleep(1000);
 		setupSortedBundles();
 		framework = Concierge
 				.doMain(new String[] { "-Dorg.eclipse.concierge.debug=true",

@@ -94,7 +94,12 @@ public abstract class AbstractConciergeTestCase {
 				this.framework.stop();
 				FrameworkEvent event = framework.waitForStop(10000);
 				Assert.assertEquals(FrameworkEvent.STOPPED, event.getType());
-
+				
+				// force a GC to allow cleanup of files
+				// on Mac from time to time files from storage can not be deleted
+				// until a GC has been run
+				System.gc();
+				
 				// TODO we have from time to time problems when shutdown the
 				// framework, that next tests are failing
 				// for CI build we can define a timeout to wait here. A good
@@ -327,6 +332,29 @@ public abstract class AbstractConciergeTestCase {
 			return "UNKNOWN state: " + state;
 		}
 	}
+
+	protected void dumpStorage() throws Exception {
+		Concierge concierge = (Concierge) framework;
+		Field field = concierge.getClass().getDeclaredField("STORAGE_LOCATION");
+		field.setAccessible(true);
+		Object o = field.get(concierge);
+		System.err.println("dumpStorage: STORAGE_LOCATION=" + o);
+		File dir = new File ((String) o);
+		dumpStorageDirectory(dir);
+	}
+	
+	private static void dumpStorageDirectory(File path) {
+		File[] files = path.listFiles();
+		for (int i = 0; i < files.length; i++) {
+			if (files[i].isDirectory()) {
+				dumpStorageDirectory(files[i]);
+			} else {
+				System.err.println("dumpStorage: " + files[i]);
+			}
+		}
+		System.err.println("dumpStorage: " + path);
+	}
+
 
 	/**
 	 * The <code>RunInClassLoader</code> class helps to run code in ClassLoader
