@@ -56,7 +56,7 @@ configure(subprojects.findAll {it.name != 'distribution'}) {
         	}
 	        resources {
     	        srcDirs = [ ".", "../distribution/src/config" ]
-				include "META-INF/services/**", META-INF/micro-services", "about.html", "about_files/**"
+				include "META-INF/services/**", "META-INF/micro-services", "about.html", "about_files/**"
         	}
 	    }
     	test {
