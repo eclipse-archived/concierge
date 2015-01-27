@@ -122,6 +122,7 @@ public class ConciergeParentClassLoader extends AbstractConciergeTestCase {
 	}
 
 	@Test
+	@Ignore("Does not run on Hudson as SunJCE provider not found")
 	public void testLoadClassComSunCryptoProviderHmacSHA1WithExtParentClassLoader()
 			throws Exception {
 		HashMap<String, String> launchArgs = new HashMap<String, String>();
