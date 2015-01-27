@@ -3020,8 +3020,13 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 							ioe.printStackTrace();
 							return null;
 						} catch (final LinkageError le) {
-							System.err.println("ERROR in " + toString() + ":");
-							le.printStackTrace();
+							if (framework.DEBUG_CLASSLOADING) {
+								framework.logger.log(
+										LogService.LOG_DEBUG,
+										"Error during loading class="
+												+ classname + " from bundle="
+												+ this.getBundle().getSymbolicName(), le);
+							}
 							throw le;
 						}
 					}
@@ -3053,9 +3058,13 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 									ioe.printStackTrace();
 									return null;
 								} catch (final LinkageError le) {
-									System.err.println("ERROR in " + toString()
-											+ ":");
-									le.printStackTrace();
+									if (framework.DEBUG_CLASSLOADING) {
+										framework.logger.log(
+												LogService.LOG_DEBUG,
+												"Error during loading class="
+														+ classname + " from bundle="
+														+ this.getBundle().getSymbolicName(), le);
+									}
 									throw le;
 								}
 							}
