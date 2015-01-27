@@ -37,7 +37,7 @@ public class ConciergeParentClassLoader extends AbstractConciergeTestCase {
 		stopFramework();
 	}
 
-	private void setupDefaultBundle() throws BundleException {
+	private void setupJavaFxBundle() throws BundleException {
 		SyntheticBundleBuilder builder = new SyntheticBundleBuilder();
 		builder.bundleSymbolicName("bundle").addManifestHeader(
 				"Import-Package", "javafx.application");
@@ -54,7 +54,7 @@ public class ConciergeParentClassLoader extends AbstractConciergeTestCase {
 		launchArgs.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA,
 				"javafx.application");
 		startFrameworkClean(launchArgs);
-		setupDefaultBundle();
+		setupJavaFxBundle();
 
 		RunInClassLoader runner = new RunInClassLoader(bundleUnderTest);
 		try {
@@ -66,7 +66,7 @@ public class ConciergeParentClassLoader extends AbstractConciergeTestCase {
 	}
 
 	@Test
-	@Ignore("Does not run on Hudson")
+	@Ignore("Does not run on Hudson as javafx not installed")
 	public void testLoadClassJavaFxWithExtParentClassLoader() throws Exception {
 		HashMap<String, String> launchArgs = new HashMap<String, String>();
 		launchArgs.put(Constants.FRAMEWORK_BOOTDELEGATION, "javafx.*");
@@ -76,7 +76,7 @@ public class ConciergeParentClassLoader extends AbstractConciergeTestCase {
 		launchArgs.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA,
 				"javafx.application");
 		startFrameworkClean(launchArgs);
-		setupDefaultBundle();
+		setupJavaFxBundle();
 
 		RunInClassLoader runner = new RunInClassLoader(bundleUnderTest);
 		// as javafx is loaded from ext class loader it has to work now
@@ -91,4 +91,60 @@ public class ConciergeParentClassLoader extends AbstractConciergeTestCase {
 		Assert.assertTrue(clazz == clazzFromSystemClassLoader);
 	}
 
+	private void setupSunJceBundle() throws BundleException {
+		SyntheticBundleBuilder builder = new SyntheticBundleBuilder();
+		builder.bundleSymbolicName("bundle").addManifestHeader(
+				"Import-Package", "com.sun.crypto.provider");
+		bundleUnderTest = installBundle(builder);
+		bundleUnderTest.start();
+		assertBundleActive(bundleUnderTest);
+	}
+
+	@Test
+	@Ignore("Does not fail, Sun JCE provider seems not be loaded by Ext ClassLoader")
+	public void testLoadClassComSunCryptoProviderHmacSHA1WithStandardParentClassLoader()
+			throws Exception {
+		HashMap<String, String> launchArgs = new HashMap<String, String>();
+		launchArgs.put(Constants.FRAMEWORK_BOOTDELEGATION,
+				"com.sun.crypto.provider.*");
+		launchArgs.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA,
+				"com.sun.crypto.provider");
+		startFrameworkClean(launchArgs);
+		setupSunJceBundle();
+
+		RunInClassLoader runner = new RunInClassLoader(bundleUnderTest);
+		try {
+			runner.getClass("com.sun.crypto.provider.HmacSHA1");
+			Assert.fail("Uups, ClassNotFoundException expected");
+		} catch (ClassNotFoundException ex) {
+			// OK, expected
+		}
+	}
+
+	@Test
+	public void testLoadClassComSunCryptoProviderHmacSHA1WithExtParentClassLoader()
+			throws Exception {
+		HashMap<String, String> launchArgs = new HashMap<String, String>();
+		launchArgs.put(Constants.FRAMEWORK_BOOTDELEGATION,
+				"com.sun.crypto.provider.*");
+		// define ext as parent class loader
+		launchArgs.put(Constants.FRAMEWORK_BUNDLE_PARENT,
+				Constants.FRAMEWORK_BUNDLE_PARENT_EXT);
+		launchArgs.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA,
+				"com.sun.crypto.provider");
+		startFrameworkClean(launchArgs);
+		setupSunJceBundle();
+
+		RunInClassLoader runner = new RunInClassLoader(bundleUnderTest);
+		// as javafx is loaded from ext class loader it has to work now
+		Class<?> clazz = runner.getClass("com.sun.crypto.provider.HmacSHA1");
+
+		// and loaded class has to be identical to one loaded from system class
+		// loader
+		Class<?> clazzFromSystemClassLoader = ClassLoader
+				.getSystemClassLoader().loadClass(
+						"com.sun.crypto.provider.HmacSHA1");
+		Assert.assertEquals(clazzFromSystemClassLoader, clazz);
+		Assert.assertTrue(clazz == clazzFromSystemClassLoader);
+	}
 }
