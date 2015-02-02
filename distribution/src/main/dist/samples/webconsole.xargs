@@ -1,0 +1,16 @@
+# xargs sample file to load WebConsole
+
+# enable to clean storage first
+# -Dorg.osgi.framework.storage.clean=onFirstInit
+
+# use our own profile
+-Dorg.eclipse.concierge.profile=webconsole
+
+# repos to load bundles from
+-Dconcierge.dir=..
+-Drepo=http://www.us.apache.org/dist/felix
+
+# load bundles
+-istart ${concierge.dir}/bundles/org.eclipse.concierge.shell-1.0.0.*.jar
+-istart ${repo}/org.apache.felix.httplite.complete-0.1.4.jar
+-istart ${repo}/org.apache.felix.webconsole-4.2.2-all.jar
