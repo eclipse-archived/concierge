@@ -6,7 +6,7 @@ plugins {
 	// id 'org.standardout.bnd-platform' version '1.2.0'
 
 	// see: https://github.com/netzwerg/gradle-release-plugin
-    id 'ch.netzwerg.release' version '0.2.0'
+    id 'ch.netzwerg.release' version '0.4.0'
 }
 
 // only include in top level project
@@ -154,7 +154,7 @@ project(':org.eclipse.concierge.tests.integration') {
 release {
   dependsOn distZip // 'distZip' could e.g be used in combination with the 'application' plugin
   push = false // 'true' would e.g. be useful when triggering the release task on a CI server
-  suffix = '-SNAPSHOT' // '.DEV' or '' (empty) could be useful alternatives
+  versionSuffix = '-SNAPSHOT' // '.DEV' or '' (empty) could be useful alternatives
 }
 
 
