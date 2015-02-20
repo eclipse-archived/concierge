@@ -12,6 +12,7 @@ package org.eclipse.concierge;
 
 import org.eclipse.concierge.test.util.AbstractConciergeTestCase;
 import org.eclipse.concierge.test.util.SyntheticBundleBuilder;
+import org.junit.After;
 import org.junit.Test;
 import org.osgi.framework.Bundle;
 
@@ -21,27 +22,26 @@ import org.osgi.framework.Bundle;
 public class BundlesWithFrameworkExtensionsTest extends
 		AbstractConciergeTestCase {
 
+	@After
+	public void tearDown() throws Exception {
+		stopFramework();
+	}
+
 	/**
 	 * This test will install a fragment bundle to framework
 	 * org.eclipse.concierge.
 	 */
 	@Test
 	public void testFrameworkExtensionFragmentOfConcierge() throws Exception {
-		try {
-			startFramework();
-			SyntheticBundleBuilder builder = SyntheticBundleBuilder
-					.newBuilder();
-			builder.bundleSymbolicName(
-					"testFrameworkExtensionFragmentOfConcierge")
-					.bundleVersion("1.0.0")
-					.addManifestHeader("Fragment-Host",
-							"org.eclipse.concierge; extension:=framework");
-			final Bundle bundleUnderTest = installBundle(builder);
-			enforceResolveBundle(bundleUnderTest);
-			assertBundleResolved(bundleUnderTest);
-		} finally {
-			stopFramework();
-		}
+		startFramework();
+		SyntheticBundleBuilder builder = SyntheticBundleBuilder.newBuilder();
+		builder.bundleSymbolicName("testFrameworkExtensionFragmentOfConcierge")
+				.bundleVersion("1.0.0")
+				.addManifestHeader("Fragment-Host",
+						"org.eclipse.concierge; extension:=framework");
+		Bundle bundleUnderTest = installBundle(builder);
+		enforceResolveBundle(bundleUnderTest);
+		assertBundleResolved(bundleUnderTest);
 	}
 
 	/**
@@ -49,21 +49,16 @@ public class BundlesWithFrameworkExtensionsTest extends
 	 */
 	@Test
 	public void testFrameworkExtensionFragmentOfSystemBundle() throws Exception {
-		try {
-			startFramework();
-			SyntheticBundleBuilder builder = SyntheticBundleBuilder
-					.newBuilder();
-			builder.bundleSymbolicName(
-					"testFrameworkExtensionFragmentOfSystemBundle")
-					.bundleVersion("1.0.0")
-					.addManifestHeader("Fragment-Host",
-							"system.bundle; extension:=framework");
-			final Bundle bundleUnderTest = installBundle(builder);
-			enforceResolveBundle(bundleUnderTest);
-			assertBundleResolved(bundleUnderTest);
-		} finally {
-			stopFramework();
-		}
+		startFramework();
+		SyntheticBundleBuilder builder = SyntheticBundleBuilder.newBuilder();
+		builder.bundleSymbolicName(
+				"testFrameworkExtensionFragmentOfSystemBundle")
+				.bundleVersion("1.0.0")
+				.addManifestHeader("Fragment-Host",
+						"system.bundle; extension:=framework");
+		Bundle bundleUnderTest = installBundle(builder);
+		enforceResolveBundle(bundleUnderTest);
+		assertBundleResolved(bundleUnderTest);
 	}
 
 }
