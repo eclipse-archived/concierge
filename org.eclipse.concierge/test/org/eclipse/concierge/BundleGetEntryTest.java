@@ -133,32 +133,24 @@ public class BundleGetEntryTest extends AbstractConciergeTestCase {
 	@Test
 	@Ignore("Does not work due to wrong installBundle() implementation")
 	public void testGetEntryFromBundleListenerInstalledEvent() throws Exception {
-		try {
-			SyntheticBundleBuilder builder = SyntheticBundleBuilder
-					.newBuilder();
-			builder.bundleSymbolicName("bundle");
-			builder.addFile("plugin.properties", "# props");
-			// register a bundle listener
-			framework.getBundleContext().addBundleListener(
-					new BundleListener() {
-						public void bundleChanged(BundleEvent event) {
-							if (event.getType() == BundleEvent.INSTALLED) {
-								// get resources from bundle
-								URL res1 = event.getBundle().getEntry(
-										"/plugin.properties");
-								Assert.assertNotNull(res1);
-								Assert.assertEquals("# props",
-										TestUtils.getContentFromUrl(res1));
+		SyntheticBundleBuilder builder = SyntheticBundleBuilder.newBuilder();
+		builder.bundleSymbolicName("bundle");
+		builder.addFile("plugin.properties", "# props");
+		// register a bundle listener
+		framework.getBundleContext().addBundleListener(new BundleListener() {
+			public void bundleChanged(BundleEvent event) {
+				if (event.getType() == BundleEvent.INSTALLED) {
+					// get resources from bundle
+					URL res1 = event.getBundle().getEntry("/plugin.properties");
+					Assert.assertNotNull(res1);
+					Assert.assertEquals("# props",
+							TestUtils.getContentFromUrl(res1));
 
-							}
-						}
-					});
-			// now trigger install
-			bundleUnderTest = installBundle(builder);
-		} finally {
-			// TODO wait 1 sec otherwise other tests will fail
-			Thread.sleep(1000);
-		}
+				}
+			}
+		});
+		// now trigger install
+		bundleUnderTest = installBundle(builder);
 	}
 
 	@Test
