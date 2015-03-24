@@ -3020,7 +3020,6 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 							// define package
 							definePackage(packageOf(classname));
-
 							return defineClass(classname, bytes, 0,
 									bytes.length, domain);
 						} catch (final IOException ioe) {
@@ -3509,7 +3508,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 		@Override
 		public String put(final String key, final String value) {
-			if (value.charAt(0) == '%') {
+			if (value.length()>0 && value.charAt(0) == '%') {
 				hasLocalizedValues = true;
 			}
 
