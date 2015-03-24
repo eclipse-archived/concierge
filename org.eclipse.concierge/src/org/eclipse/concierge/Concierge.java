@@ -1041,10 +1041,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 			SUPPORTED_EE.add(t.nextToken().trim());
 		}
 
-		// set UUID
-		properties.setProperty(Constants.FRAMEWORK_UUID, UUID.randomUUID()
-				.toString());
-
 		// TODO: check if there is a security manager set and
 		// Constants.FRAMEWORK_SECURITY; is set
 
