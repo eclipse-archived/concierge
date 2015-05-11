@@ -45,33 +45,19 @@ public class ConciergeParentClassLoader extends AbstractConciergeTestCase {
 		assertBundleActive(bundleUnderTest);
 	}
 
+	/**
+	 * In JavaSE 7 javafx is in lib/jfxrt.jar, in JavaSE 8 in lib/ext/jfxrt.jar.
+	 * So we use Boot class loader or ext class loader to load successfully load
+	 * javafx classes.
+	 */
 	@Test
-	public void testLoadClassJavaFxWithStandardParentClassLoader()
-			throws Exception {
+	public void testLoadClassJavaFxWithParentClassLoader() throws Exception {
+		String jvmVersion = System.getProperty("java.version");
+		String parentClassLoader = jvmVersion.startsWith("1.7") ? Constants.FRAMEWORK_BUNDLE_PARENT_BOOT
+				: Constants.FRAMEWORK_BUNDLE_PARENT_EXT;
 		HashMap<String, String> launchArgs = new HashMap<String, String>();
-		launchArgs.put(Constants.FRAMEWORK_BOOTDELEGATION, "javafx.*");
-		launchArgs.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA,
-				"javafx.application");
-		startFrameworkClean(launchArgs);
-		setupJavaFxBundle();
-
-		RunInClassLoader runner = new RunInClassLoader(bundleUnderTest);
-		try {
-			runner.getClass("javafx.application.Application");
-			Assert.fail("Uups, ClassNotFoundException expected");
-		} catch (ClassNotFoundException ex) {
-			// OK, expected
-		}
-	}
-
-	@Test
-	// @Ignore("Does not run on Hudson as javafx not installed")
-	public void testLoadClassJavaFxWithExtParentClassLoader() throws Exception {
-		HashMap<String, String> launchArgs = new HashMap<String, String>();
-		launchArgs.put(Constants.FRAMEWORK_BOOTDELEGATION, "javafx.*");
-		// define ext as parent class loader
-		launchArgs.put(Constants.FRAMEWORK_BUNDLE_PARENT,
-				Constants.FRAMEWORK_BUNDLE_PARENT_EXT);
+		// launchArgs.put(Constants.FRAMEWORK_BOOTDELEGATION, "javafx.*");
+		launchArgs.put(Constants.FRAMEWORK_BUNDLE_PARENT, parentClassLoader);
 		launchArgs.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA,
 				"javafx.application");
 		startFrameworkClean(launchArgs);
