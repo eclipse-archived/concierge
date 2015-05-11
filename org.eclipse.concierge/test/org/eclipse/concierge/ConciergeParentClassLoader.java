@@ -16,7 +16,6 @@ import org.eclipse.concierge.test.util.AbstractConciergeTestCase;
 import org.eclipse.concierge.test.util.SyntheticBundleBuilder;
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleException;
@@ -66,7 +65,7 @@ public class ConciergeParentClassLoader extends AbstractConciergeTestCase {
 	}
 
 	@Test
-	@Ignore("Does not run on Hudson as javafx not installed")
+	// @Ignore("Does not run on Hudson as javafx not installed")
 	public void testLoadClassJavaFxWithExtParentClassLoader() throws Exception {
 		HashMap<String, String> launchArgs = new HashMap<String, String>();
 		launchArgs.put(Constants.FRAMEWORK_BOOTDELEGATION, "javafx.*");
@@ -91,6 +90,10 @@ public class ConciergeParentClassLoader extends AbstractConciergeTestCase {
 		Assert.assertTrue(clazz == clazzFromSystemClassLoader);
 	}
 
+	/**
+	 * Installs a bundle with an import to a package in an library in lib/ext
+	 * (here: sunjce_provider.jar).
+	 */
 	private void setupSunJceBundle() throws BundleException {
 		SyntheticBundleBuilder builder = new SyntheticBundleBuilder();
 		builder.bundleSymbolicName("bundle").addManifestHeader(
@@ -100,13 +103,54 @@ public class ConciergeParentClassLoader extends AbstractConciergeTestCase {
 		assertBundleActive(bundleUnderTest);
 	}
 
+	/**
+	 * Loads a class from a lib/ext library via BOOT classloader, will NOT work.
+	 */
 	@Test
-	@Ignore("Does not fail, Sun JCE provider seems not be loaded by Ext ClassLoader")
-	public void testLoadClassComSunCryptoProviderHmacSHA1WithStandardParentClassLoader()
+	public void testLoadClassFromLibExtWithBootParentClassLoader()
 			throws Exception {
+		loadClassFailedFromLibExtWithParentClassLoader(Constants.FRAMEWORK_BUNDLE_PARENT_BOOT);
+	}
+
+	/**
+	 * Loads a class from a lib/ext library via APP classloader, will work, as
+	 * app class loader inherits standard class loader which include ext class
+	 * loader.
+	 */
+	@Test
+	public void testLoadClassFromLibExtWithAppParentClassLoader()
+			throws Exception {
+		loadClassSuccessfulFromLibExtWithParentClassLoader(Constants.FRAMEWORK_BUNDLE_PARENT_APP);
+	}
+
+	/**
+	 * Loads a class from a lib/ext library via FRAMEWORK classloader, will
+	 * work, as framework class loader inherits standard class loader which
+	 * include ext class loader.
+	 */
+	@Test
+	public void testLoadClassFromLibExtWithFrameworkParentClassLoader()
+			throws Exception {
+		loadClassSuccessfulFromLibExtWithParentClassLoader(Constants.FRAMEWORK_BUNDLE_PARENT_FRAMEWORK);
+	}
+
+	/**
+	 * Loads a class from a lib/ext library via EXT classloader, will work, as
+	 * lib/ext will found by this class loader.
+	 */
+	@Test
+	// @Ignore("Does not run on Hudson as SunJCE provider not found")
+	public void testLoadClassFromLibExtWithExtParentClassLoader()
+			throws Exception {
+		loadClassSuccessfulFromLibExtWithParentClassLoader(Constants.FRAMEWORK_BUNDLE_PARENT_EXT);
+	}
+
+	// helper methods
+
+	public void loadClassFailedFromLibExtWithParentClassLoader(
+			String parentClassLoader) throws Exception {
 		HashMap<String, String> launchArgs = new HashMap<String, String>();
-		launchArgs.put(Constants.FRAMEWORK_BOOTDELEGATION,
-				"com.sun.crypto.provider.*");
+		launchArgs.put(Constants.FRAMEWORK_BUNDLE_PARENT, parentClassLoader);
 		launchArgs.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA,
 				"com.sun.crypto.provider");
 		startFrameworkClean(launchArgs);
@@ -121,26 +165,19 @@ public class ConciergeParentClassLoader extends AbstractConciergeTestCase {
 		}
 	}
 
-	@Test
-	@Ignore("Does not run on Hudson as SunJCE provider not found")
-	public void testLoadClassComSunCryptoProviderHmacSHA1WithExtParentClassLoader()
-			throws Exception {
+	private void loadClassSuccessfulFromLibExtWithParentClassLoader(
+			String parentClassLoader) throws Exception {
 		HashMap<String, String> launchArgs = new HashMap<String, String>();
-		launchArgs.put(Constants.FRAMEWORK_BOOTDELEGATION,
-				"com.sun.crypto.provider.*");
-		// define ext as parent class loader
-		launchArgs.put(Constants.FRAMEWORK_BUNDLE_PARENT,
-				Constants.FRAMEWORK_BUNDLE_PARENT_EXT);
+		launchArgs.put(Constants.FRAMEWORK_BUNDLE_PARENT, parentClassLoader);
 		launchArgs.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA,
 				"com.sun.crypto.provider");
 		startFrameworkClean(launchArgs);
 		setupSunJceBundle();
 
 		RunInClassLoader runner = new RunInClassLoader(bundleUnderTest);
-		// as javafx is loaded from ext class loader it has to work now
 		Class<?> clazz = runner.getClass("com.sun.crypto.provider.HmacSHA1");
 
-		// and loaded class has to be identical to one loaded from system class
+		// loaded class has to be identical to one loaded from system class
 		// loader
 		Class<?> clazzFromSystemClassLoader = ClassLoader
 				.getSystemClassLoader().loadClass(

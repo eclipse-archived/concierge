@@ -54,7 +54,7 @@ public class FragmentBundleWithImportsTest extends AbstractConciergeTestCase {
 
 	@Override
 	protected boolean stayInShell() {
-		return true;
+		return false;
 	}
 
 	@Parameters(name = "{index}: {0} should be resolved: {3}")
