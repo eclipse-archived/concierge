@@ -45,19 +45,19 @@ public class ConciergeParentClassLoader extends AbstractConciergeTestCase {
 		assertBundleActive(bundleUnderTest);
 	}
 
-	/**
-	 * In JavaSE 7 javafx is in lib/jfxrt.jar, in JavaSE 8 in lib/ext/jfxrt.jar.
-	 * So we use Boot class loader or ext class loader to load successfully load
-	 * javafx classes.
-	 */
 	@Test
 	public void testLoadClassJavaFxWithParentClassLoader() throws Exception {
 		String jvmVersion = System.getProperty("java.version");
-		String parentClassLoader = jvmVersion.startsWith("1.7") ? Constants.FRAMEWORK_BUNDLE_PARENT_BOOT
-				: Constants.FRAMEWORK_BUNDLE_PARENT_EXT;
+		// does not work in JavaSE 7 as jfxrt.jar is NOT in class path
+		if (jvmVersion.startsWith("1.7")) {
+			System.err
+					.println("Skipping testLoadClassJavaFxWithParentClassLoader for JavaSE 7");
+			return;
+		}
 		HashMap<String, String> launchArgs = new HashMap<String, String>();
 		// launchArgs.put(Constants.FRAMEWORK_BOOTDELEGATION, "javafx.*");
-		launchArgs.put(Constants.FRAMEWORK_BUNDLE_PARENT, parentClassLoader);
+		launchArgs.put(Constants.FRAMEWORK_BUNDLE_PARENT,
+				Constants.FRAMEWORK_BUNDLE_PARENT_EXT);
 		launchArgs.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA,
 				"javafx.application");
 		startFrameworkClean(launchArgs);
