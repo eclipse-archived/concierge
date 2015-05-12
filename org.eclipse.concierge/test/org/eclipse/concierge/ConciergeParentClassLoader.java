@@ -22,8 +22,9 @@ import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
 
 /**
- * Tests parent class loader configurations. We use a javafx class as this will
- * be loaded as an extension from lib/jre/ext folder.
+ * Tests parent class loader configurations. We use a javafx class and a
+ * com.sun.crypt.provider classes as they will be loaded as an extension from
+ * lib/jre/ext folder.
  * 
  * @author Jochen Hiller - Initial contribution
  */
@@ -45,13 +46,21 @@ public class ConciergeParentClassLoader extends AbstractConciergeTestCase {
 		assertBundleActive(bundleUnderTest);
 	}
 
+	private boolean isJavaFxAvailable() {
+		try {
+			ClassLoader.getSystemClassLoader().loadClass(
+					"javafx.application.Application");
+			return true;
+		} catch (ClassNotFoundException e) {
+			return false;
+		}
+	}
+
 	@Test
 	public void testLoadClassJavaFxWithParentClassLoader() throws Exception {
-		String jvmVersion = System.getProperty("java.version");
-		// does not work in JavaSE 7 as jfxrt.jar is NOT in class path
-		if (jvmVersion.startsWith("1.7")) {
+		if (!isJavaFxAvailable()) {
 			System.err
-					.println("Skipping testLoadClassJavaFxWithParentClassLoader for JavaSE 7");
+					.println("Skipping testLoadClassJavaFxWithParentClassLoader: javafx not available");
 			return;
 		}
 		HashMap<String, String> launchArgs = new HashMap<String, String>();
