@@ -108,7 +108,7 @@ public class BundleGetEntryTest extends AbstractConciergeTestCase {
 	}
 
 	@Test
-	@Ignore("Does not work, investigate")
+	@Ignore("Does not work, see https://bugs.eclipse.org/bugs/show_bug.cgi?id=467161")
 	public void testFragmentGetEntryViaBundleActiveState() throws Exception {
 		setupDefaultBundles();
 		bundleUnderTest.start();
@@ -130,8 +130,25 @@ public class BundleGetEntryTest extends AbstractConciergeTestCase {
 				TestUtils.getContentFromUrl(res3));
 	}
 
+	/**
+	 * This test will add a bundle listener to framework. Within bundle listener
+	 * it tries to read a resource from bundle when bundle event indicates
+	 * bundle has been INSTALLED. This is typically used in an extender pattern.
+	 * 
+	 * The test does fail with an "IllegalStateException" in Concierge when
+	 * bundle listeners will be notified BEFORE bundle will be installed. See
+	 * Concierge.installNewBundle() method.<br />
+	 * 
+	 * It DOES work when code looks like:
+	 * 
+	 * <pre>
+	 * bundle.install();
+	 * // notify the listeners
+	 * notifyBundleListeners(BundleEvent.INSTALLED, bundle, context.getBundle());
+	 * </pre>
+	 */
 	@Test
-	@Ignore("Does not work due to wrong installBundle() implementation")
+	@Ignore("Does not work. See https://bugs.eclipse.org/bugs/show_bug.cgi?id=467160")
 	public void testGetEntryFromBundleListenerInstalledEvent() throws Exception {
 		SyntheticBundleBuilder builder = SyntheticBundleBuilder.newBuilder();
 		builder.bundleSymbolicName("bundle");

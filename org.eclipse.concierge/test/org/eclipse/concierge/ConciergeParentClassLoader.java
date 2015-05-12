@@ -134,7 +134,6 @@ public class ConciergeParentClassLoader extends AbstractConciergeTestCase {
 	 * lib/ext will found by this class loader.
 	 */
 	@Test
-	// @Ignore("Does not run on Hudson as SunJCE provider not found")
 	public void testLoadClassFromLibExtWithExtParentClassLoader()
 			throws Exception {
 		loadClassSuccessfulFromLibExtWithParentClassLoader(Constants.FRAMEWORK_BUNDLE_PARENT_EXT);

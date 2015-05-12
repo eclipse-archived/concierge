@@ -281,7 +281,7 @@ public class SplitStringTest {
 				pointer = ++closingQuote;
 				continue;
 			}
-			// TODO: for performance, fold the trim into the splitting
+			// TODO Jan: for performance, fold the trim into the splitting
 			tokens.add(values.substring(tokenStart, nextDelimiter).trim()
 					.replace("`", "\\\""));
 			pointer = ++nextDelimiter;

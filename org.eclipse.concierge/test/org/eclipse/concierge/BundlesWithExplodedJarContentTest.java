@@ -28,7 +28,7 @@ import org.osgi.framework.Bundle;
 /**
  * Tests which install bundles which refers to native code.
  * 
- * TODO add more tests and combinations for Bundle-NativeCode, for more OS/ARCH
+ * TODO jhi add more tests and combinations for Bundle-NativeCode, for more OS/ARCH
  * types
  * 
  * @author Jochen Hiller

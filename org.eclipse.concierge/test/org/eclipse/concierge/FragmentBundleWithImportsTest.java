@@ -52,11 +52,6 @@ import org.osgi.framework.Bundle;
 @Ignore("TODO Does not work due to temporary change in BundleImpl.Revision.checkConflicts")
 public class FragmentBundleWithImportsTest extends AbstractConciergeTestCase {
 
-	@Override
-	protected boolean stayInShell() {
-		return false;
-	}
-
 	@Parameters(name = "{index}: {0} should be resolved: {3}")
 	public static Collection<Object[]> data() {
 		return Arrays

@@ -38,6 +38,9 @@ import org.osgi.framework.wiring.FrameworkWiring;
  */
 public abstract class AbstractConciergeTestCase {
 
+	/** This property allows to wait some time when framework has been shutdown. */
+	private final static String PROPERTY_WAIT_AFTER_FRAMEWORK_SHUTDOWN = "org.eclipse.concierge.tests.waitAfterFrameworkShutdown";
+
 	protected Framework framework = null;
 	protected BundleContext bundleContext = null;
 	protected LocalBundleStorage localBundleStorage = LocalBundleStorage
@@ -94,20 +97,19 @@ public abstract class AbstractConciergeTestCase {
 				this.framework.stop();
 				FrameworkEvent event = framework.waitForStop(10000);
 				Assert.assertEquals(FrameworkEvent.STOPPED, event.getType());
-				
+
 				// force a GC to allow cleanup of files
-				// on Mac from time to time files from storage can not be deleted
+				// on Mac from time to time files from storage can not be
+				// deleted
 				// until a GC has been run
 				System.gc();
-				
-				// TODO we have from time to time problems when shutdown the
+
+				// We have from time to time problems when shutdown the
 				// framework, that next tests are failing
 				// for CI build we can define a timeout to wait here. A good
 				// value is 100ms
-
-				String propName = "org.eclipse.concierge.tests.waitAfterFrameworkShutdown";
-				String propValue = System.getProperty(propName);
-				// System.err.println(propName + "=" + propValue);
+				String propValue = System
+						.getProperty(PROPERTY_WAIT_AFTER_FRAMEWORK_SHUTDOWN);
 
 				int timeout = -1;
 				if ((propValue != null) && (propValue.length() > 0)) {
@@ -339,10 +341,10 @@ public abstract class AbstractConciergeTestCase {
 		field.setAccessible(true);
 		Object o = field.get(concierge);
 		System.err.println("dumpStorage: STORAGE_LOCATION=" + o);
-		File dir = new File ((String) o);
+		File dir = new File((String) o);
 		dumpStorageDirectory(dir);
 	}
-	
+
 	private static void dumpStorageDirectory(File path) {
 		File[] files = path.listFiles();
 		for (int i = 0; i < files.length; i++) {
@@ -354,7 +356,6 @@ public abstract class AbstractConciergeTestCase {
 		}
 		System.err.println("dumpStorage: " + path);
 	}
-
 
 	/**
 	 * The <code>RunInClassLoader</code> class helps to run code in ClassLoader
@@ -423,7 +424,7 @@ public abstract class AbstractConciergeTestCase {
 				throw new RuntimeException("Oops, method " + method.toString()
 						+ " is not static");
 			}
-			// TODO Maybe set accessible if private?
+			// TODO jhi Maybe set accessible if private?
 			final Object result = method.invoke(null, args);
 			return result;
 		}
@@ -443,7 +444,7 @@ public abstract class AbstractConciergeTestCase {
 			}
 			final Constructor<?> constructor = clazz
 					.getDeclaredConstructor(parameterTypes);
-			// TODO Maybe set accessible if private?
+			// TODO jhi Maybe set accessible if private?
 			final Object result = constructor.newInstance(args);
 			return result;
 		}
@@ -461,7 +462,7 @@ public abstract class AbstractConciergeTestCase {
 			}
 			final Constructor<?> constructor = clazz
 					.getDeclaredConstructor(parameterTypes);
-			// TODO Maybe set accessible if private?
+			// TODO jhi Maybe set accessible if private?
 			final Object result = constructor.newInstance(args);
 			return result;
 		}
