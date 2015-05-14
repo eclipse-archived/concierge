@@ -41,6 +41,7 @@ configure(subprojects.findAll {it.name != 'distribution'}) {
 	apply plugin: 'maven-publish'
 
 	clean {
+    	delete "bin"
     	delete "storage"
     	delete "target"
 	}
