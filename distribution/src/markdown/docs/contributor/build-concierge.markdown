@@ -1,5 +1,3 @@
-# How to build Concierge
-
 ## Gradle based build system
 
 Concierge will be build using [Gradle](http://gradle.org/). The gradle wrapper scripts will be used, to simplify installation. The wrapper scripts are checked in into repository as `./gradlew` and `./gradlew.bat`. The required files to start and download gradle are in folder `.gradle-wrapper`, do not touch. 

@@ -10,7 +10,9 @@ TODO: here an overview what Concierge is
 
 All subpages:
 
-* [How to embed Concierge into an Application}(concierge-embedding.html)
+* [Getting started](getting-started.html)
+* [How to embed Concierge into an Application](concierge-embedding.html)
+* [Use Concierge with BNDTools](concierge-bndtools.html)
 * [OSGi Options supported by Concierge](options-osgi.html)
 * [Concierge Options](options-concierge.html)
 * [Compatibility of Conciere with Bundles](compatibility-bundles.html)

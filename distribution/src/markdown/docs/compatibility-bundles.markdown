@@ -1,9 +1,3 @@
-# Compatibility of Bundles with Concierge
-
-## Introduction
-
-TODO: describer here what will be listed here
-
 ## Overview
 
 TODO: here a table with bundles supported, which versions, additional notes where needed
@@ -15,7 +9,7 @@ We can also provide sample xargs files (either be code here, or by external file
 E.g. for WebConsole
 
 ```
-# apache-webconsole.xargs
+## apache-webconsole.xargs
 -Dapache.repo=http:/...
 -Dorg.bootdelegation
 -Dsystem.packages.extra...
