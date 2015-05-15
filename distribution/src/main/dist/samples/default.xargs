@@ -1,0 +1,8 @@
+# xargs sample file to launch Concierge with shell
+
+# clean storage first
+-Dorg.osgi.framework.storage.clean=onFirstInit
+
+# load shell bundle
+-istart bundles/org.eclipse.concierge.shell-0.9.0.*.jar
+
