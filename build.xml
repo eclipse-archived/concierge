@@ -1,3 +1,4 @@
+<!-- TODO jhi remove this file when gradle build is complete -->
 <project name="org.eclipse.concierge.buildroot" default="build">
 
 <target name="build">

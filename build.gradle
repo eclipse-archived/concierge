@@ -1,12 +1,19 @@
 // Build script for Concierge
 
+// sample usages:
+// Cleanup:                               ./gradlew clean
+// Build and run tests:                   ./gradlew test
+// Make complete fresh build:             ./gradlew clean build publish assembleMainDist installDist
+// Build and publish to local Maven repo: ./gradlew clean build publishToMavenLocal
+
+
 plugins {
-	// TODO create p2 repo with this tool?
+	// TODO jhi create p2 repo with this tool?
 	// see: https://github.com/stempler/bnd-platform
 	// id 'org.standardout.bnd-platform' version '1.2.0'
 
 	// see: https://github.com/netzwerg/gradle-release-plugin
-    id 'ch.netzwerg.release' version '0.4.0'
+    id 'ch.netzwerg.release' version '1.1.0'
 }
 
 // only include in top level project
@@ -49,7 +56,7 @@ configure(subprojects.findAll {it.name != 'distribution'}) {
 	sourceCompatibility = 1.5
 	targetCompatibility = 1.5
 	
-	// TODO align directory structure to Maven based one
+	// TODO jhi align directory structure to Maven based one
 	sourceSets {
     	main {
         	java {
@@ -70,9 +77,9 @@ configure(subprojects.findAll {it.name != 'distribution'}) {
 	compileJava {
 		// disable warning: bootstrap class path not set in conjunction with -source 1.5
 		options.compilerArgs << '-Xlint:-options'
-		// TODO fix warnings, then enable
+		// TODO jhi fix warnings, then enable
 		// options.compilerArgs << '-Xlint:unchecked'
-		// TODO fix deprecated warnings, then enable
+		// TODO jhi fix deprecated warnings, then enable
 		// options.compilerArgs << '-Xlint:deprecation'
 	}
 
@@ -111,6 +118,29 @@ configure(subprojects.findAll {it.name != 'distribution'}) {
 
 	repositories {
 		mavenCentral()
+   	}
+
+	publishing {
+		repositories {
+	        maven {
+	        	// see https://bugs.eclipse.org/bugs/show_bug.cgi?id=467163
+	        	// https://repo.eclipse.org/content/repositories/concierge-snapshots/
+	        	// https://repo.eclipse.org/content/repositories/concierge-releases/
+	        	if(project.version.endsWith('-SNAPSHOT')) {
+	        	    url "../distribution/build/repo/snapshots"
+//		            credentials {
+//            			username "admin"
+//            			password "password"
+//          			}
+ 		        } else {
+	        	    url "../distribution/build/repo/releases"
+//		            credentials {
+//            			username "admin"
+//            			password "password"
+//          			}
+          		}
+        	}
+    	}
 	}
 }
 

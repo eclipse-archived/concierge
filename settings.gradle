@@ -1,8 +1,8 @@
 // all projects to include in build
 include	'org.eclipse.concierge',
 		'org.eclipse.concierge.extension.permission',
-		'org.eclipse.concierge.service.permission',
 		'org.eclipse.concierge.service.packageadmin',
+		'org.eclipse.concierge.service.permission',
 		'org.eclipse.concierge.service.startlevel',
 		'org.eclipse.concierge.service.xmlparser',
 		'org.eclipse.concierge.shell',
