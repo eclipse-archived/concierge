@@ -58,36 +58,3 @@ When distribution has been made, a SNAPSHOT build will be published to Eclipse D
 * Concierge Downloads: [http://download.eclipse.org/concierge/](http://download.eclipse.org/concierge/?d)
 * Concierge Snapshot builds: [http://download.eclipse.org/concierge/snapshots](http://download.eclipse.org/concierge/snapshots/?d)
 * Concierge Release builds: [http://download.eclipse.org/concierge/releases](http://download.eclipse.org/concierge/releases/?d)
-
-
-## Open Issues
-
-* Create maven artifacts
-  * Which group id, which artifact ids?
-    * Proposal: groupId: "org.eclise.concierge"
-    * Artifact-ids: full qualified name, e.g. "org.eclipse.concierge",
-      "org.eclipse.concierge.service.startlevel"
-    * or: "framework", "service-startlevel"
-  * Install into local maven repo
-  * Install SNAPSHOT builds into Eclipse Maven repo
-  * Install RELEASE builds into Eclipse Maven repo
-* SNAPHSHOT vs. RELEASE builds
-  * make a release build
-* Hudson: get the gradle Hudson/Jenkins plugin installed
-  * See https://bugs.eclipse.org/bugs/show_bug.cgi?id=449992
-* Add task for updating Copyright notice in all .java files
-  * put template to distribution/src/config/copyright.txt file
-* Restructure all projects
-  * ./framework/org.eclipse.concierge
-  * ./bundles/org.eclipse.concierge.*
-  * ./docs/
-  * ./distribution/
-  * within Java project: src/main/java, src/test/java, ...
-    * let META-INF/MANIFEST as it is (Manifest first approach)
-* Align documentation with portal
-  * shall HTML files be instrumented with Google Analytics or similar?
-  * What is standard Eclipse approach?
-* Remove build.xml files for legacy ANT build
-* Extend build jobs (wait for Gradle Jenkins plugin)
-  * overall test results
-  * include findbugs/PMD/checkstyle

@@ -12,7 +12,6 @@ optimized for mobile and embedded devices.
 * [How to embed Concierge into a Java application](concierge-embedding.html)
 * [OSGi Options supported by Concierge](options-osgi.html)
 * [Concierge Options](options-concierge.html)
-* [Compatibility of Conciere with Bundles](compatibility-bundles.html)
 * [Concierge AddOn bundles](concierge-bundles.html)
 
 ## Developer documentation
