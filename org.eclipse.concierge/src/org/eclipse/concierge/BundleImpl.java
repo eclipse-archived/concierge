@@ -743,13 +743,14 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 		if (currentRevision.isFragment()) {
 			// fragment becomes unresolved
 			framework.removeFragment(currentRevision);
-			framework.notifyBundleListeners(BundleEvent.UNRESOLVED, this);
 		}
 
 		// reset locale
 		lastDefaultLocale = Locale.getDefault();
 		headers.headerCache = null;
 
+		framework.notifyBundleListeners(BundleEvent.UNRESOLVED, this);
+		
 		state = UNINSTALLED;
 		synchronized (framework) {
 			updateLastModified();
