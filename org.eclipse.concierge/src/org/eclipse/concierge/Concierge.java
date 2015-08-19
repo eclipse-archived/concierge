@@ -2200,7 +2200,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 		}
 	}
 
-	private boolean inResolve;
+	private boolean inResolve = false;
 
 	private HashMap<ResolverHook, ServiceReferenceImpl<ResolverHookFactory>> getResolverHooks(
 			final Collection<BundleRevision> bundles) throws Throwable {
@@ -2408,17 +2408,16 @@ public final class Concierge extends AbstractBundle implements Framework,
 		removed.removeAll(filteredResources);
 	}
 
-	boolean resolve(final Collection<BundleRevision> bundles,
-			final boolean critical) throws BundleException {
+	synchronized boolean resolve(final Collection<BundleRevision> bundles,
+			final boolean critical) throws BundleException {		
 		if (inResolve) {
 			throw new IllegalStateException("nested resolve call");
 		}
 
-		inResolve = true;
 		boolean cleanup = false;
-
 		try {
-
+			inResolve = true;			
+						
 			final MultiMap<Resource, HostedCapability> hostedCapabilities = new MultiMap<Resource, HostedCapability>();
 
 			if (resolver.hooks == null) {
