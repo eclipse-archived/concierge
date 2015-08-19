@@ -112,9 +112,6 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 	protected static final Method dexFileLoader;
 	protected static final Method dexClassLoader;
 	
-	/** Lock object to synchronize start/stop of a bundle. */
-	private Object lock = new Object();
-
 	static {
 		Method classloader;
 		Method fileloader;
@@ -463,7 +460,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 		if (!lazyActivation
 				&& (state == Bundle.STARTING || state == Bundle.STOPPING)) {
 			try {
-				synchronized (lock) {
+				synchronized (this) {
 					wait(TIMEOUT);
 				}
 			} catch (final InterruptedException ie) {
@@ -533,7 +530,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				framework.notifyBundleListeners(BundleEvent.LAZY_ACTIVATION,
 						this);
 			}
-			synchronized (lock) {
+			synchronized (this) {
 				notify();
 			}
 			return;
@@ -580,7 +577,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				framework.logger.log(LogService.LOG_INFO, "framework: Bundle "
 						+ toString() + " started.");
 			}
-			synchronized (lock) {
+			synchronized (this) {
 				notify();
 			}
 		} catch (final Throwable t) {
@@ -635,7 +632,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 		if (state == Bundle.STARTING || state == Bundle.STOPPING) {
 			try {
-				synchronized (lock) {
+				synchronized (this) {
 					wait(TIMEOUT);
 				}
 			} catch (final InterruptedException ie) {
@@ -711,7 +708,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				context.isValid = false;
 			}
 			context = null;
-			synchronized (lock) {
+			synchronized (this) {
 				notify();
 			}
 		}
