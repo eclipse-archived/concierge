@@ -796,9 +796,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 				"3");
 		defaultProperties.setProperty(Constants.FRAMEWORK_STORAGE, "storage");
 
-		defaultProperties.setProperty(Constants.FRAMEWORK_UUID, UUID
-				.randomUUID().toString());
-
 		// properties
 		properties = new Properties(defaultProperties) {
 
@@ -1225,6 +1222,11 @@ public final class Concierge extends AbstractBundle implements Framework,
 		} catch (final Error e) {
 			// already set...
 		}
+		
+		// set the UUID
+		// TODO: need workaround for Java 1.4
+		properties.setProperty(Constants.FRAMEWORK_UUID, UUID
+				.randomUUID().toString());
 
 		state = Bundle.STARTING;
 
