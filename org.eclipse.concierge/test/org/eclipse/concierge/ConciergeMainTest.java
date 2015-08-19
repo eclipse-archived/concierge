@@ -66,13 +66,14 @@ public class ConciergeMainTest {
 	 * instead of file:.//some/path
 	 */
 	@Test
-	@Ignore("Fails due to missing check for bundles with absolute path")
+	@Ignore("TODO is installBundle with location id with an absolute path ok?")
 	public void testDoMainInstallBundleWithLeadingSlash() throws Exception {
 		SyntheticBundleBuilder builder = SyntheticBundleBuilder.newBuilder();
 		builder.bundleSymbolicName("testDoMainInstallBundleWithLeadingSlash");
 		File f = builder.asFile();
 		f.deleteOnExit();
-		Concierge framework = Concierge.doMain(new String[] { "-install",
+		Concierge framework = Concierge.doMain(new String[] {
+				"-Dorg.osgi.framework.storage.clean=onFirstInit", "-install",
 				f.toString() });
 		Assert.assertNotNull(framework);
 		framework.stop();

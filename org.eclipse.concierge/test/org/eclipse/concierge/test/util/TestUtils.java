@@ -164,7 +164,7 @@ public class TestUtils {
 			String basicAuth = "Basic " + base64encode(userpass.getBytes());
 			con.setRequestProperty("Authorization", basicAuth);
 
-			// TODO hmm. some content is missing at the beginning
+			// TODO jhi some content is missing at the beginning
 			InputStream is = con.getInputStream();
 			int responseCode = con.getResponseCode();
 			if (responseCode != HttpURLConnection.HTTP_OK) {

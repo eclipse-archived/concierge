@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.concierge.test.util;
 
+import java.io.File;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -36,6 +37,9 @@ import org.osgi.framework.wiring.FrameworkWiring;
  * @author Jochen Hiller
  */
 public abstract class AbstractConciergeTestCase {
+
+	/** This property allows to wait some time when framework has been shutdown. */
+	private final static String PROPERTY_WAIT_AFTER_FRAMEWORK_SHUTDOWN = "org.eclipse.concierge.tests.waitAfterFrameworkShutdown";
 
 	protected Framework framework = null;
 	protected BundleContext bundleContext = null;
@@ -73,8 +77,14 @@ public abstract class AbstractConciergeTestCase {
 		this.bundleContext = this.framework.getBundleContext();
 
 		if (stayInShell()) {
-			// assume to get shell jar file in target folder
-			installAndStartBundle("./target/plugins/org.eclipse.concierge.shell-1.0.0.alpha2.jar");
+			String shellJarName = "./test/resources/org.eclipse.concierge.shell-1.0.0.jar";
+			if (!new File(shellJarName).exists()) {
+				System.err.println("Oops, could not find shell bundle at "
+						+ shellJarName);
+			} else {
+				// assume to get shell jar file in target folder
+				installAndStartBundle(shellJarName);
+			}
 		}
 	}
 
@@ -87,6 +97,32 @@ public abstract class AbstractConciergeTestCase {
 				this.framework.stop();
 				FrameworkEvent event = framework.waitForStop(10000);
 				Assert.assertEquals(FrameworkEvent.STOPPED, event.getType());
+
+				// force a GC to allow cleanup of files
+				// on Mac from time to time files from storage can not be
+				// deleted
+				// until a GC has been run
+				System.gc();
+
+				// We have from time to time problems when shutdown the
+				// framework, that next tests are failing
+				// for CI build we can define a timeout to wait here. A good
+				// value is 100ms
+				String propValue = System
+						.getProperty(PROPERTY_WAIT_AFTER_FRAMEWORK_SHUTDOWN);
+
+				int timeout = -1;
+				if ((propValue != null) && (propValue.length() > 0)) {
+					try {
+						timeout = Integer.valueOf(propValue);
+					} catch (NumberFormatException ex) {
+						// ignore
+					}
+					if (timeout > 0) {
+						Thread.sleep(timeout);
+					}
+				}
+
 			}
 		}
 	}
@@ -299,6 +335,28 @@ public abstract class AbstractConciergeTestCase {
 		}
 	}
 
+	protected void dumpStorage() throws Exception {
+		Concierge concierge = (Concierge) framework;
+		Field field = concierge.getClass().getDeclaredField("STORAGE_LOCATION");
+		field.setAccessible(true);
+		Object o = field.get(concierge);
+		System.err.println("dumpStorage: STORAGE_LOCATION=" + o);
+		File dir = new File((String) o);
+		dumpStorageDirectory(dir);
+	}
+
+	private static void dumpStorageDirectory(File path) {
+		File[] files = path.listFiles();
+		for (int i = 0; i < files.length; i++) {
+			if (files[i].isDirectory()) {
+				dumpStorageDirectory(files[i]);
+			} else {
+				System.err.println("dumpStorage: " + files[i]);
+			}
+		}
+		System.err.println("dumpStorage: " + path);
+	}
+
 	/**
 	 * The <code>RunInClassLoader</code> class helps to run code in ClassLoader
 	 * of the bundle using Java reflection. This allows to call testing code in
@@ -366,7 +424,7 @@ public abstract class AbstractConciergeTestCase {
 				throw new RuntimeException("Oops, method " + method.toString()
 						+ " is not static");
 			}
-			// TODO Maybe set accessible if private?
+			// TODO jhi Maybe set accessible if private?
 			final Object result = method.invoke(null, args);
 			return result;
 		}
@@ -386,7 +444,7 @@ public abstract class AbstractConciergeTestCase {
 			}
 			final Constructor<?> constructor = clazz
 					.getDeclaredConstructor(parameterTypes);
-			// TODO Maybe set accessible if private?
+			// TODO jhi Maybe set accessible if private?
 			final Object result = constructor.newInstance(args);
 			return result;
 		}
@@ -404,7 +462,7 @@ public abstract class AbstractConciergeTestCase {
 			}
 			final Constructor<?> constructor = clazz
 					.getDeclaredConstructor(parameterTypes);
-			// TODO Maybe set accessible if private?
+			// TODO jhi Maybe set accessible if private?
 			final Object result = constructor.newInstance(args);
 			return result;
 		}

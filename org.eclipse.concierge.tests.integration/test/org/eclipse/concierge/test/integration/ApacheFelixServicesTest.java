@@ -108,7 +108,6 @@ public class ApacheFelixServicesTest extends AbstractConciergeTestCase {
 	 * </pre>
 	 */
 	@Test
-	@Ignore("does not end")
 	public void test05ApacheFelixFileInstall340() throws Exception {
 		try {
 			final Map<String, String> launchArgs = new HashMap<String, String>();

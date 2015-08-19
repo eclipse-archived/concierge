@@ -1,9 +1,12 @@
 package org.eclipse.concierge;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.eclipse.concierge.test.util.AbstractConciergeTestCase;
 import org.eclipse.concierge.test.util.SyntheticBundleBuilder;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.osgi.framework.Bundle;
@@ -17,6 +20,11 @@ public class ConciergeMainOptionAllTest extends AbstractConciergeTestCase {
 	private File fileA;
 	private File fileB;
 	private File fileC;
+
+	@After
+	public void tearDown() throws Exception {
+		stopFramework();
+	}
 
 	/**
 	 * Setup Bundles: A, B requires A, C requires B. So natural order can be
@@ -75,7 +83,8 @@ public class ConciergeMainOptionAllTest extends AbstractConciergeTestCase {
 	/** Test is these bundles can be started at all. */
 	@Test
 	public void testSortedBundles() throws Exception {
-		startFramework();
+		Map<String, String> launchArgs = new HashMap<String, String>();
+		startFrameworkClean(launchArgs);
 		setupSortedBundles();
 		Bundle bundleA = installBundle(fileA.getPath());
 		Bundle bundleB = installBundle(fileB.getPath());
@@ -86,27 +95,27 @@ public class ConciergeMainOptionAllTest extends AbstractConciergeTestCase {
 		Bundle[] bundles = framework.getBundleContext().getBundles();
 		Assert.assertEquals(4, bundles.length);
 		assertBundlesActive(bundles);
-		stopFramework();
 	}
 
 	/** Test now if they can be started with -all option. */
 	@Test
 	public void testAllWithSortedBundles() throws Exception {
 		setupSortedBundles();
-		framework = Concierge.doMain(new String[] {
-				"-Dorg.eclipse.concierge.debug=true",
-				"-Dorg.osgi.framework.storage.clean=true", "-all", dir });
+		framework = Concierge
+				.doMain(new String[] { "-Dorg.eclipse.concierge.debug=true",
+						"-Dorg.osgi.framework.storage.clean=onFirstInit",
+						"-all", dir });
 		Assert.assertNotNull(framework);
 		Bundle[] bundles = framework.getBundleContext().getBundles();
 		Assert.assertEquals(4, bundles.length);
 		assertBundlesActive(bundles);
-		framework.stop();
 	}
 
 	/** Test is these bundles can be started at all. */
 	@Test
 	public void testUnsortedBundles() throws Exception {
-		startFramework();
+		Map<String, String> launchArgs = new HashMap<String, String>();
+		startFrameworkClean(launchArgs);
 		setupUnsortedBundles();
 		Bundle bundleA = installBundle(fileA.getPath());
 		Bundle bundleB = installBundle(fileB.getPath());
@@ -117,20 +126,19 @@ public class ConciergeMainOptionAllTest extends AbstractConciergeTestCase {
 		Bundle[] bundles = framework.getBundleContext().getBundles();
 		Assert.assertEquals(4, bundles.length);
 		assertBundlesActive(bundles);
-		stopFramework();
 	}
 
 	/** Test now if they can be started with -all option. */
 	@Test
 	public void testAllWithUnortedBundles() throws Exception {
 		setupUnsortedBundles();
-		framework = Concierge.doMain(new String[] {
-				"-Dorg.eclipse.concierge.debug=true",
-				"-Dorg.osgi.framework.storage.clean=true", "-all", dir });
+		framework = Concierge
+				.doMain(new String[] { "-Dorg.eclipse.concierge.debug=true",
+						"-Dorg.osgi.framework.storage.clean=onFirstInit",
+						"-all", dir });
 		Assert.assertNotNull(framework);
 		Bundle[] bundles = framework.getBundleContext().getBundles();
 		Assert.assertEquals(4, bundles.length);
-		framework.stop();
 	}
 
 }

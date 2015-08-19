@@ -1,3 +1,17 @@
+// add . folder to test classpath, to lookup META-INF/micro-services
+sourceSets {
+    test {
+	    runtimeClasspath += files('.')
+    }
+}
+
+test {
+    // forward a system property for the test JVM(s)
+    systemProperty "org.eclipse.concierge.tests.waitAfterFrameworkShutdown", 
+    	System.getProperty("org.eclipse.concierge.tests.waitAfterFrameworkShutdown")
+}
+
+
 // make stripped jar with no debug information
 // pack200 --repack --strip-debug <stripped-jar> <original-jar>
 task strippedJar(type: Exec, dependsOn: jar) {

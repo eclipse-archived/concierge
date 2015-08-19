@@ -111,6 +111,9 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 	 */
 	protected static final Method dexFileLoader;
 	protected static final Method dexClassLoader;
+	
+	/** Lock object to synchronize start/stop of a bundle. */
+	private Object lock = new Object();
 
 	static {
 		Method classloader;
@@ -460,7 +463,9 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 		if (!lazyActivation
 				&& (state == Bundle.STARTING || state == Bundle.STOPPING)) {
 			try {
-				wait(TIMEOUT);
+				synchronized (lock) {
+					wait(TIMEOUT);
+				}
 			} catch (final InterruptedException ie) {
 				// ignore and proceed
 			}
@@ -528,7 +533,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				framework.notifyBundleListeners(BundleEvent.LAZY_ACTIVATION,
 						this);
 			}
-			synchronized (this) {
+			synchronized (lock) {
 				notify();
 			}
 			return;
@@ -575,7 +580,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				framework.logger.log(LogService.LOG_INFO, "framework: Bundle "
 						+ toString() + " started.");
 			}
-			synchronized (this) {
+			synchronized (lock) {
 				notify();
 			}
 		} catch (final Throwable t) {
@@ -630,7 +635,9 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 		if (state == Bundle.STARTING || state == Bundle.STOPPING) {
 			try {
-				wait(TIMEOUT);
+				synchronized (lock) {
+					wait(TIMEOUT);
+				}
 			} catch (final InterruptedException ie) {
 				// ignore
 			}
@@ -704,7 +711,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				context.isValid = false;
 			}
 			context = null;
-			synchronized (this) {
+			synchronized (lock) {
 				notify();
 			}
 		}
@@ -3013,15 +3020,19 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 							// define package
 							definePackage(packageOf(classname));
-
 							return defineClass(classname, bytes, 0,
 									bytes.length, domain);
 						} catch (final IOException ioe) {
 							ioe.printStackTrace();
 							return null;
 						} catch (final LinkageError le) {
-							System.err.println("ERROR in " + toString() + ":");
-							le.printStackTrace();
+							if (framework.DEBUG_CLASSLOADING) {
+								framework.logger.log(
+										LogService.LOG_DEBUG,
+										"Error during loading class="
+												+ classname + " from bundle="
+												+ this.getBundle().getSymbolicName(), le);
+							}
 							throw le;
 						}
 					}
@@ -3053,9 +3064,13 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 									ioe.printStackTrace();
 									return null;
 								} catch (final LinkageError le) {
-									System.err.println("ERROR in " + toString()
-											+ ":");
-									le.printStackTrace();
+									if (framework.DEBUG_CLASSLOADING) {
+										framework.logger.log(
+												LogService.LOG_DEBUG,
+												"Error during loading class="
+														+ classname + " from bundle="
+														+ this.getBundle().getSymbolicName(), le);
+									}
 									throw le;
 								}
 							}
@@ -3493,7 +3508,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 		@Override
 		public String put(final String key, final String value) {
-			if (value.charAt(0) == '%') {
+			if (value.length()>0 && value.charAt(0) == '%') {
 				hasLocalizedValues = true;
 			}
 

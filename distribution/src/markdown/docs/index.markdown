@@ -1,40 +1,22 @@
 # Eclipse Concierge
 
-## Overview
-
-TODO: here an overview what Concierge is
-
-## Related Information
+Concierge is a small-footprint implementation of the OSGi Core Specification R5 standard 
+optimized for mobile and embedded devices.
 
 
+## User documentation
 
-All subpages:
-
-* [How to embed Concierge into an Application}(concierge-embedding.html)
+* [Getting started](getting-started.html)
+* [Run Concierge from command line](concierge-commandline.html)
+* [Run Concierge with Bnd(tools)](concierge-bndtools.html)
+* [How to embed Concierge into a Java application](concierge-embedding.html)
 * [OSGi Options supported by Concierge](options-osgi.html)
 * [Concierge Options](options-concierge.html)
-* [Compatibility of Conciere with Bundles](compatibility-bundles.html)
-* [XargsLaucher support](xargs-launcher.html)
-* [Concierge commandline options](concierge-commandline.html)
 * [Concierge AddOn bundles](concierge-bundles.html)
-* []()
-* []()
+
+## Developer documentation
+
+* [Building Concierge from source](contributor/build-concierge.html)
+* [How to contribute](contributor/contribute.html)
 
 
-
-# Eclipse Concierge Project
-
-## Outline of required documentation
-
-* Launch the framework
-  * all launch parameters
-  * bootclasspath
-  * system.packages.extra
-
-* Xargs launching
-  * Properties
-  * Wildcards
-
-* How to build Concierge
-
-* Release Notes
