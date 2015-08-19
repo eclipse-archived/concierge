@@ -5021,7 +5021,10 @@ public final class Concierge extends AbstractBundle implements Framework,
 	void callWeavingHooks(final WovenClassImpl wovenClass) {
 		Collections.sort(weavingHooks, Collections.reverseOrder());
 
-		for (final ServiceReferenceImpl<WeavingHook> sref : weavingHooks) {
+		final List<ServiceReferenceImpl<WeavingHook>> wHooks = new ArrayList<ServiceReferenceImpl<WeavingHook>>();
+		wHooks.addAll(weavingHooks);
+		
+		for (final ServiceReferenceImpl<WeavingHook> sref : wHooks) {
 			final WeavingHook hook = sref.getService(this);
 
 			try {
