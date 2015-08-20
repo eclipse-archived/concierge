@@ -4133,13 +4133,16 @@ public final class Concierge extends AbstractBundle implements Framework,
 				bundle.registeredServiceListeners = new ArrayList<ServiceListenerEntry>(
 						1);
 			}
-			final ServiceListenerEntry existing = getRegisteredServiceListener(
-					listener);
-			if (existing != null) {
-				removeServiceListener(listener);
+
+			synchronized (bundle.registeredServiceListeners) {
+				final ServiceListenerEntry existing = getRegisteredServiceListener(
+						listener);
+				if (existing != null) {
+					removeServiceListener(listener);
+				}
+				bundle.registeredServiceListeners.add(entry);
+				serviceListeners.add(entry);
 			}
-			bundle.registeredServiceListeners.add(entry);
-			serviceListeners.add(entry);
 
 			informListenerHooks(serviceListenerHooks,
 					new ServiceListenerEntry[] { entry }, true);
@@ -4767,19 +4770,22 @@ public final class Concierge extends AbstractBundle implements Framework,
 		public void removeServiceListener(final ServiceListener listener) {
 			checkValid();
 
-			final ServiceListenerEntry entry = getRegisteredServiceListener(
-					listener);
-			if (entry != null) {
+			final ServiceListenerEntry entry;
+			synchronized (bundle.registeredServiceListeners) {
+				entry = getRegisteredServiceListener(listener);
+				if (entry == null) {
+					return;
+				}
 				entry.removed = true;
 				serviceListeners.remove(entry);
 				bundle.registeredServiceListeners.remove(entry);
 				if (bundle.registeredServiceListeners.isEmpty()) {
 					bundle.registeredServiceListeners = null;
 				}
-
-				informListenerHooks(serviceListenerHooks,
-						new ServiceListenerEntry[] { entry }, false);
 			}
+
+			informListenerHooks(serviceListenerHooks,
+					new ServiceListenerEntry[] { entry }, false);
 		}
 
 		/**
