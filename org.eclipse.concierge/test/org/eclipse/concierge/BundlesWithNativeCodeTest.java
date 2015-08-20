@@ -91,6 +91,7 @@ public class BundlesWithNativeCodeTest extends AbstractConciergeTestCase {
 		String osarch = System.getProperty("os.arch");
 		final SyntheticBundleBuilder builder = SyntheticBundleBuilder
 				.newBuilder();
+		// FIXME: fails on Windows
 		builder.bundleSymbolicName("testBundleNatvieCodeOSDefaults")
 				.bundleVersion("1.0.0")
 				.addManifestHeader(
@@ -103,7 +104,6 @@ public class BundlesWithNativeCodeTest extends AbstractConciergeTestCase {
 	}
 
 	@Test
-	@Ignore ("Fails as wildcard not yet supported")
 	public void testBundleNativeCodeWithWildcard() throws Exception {
 		final SyntheticBundleBuilder builder = SyntheticBundleBuilder
 				.newBuilder();

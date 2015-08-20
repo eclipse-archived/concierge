@@ -1988,7 +1988,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 							nativeStrings[i], ";");
 
 					while (tokenizer.hasMoreTokens()) {
-						final String token = tokenizer.nextToken();
+						final String token = tokenizer.nextToken();						
 						final int a = token.indexOf("=");
 						if (a > -1) {
 							final String criterium = token.substring(0, a)
@@ -2056,6 +2056,9 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 									e.printStackTrace();
 								}
 							}
+						} else if ("*".equals(token.trim()) && !tokenizer.hasMoreTokens()) {
+							// wildcard
+							hasMatch = true;
 						} else {
 							libs.add(token.trim());
 						}
@@ -2077,6 +2080,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					libs.clear();
 				}
 			}
+			
 			return hasMatch || hasOptional;
 		}
 
