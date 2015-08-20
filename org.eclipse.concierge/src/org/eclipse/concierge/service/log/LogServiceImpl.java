@@ -19,22 +19,23 @@ import java.util.List;
 import java.util.Vector;
 
 import org.osgi.framework.Bundle;
+import org.osgi.framework.ServiceFactory;
 import org.osgi.framework.ServiceReference;
+import org.osgi.framework.ServiceRegistration;
+import org.osgi.service.log.LogEntry;
 import org.osgi.service.log.LogListener;
 import org.osgi.service.log.LogReaderService;
 import org.osgi.service.log.LogService;
-import org.osgi.service.log.LogEntry;
 
 /**
  * A lightweight log service implementation. Since this is part of the
  * framework, the framework itself can be configured to use this log for debug
  * messages. This makes it easier to debug bundles on embedded and headless
  * devices.
- * 
+ *
  * @author Jan S. Rellermeyer
  */
-@SuppressWarnings("rawtypes")
-public final class LogServiceImpl implements LogService, LogReaderService {
+public final class LogServiceImpl implements LogReaderService {
 	/**
 	 * the log buffer. Works like a ring buffer. The size can be configured by a
 	 * property.
@@ -44,7 +45,8 @@ public final class LogServiceImpl implements LogService, LogReaderService {
 	/**
 	 * the list of subscribed listeners.
 	 */
-	private final List<LogListener> logListeners = new ArrayList<LogListener>(0);
+	private final List<LogListener> logListeners = new ArrayList<LogListener>(
+			0);
 
 	/**
 	 * the size.
@@ -67,6 +69,15 @@ public final class LogServiceImpl implements LogService, LogReaderService {
 	protected static final String[] LEVELS = { "NULL", "ERROR", "WARNING",
 			"INFO", "DEBUG" };
 
+	protected static final String getLevelString(final int level) {
+		if (level < 0 || level > 4) {
+			return Integer.toString(level);
+		}
+		return LEVELS[level];
+	}
+
+	public final ServiceFactory<LogService> factory = new LogServiceFactory();
+
 	public LogServiceImpl(final int buffersize, final int loglevel,
 			final boolean quiet) {
 		LOG_BUFFER_SIZE = buffersize;
@@ -80,29 +91,30 @@ public final class LogServiceImpl implements LogService, LogReaderService {
 		QUIET = quiet;
 		logBuffer = new Vector<LogEntryImpl>(LOG_BUFFER_SIZE);
 		if (!QUIET) {
-			System.out.println("Logger initialized, loglevel is "
-					+ LEVELS[LOG_LEVEL]);
+			System.out.println(
+					"Logger initialized, loglevel is " + LEVELS[LOG_LEVEL]);
 		}
 	}
 
 	/**
 	 * log an entry.
-	 * 
+	 *
 	 * @param entry
 	 *            the entry.
 	 */
-	private void log(final int level, final String message,
-			final Throwable throwable, final ServiceReference sref) {
+	protected void log(final int level, final String message,
+			final Throwable throwable, final ServiceReference<?> sref,
+			final Bundle bundle) {
 		if (level <= LOG_LEVEL) {
 			final LogEntryImpl entry = LogEntryImpl.getEntry(level, message,
-					throwable, sref);
+					throwable, sref, bundle);
 			logBuffer.add(entry);
 			if (logBuffer.size() > LOG_BUFFER_SIZE) {
-				LogEntryImpl.releaseEntry((LogEntryImpl) logBuffer.remove(0));
+				LogEntryImpl.releaseEntry(logBuffer.remove(0));
 			}
-			for (Iterator listeners = logListeners.iterator(); listeners
-					.hasNext();) {
-				((LogListener) listeners.next()).logged(entry);
+			for (final Iterator<LogListener> listeners = logListeners
+					.iterator(); listeners.hasNext();) {
+				listeners.next().logged(entry);
 			}
 			if (!QUIET) {
 				System.out.println(entry);
@@ -111,120 +123,159 @@ public final class LogServiceImpl implements LogService, LogReaderService {
 	}
 
 	/**
-	 * Log a message.
-	 * 
-	 * @param level
-	 *            the level.
-	 * @param message
-	 *            the message.
-	 * @see org.osgi.service.log.LogService#log(int, java.lang.String)
-	 */
-	public void log(int level, String message) {
-		log(level, message, null, null);
-	}
-
-	/**
-	 * Log a message.
-	 * 
-	 * @param level
-	 *            the level.
-	 * @param message
-	 *            the message.
-	 * @param exception
-	 *            an exception.
-	 * 
-	 * @see org.osgi.service.log.LogService#log(int, java.lang.String,
-	 *      java.lang.Throwable)
-	 */
-	public void log(int level, String message, Throwable exception) {
-		log(level, message, exception, null);
-	}
-
-	/**
-	 * Log a message.
-	 * 
-	 * @param sr
-	 *            the service reference.
-	 * @param level
-	 *            the level.
-	 * @param message
-	 *            the message.
-	 * 
-	 * @see org.osgi.service.log.LogService#log(org.osgi.framework.ServiceReference,
-	 *      int, java.lang.String)
-	 */
-	public void log(ServiceReference sr, int level, String message) {
-		log(level, message, null, sr);
-	}
-
-	/**
-	 * Log a message.
-	 * 
-	 * @param sr
-	 *            the service reference.
-	 * @param level
-	 *            the level.
-	 * @param message
-	 *            the message.
-	 * 
-	 * @see org.osgi.service.log.LogService#log(org.osgi.framework.ServiceReference,
-	 *      int, java.lang.String, java.lang.Throwable)
-	 */
-	public void log(ServiceReference sr, int level, String message,
-			Throwable exception) {
-		log(level, message, exception, sr);
-
-	}
-
-	/**
 	 * Add a log listener.
-	 * 
+	 *
 	 * @param listener
 	 *            the new listener.
-	 * 
+	 *
 	 * @see org.osgi.service.log.LogReaderService#addLogListener(org.osgi.service.log.LogListener)
 	 */
-	public void addLogListener(LogListener listener) {
+	public void addLogListener(final LogListener listener) {
 		logListeners.add(listener);
 	}
 
 	/**
 	 * remove a log listener.
-	 * 
+	 *
 	 * @param listener
 	 *            the listener.
-	 * 
+	 *
 	 * @see org.osgi.service.log.LogReaderService#removeLogListener(org.osgi.service.log.LogListener)
 	 */
-	public void removeLogListener(LogListener listener) {
+	public void removeLogListener(final LogListener listener) {
 		logListeners.remove(listener);
 	}
 
 	/**
 	 * get the buffered log messages.
-	 * 
+	 *
 	 * @return an <code>Enumeration</code> over the buffered log messages.
-	 * 
+	 *
 	 * @see org.osgi.service.log.LogReaderService#getLog()
 	 */
-	public Enumeration getLog() {
+	public Enumeration<? extends LogEntry> getLog() {
 		return logBuffer.elements();
 	}
 
 	/**
-	 * A log entry.
-	 * 
+	 * The service factory producing per-bundle instances of the log service
+	 * facet.
+	 *
 	 * @author Jan S. Rellermeyer
-	 * 
+	 *
+	 */
+	final class LogServiceFactory implements ServiceFactory<LogService> {
+		public LogService getService(final Bundle bundle,
+				final ServiceRegistration<LogService> registration) {
+			return new LogServiceInstance(bundle);
+		}
+
+		public void ungetService(final Bundle bundle,
+				final ServiceRegistration<LogService> registration,
+				final LogService service) {
+			// nop
+		}
+	}
+
+	/**
+	 * A bundle-specific instance of the log service facet.
+	 *
+	 * @author Jan S. Rellermeyer
+	 *
+	 */
+	@SuppressWarnings("rawtypes")
+	private final class LogServiceInstance implements LogService {
+
+		private final Bundle bundle;
+
+		protected LogServiceInstance(final Bundle bundle) {
+			this.bundle = bundle;
+		}
+
+		/**
+		 * Log a message.
+		 *
+		 * @param level
+		 *            the level.
+		 * @param message
+		 *            the message.
+		 * @see org.osgi.service.log.LogService#log(int, java.lang.String)
+		 */
+		public void log(final int level, final String message) {
+			LogServiceImpl.this.log(level, message, null, null, bundle);
+		}
+
+		/**
+		 * Log a message.
+		 *
+		 * @param level
+		 *            the level.
+		 * @param message
+		 *            the message.
+		 * @param exception
+		 *            an exception.
+		 *
+		 * @see org.osgi.service.log.LogService#log(int, java.lang.String,
+		 *      java.lang.Throwable)
+		 */
+		public void log(final int level, final String message,
+				final Throwable exception) {
+			LogServiceImpl.this.log(level, message, exception, null, bundle);
+		}
+
+		/**
+		 * Log a message.
+		 *
+		 * @param sr
+		 *            the service reference.
+		 * @param level
+		 *            the level.
+		 * @param message
+		 *            the message.
+		 * @see org.osgi.service.log.LogService#log(org.osgi.framework.ServiceReference,
+		 *      int, java.lang.String)
+		 */
+		public void log(final ServiceReference sr, final int level,
+				final String message) {
+			LogServiceImpl.this.log(level, message, null, sr, bundle);
+		}
+
+		/**
+		 * Log a message.
+		 *
+		 * @param sr
+		 *            the service reference.
+		 * @param level
+		 *            the level.
+		 * @param message
+		 *            the message.
+		 *
+		 * @see org.osgi.service.log.LogService#log(org.osgi.framework.ServiceReference,
+		 *      int, java.lang.String, java.lang.Throwable)
+		 */
+		public void log(final ServiceReference sr, final int level,
+				final String message, final Throwable exception) {
+			LogServiceImpl.this.log(level, message, exception, sr, bundle);
+		}
+
+	}
+
+	/**
+	 * A log entry.
+	 *
+	 * @author Jan S. Rellermeyer
+	 *
 	 */
 	final static class LogEntryImpl implements LogEntry {
 		private int level;
 
 		private String message;
 
-		private ServiceReference sref;
+		private ServiceReference<?> sref;
 
 		private Throwable exception;
+
+		private Bundle bundle;
 
 		private long time;
 
@@ -235,11 +286,12 @@ public final class LogServiceImpl implements LogService, LogReaderService {
 
 		protected static LogEntryImpl getEntry(final int level,
 				final String message, final Throwable throwable,
-				final ServiceReference sref) {
+				final ServiceReference<?> sref, final Bundle bundle) {
 			synchronized (entryRecyclingList) {
-				LogEntryImpl entry = entryRecyclingList.isEmpty() ? new LogEntryImpl()
+				final LogEntryImpl entry = entryRecyclingList.isEmpty()
+						? new LogEntryImpl()
 						: (LogEntryImpl) entryRecyclingList.remove(0);
-				entry.log(level, message, throwable, sref);
+				entry.log(level, message, throwable, sref, bundle);
 				return entry;
 			}
 		}
@@ -247,14 +299,14 @@ public final class LogServiceImpl implements LogService, LogReaderService {
 		protected static void releaseEntry(final LogEntryImpl entry) {
 			synchronized (entryRecyclingList) {
 				if (entryRecyclingList.size() < THRESHOLD) {
-					entry.log(0, null, null, null);
+					entry.log(0, null, null, null, null);
 					entryRecyclingList.add(entry);
 				}
 			}
 		}
 
 		/**
-		 * 
+		 *
 		 */
 		private LogEntryImpl() {
 		}
@@ -266,11 +318,13 @@ public final class LogServiceImpl implements LogService, LogReaderService {
 		 * @param exception
 		 */
 		private void log(final int level, final String message,
-				final Throwable exception, final ServiceReference sref) {
+				final Throwable exception, final ServiceReference<?> sref,
+				final Bundle bundle) {
 			this.level = level;
 			this.message = message;
 			this.exception = exception;
 			this.sref = sref;
+			this.bundle = bundle;
 			this.time = System.currentTimeMillis();
 		}
 
@@ -278,13 +332,13 @@ public final class LogServiceImpl implements LogService, LogReaderService {
 		 * @see org.osgi.service.log.LogEntry#getBundle()
 		 */
 		public Bundle getBundle() {
-			return sref == null ? null : sref.getBundle();
+			return bundle;
 		}
 
 		/**
 		 * @see org.osgi.service.log.LogEntry#getServiceReference()
 		 */
-		public ServiceReference getServiceReference() {
+		public ServiceReference<?> getServiceReference() {
 			return sref;
 		}
 
@@ -317,12 +371,13 @@ public final class LogServiceImpl implements LogService, LogReaderService {
 		}
 
 		/**
-		 * 
+		 *
 		 * @see java.lang.Object#toString()
 		 */
 		public String toString() {
-			StringBuffer buffer = new StringBuffer("[").append(new Date(time))
-					.append("] [").append(LEVELS[level]).append("] ");
+			final StringBuffer buffer = new StringBuffer("[")
+					.append(new Date(time)).append("] [")
+					.append(getLevelString(level)).append("] ");
 			if (sref != null) {
 				buffer.append("Bundle: ");
 				buffer.append(sref.getBundle());
@@ -338,5 +393,7 @@ public final class LogServiceImpl implements LogService, LogReaderService {
 			}
 			return buffer.toString();
 		}
+
 	}
+
 }
