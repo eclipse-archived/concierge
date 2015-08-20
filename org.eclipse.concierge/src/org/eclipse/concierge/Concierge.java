@@ -2469,15 +2469,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 					sortProviders(providers, requirement.getNamespace());
 
-					// check if the resource itself provides a
-					// candidate
-					/*
-					 * for (final Capability capability : requirement
-					 * .getResource().getCapabilities(
-					 * requirement.getNamespace())) { if (matches(requirement,
-					 * capability)) { providers.add(capability); } }
-					 */
-
 					return providers;
 				}
 
@@ -2527,14 +2518,12 @@ public final class Concierge extends AbstractBundle implements Framework,
 					return wirings;
 				}
 
-			}, solution, unresolvedRequirements, unresolvedResources);
+			}, solution, unresolvedRequirements, unresolvedResources, false);
 
 			// TODO: introduce resolver debug flag
 			if (LOG_ENABLED) {
 				logger.log(LogService.LOG_DEBUG, "Solution: " + solution);
 			}
-
-			final MultiMap<Resource, Wire> reciprocal = new MultiMap<Resource, Wire>();
 
 			// apply solution
 			for (final Resource resource : solution.keySet()) {
@@ -2591,11 +2580,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 						revision.setWiring(wiring);
 					} else {
 						wiring = revision.addAdditionalWires(wires);
-					}
-
-					for (final Wire wire : wires) {
-						final Resource provider = wire.getProvider();
-						reciprocal.insertUnique(provider, wire);
 					}
 
 					if (!isFragment) {
@@ -2763,7 +2747,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 			final ArrayList<Resource> unresolvedResources = new ArrayList<Resource>();
 
 			resolve0(context, solution, unresolvedRequirements,
-					unresolvedResources);
+					unresolvedResources, true);
 
 			if (!unresolvedRequirements.isEmpty()
 					|| !unresolvedResources.isEmpty()) {
@@ -2777,7 +2761,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 		protected void resolve0(final ResolveContext context,
 				final MultiMap<Resource, Wire> solution,
 				final ArrayList<Requirement> unresolvedRequirements,
-				final ArrayList<Resource> unresolvedResources) {
+				final ArrayList<Resource> unresolvedResources,
+				final boolean standalone) {
 
 			final Collection<Resource> mandatory = context
 					.getMandatoryResources();
@@ -2818,7 +2803,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 					final Collection<Requirement> unres = resolveResource(
 							context, resource, existingWirings, solution,
-							new HashSet<Resource>());
+							new HashSet<Resource>(), standalone);
 					unresolvedRequirements.addAll(unres);
 				}
 
@@ -2829,7 +2814,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 				for (final Resource resource : optional) {
 					resolveResource(context, resource, existingWirings,
-							solution, new HashSet<Resource>());
+							solution, new HashSet<Resource>(), standalone);
 				}
 
 			}
@@ -2920,7 +2905,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 				final ResolveContext context, final Resource resource,
 				final Map<Resource, Wiring> existingWirings,
 				final MultiMap<Resource, Wire> solution,
-				final HashSet<Resource> inResolution) {
+				final HashSet<Resource> inResolution,
+				final boolean standalone) {
 			inResolution.add(resource);
 
 			if (solution.containsKey(resource)) {
@@ -3189,13 +3175,17 @@ public final class Concierge extends AbstractBundle implements Framework,
 											&& resolveResource(context,
 													capability.getResource(),
 													existingWirings, solution,
-													inResolution).isEmpty()) {
+													inResolution, standalone)
+															.isEmpty()) {
 
 								final Wire wire = Resources
 										.createWire(capability, requirement);
 								newWires.insert(resource, wire);
-								newWires.insertUnique(capability.getResource(),
-										wire);
+								if (!standalone) {
+									newWires.insertUnique(
+											capability.getResource(), wire);
+								}
+
 								resolved = true;
 
 								if (!multiple) {
