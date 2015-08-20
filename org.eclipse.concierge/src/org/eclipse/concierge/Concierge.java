@@ -312,6 +312,12 @@ public final class Concierge extends AbstractBundle implements Framework,
 			3);
 
 	/**
+	 * class name string -> service reference.
+	 */
+	final MultiMap<String, ServiceReference<?>> microServices = new MultiMap<String, ServiceReference<?>>(
+			3);
+
+	/**
 	 * bundle listeners.
 	 */
 	protected final List<BundleListener> bundleListeners = new ArrayList<BundleListener>(
@@ -499,6 +505,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 	/** Return code from main when printing usage message. */
 	private static final int MAIN_RC_USAGE = 1;
+
+	private boolean firstInit = true;
 
 	/**
 	 * Main method to start Concierge. This class will delegate that to an
@@ -720,11 +728,13 @@ public final class Concierge extends AbstractBundle implements Framework,
 					final ServiceReference<?> ref = new ServiceReferenceImpl<Object>(
 							this, this, service, props,
 							new String[] { tokens[0] });
-					serviceRegistry.insert(tokens[0], ref);
+					microServices.insert(tokens[0], ref);
 				} catch (final Exception e) {
 					e.printStackTrace();
 				}
 			}
+
+			serviceRegistry.insertMap(microServices);
 		} catch (final IOException ioe) {
 			ioe.printStackTrace();
 		}
@@ -912,6 +922,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 		final String bsl = properties
 				.getProperty(Constants.FRAMEWORK_BEGINNING_STARTLEVEL);
+
 		try {
 			BEGINNING_STARTLEVEL = Integer.parseInt(bsl);
 		} catch (final NumberFormatException nfe) {
@@ -1044,8 +1055,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 		// clean the storage if requested
 		final File storage = new File(STORAGE_LOCATION);
 		if (storage.exists()) {
-			if (Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT.equals(properties
-					.getProperty(Constants.FRAMEWORK_STORAGE_CLEAN))) {
+			if (firstInit && Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT
+					.equals(properties
+							.getProperty(Constants.FRAMEWORK_STORAGE_CLEAN))) {
 				deleteDirectory(storage);
 			} else {
 				restart = true;
@@ -1057,8 +1069,11 @@ public final class Concierge extends AbstractBundle implements Framework,
 					"Could not create storage directory " + storage);
 		}
 
+		firstInit = false;
+
 		// set start level 0
 		startlevel = 0;
+
 		// enable event handling
 
 		// set the collision policy
@@ -1159,7 +1174,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 					be.printStackTrace();
 				}
 			}
-
 		}
 
 		// system bundle symbolic name
@@ -1302,6 +1316,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 */
 	public void start() throws BundleException {
 		// TODO: check for AdminPermission(this,EXECUTE)
+
 		if (state != Bundle.STARTING) {
 			init();
 		}
@@ -1380,7 +1395,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 		try {
 			final DataOutputStream out = new DataOutputStream(
 					new FileOutputStream(new File(STORAGE_LOCATION, "meta")));
-			out.writeInt(startlevel);
 			out.writeLong(nextBundleID);
 			out.close();
 		} catch (final IOException ioe) {
@@ -1391,7 +1405,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 	/**
 	 * restore a profile.
 	 * 
-	 * @return the startlevel or -1 if the profile could not be restored.
 	 */
 	private void restoreProfile() {
 		try {
@@ -1409,7 +1422,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 			final DataInputStream in = new DataInputStream(
 					new FileInputStream(file));
-			BEGINNING_STARTLEVEL = in.readInt();
 			nextBundleID = in.readLong();
 			in.close();
 
@@ -1498,6 +1510,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 			System.out.println("  Bye !");
 			System.out.println("----------------------------"
 					+ "-----------------------------");
+			System.out.flush();
 		}
 
 		try {
@@ -1518,7 +1531,10 @@ public final class Concierge extends AbstractBundle implements Framework,
 			bundleID_bundles.clear();
 			serviceRegistry.clear();
 
-			// Reset the used Concierge instance in URL stream handler factory
+			// restore micro-services
+			serviceRegistry.insertMap(microServices);
+
+			// reset the used Concierge instance in URL stream handler factory
 			conciergeURLStreamHandlerFactory.setConcierge(null);
 
 			stopEvent = new FrameworkEvent(update

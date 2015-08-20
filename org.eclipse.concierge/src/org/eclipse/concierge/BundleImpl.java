@@ -284,7 +284,10 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			throw new BundleException("Bundle revision " + currentRevisionNumber
 					+ " does not exist", BundleException.READ_ERROR);
 		}
-
+		
+		this.symbolicName = currentRevision.getSymbolicName();
+		this.version = currentRevision.getVersion();
+		this.revisions.add(0, currentRevision);
 		this.startlevel = in.readInt();
 		this.state = Bundle.INSTALLED;
 		this.autostart = in.readShort();
@@ -293,6 +296,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 		in.close();
 		this.context = framework.createBundleContext(this);
 
+		System.err.println("RESTORED BUNDLE " + toString() + " WITH SL " + this.startlevel + " and autostart " + this.autostart);
+		
 		if (framework.SECURITY_ENABLED) {
 			domain = new ProtectionDomain(null, null);
 		}
