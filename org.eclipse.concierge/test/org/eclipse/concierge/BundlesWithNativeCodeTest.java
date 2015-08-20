@@ -15,15 +15,14 @@ import org.eclipse.concierge.test.util.SyntheticBundleBuilder;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.osgi.framework.Bundle;
 
 /**
  * Tests which install bundles which refers to native code.
  * 
- * TODO jhi add more tests and combinations for Bundle-NativeCode, for more OS/ARCH
- * types
+ * TODO jhi add more tests and combinations for Bundle-NativeCode, for more
+ * OS/ARCH types
  * 
  * @author Jochen Hiller
  */
@@ -44,8 +43,7 @@ public class BundlesWithNativeCodeTest extends AbstractConciergeTestCase {
 		final SyntheticBundleBuilder builder = SyntheticBundleBuilder
 				.newBuilder();
 		builder.bundleSymbolicName("testBundleNativeCodeMacOSX_X86_64")
-				.bundleVersion("1.0.0")
-				.addManifestHeader("Bundle-NativeCode",
+				.bundleVersion("1.0.0").addManifestHeader("Bundle-NativeCode",
 						"lib/native/someNative.so; osname=MacOSX; processor=x86_64");
 		final Bundle bundleUnderTest = installBundle(builder);
 		enforceResolveBundle(bundleUnderTest);
@@ -60,9 +58,7 @@ public class BundlesWithNativeCodeTest extends AbstractConciergeTestCase {
 				.newBuilder();
 		builder.bundleSymbolicName(
 				"testBundleNativeCodeMacOSX_X86_64_WithSelectionFilter")
-				.bundleVersion("1.0.0")
-				.addManifestHeader(
-						"Bundle-NativeCode",
+				.bundleVersion("1.0.0").addManifestHeader("Bundle-NativeCode",
 						"lib/native/someNative.so; osname=Linux; processor=ARM; selection-filter=\"(&(kura.arch=armv7_hf))\","
 								+ "lib/native/otherNative.so; osname=MacOSX; processor=x86_64");
 		final Bundle bundleUnderTest = installBundle(builder);
@@ -76,8 +72,7 @@ public class BundlesWithNativeCodeTest extends AbstractConciergeTestCase {
 		final SyntheticBundleBuilder builder = SyntheticBundleBuilder
 				.newBuilder();
 		builder.bundleSymbolicName("testBundleNativeCodeMacOSX_X86")
-				.bundleVersion("1.0.0")
-				.addManifestHeader("Bundle-NativeCode",
+				.bundleVersion("1.0.0").addManifestHeader("Bundle-NativeCode",
 						"lib/native/someNative.so; osname=MacOSX; processor=x86");
 		final Bundle bundleUnderTest = installBundle(builder);
 		enforceResolveBundle(bundleUnderTest);
@@ -91,11 +86,9 @@ public class BundlesWithNativeCodeTest extends AbstractConciergeTestCase {
 		String osarch = System.getProperty("os.arch");
 		final SyntheticBundleBuilder builder = SyntheticBundleBuilder
 				.newBuilder();
-		// FIXME: fails on Windows
+
 		builder.bundleSymbolicName("testBundleNatvieCodeOSDefaults")
-				.bundleVersion("1.0.0")
-				.addManifestHeader(
-						"Bundle-NativeCode",
+				.bundleVersion("1.0.0").addManifestHeader("Bundle-NativeCode",
 						"lib/someNative.so; osname=" + osname + "; processor="
 								+ osarch + "");
 		final Bundle bundleUnderTest = installBundle(builder);
@@ -108,8 +101,7 @@ public class BundlesWithNativeCodeTest extends AbstractConciergeTestCase {
 		final SyntheticBundleBuilder builder = SyntheticBundleBuilder
 				.newBuilder();
 		builder.bundleSymbolicName("testBundleNativeCodeWithWildcard")
-				.bundleVersion("1.0.0")
-				.addManifestHeader("Bundle-NativeCode",
+				.bundleVersion("1.0.0").addManifestHeader("Bundle-NativeCode",
 						"lib/native/someNative.so; osname=MacOSX; processor=x86; *");
 		final Bundle bundleUnderTest = installBundle(builder);
 		enforceResolveBundle(bundleUnderTest);
