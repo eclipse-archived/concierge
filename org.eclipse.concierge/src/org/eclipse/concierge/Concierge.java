@@ -2945,12 +2945,14 @@ public final class Concierge extends AbstractBundle implements Framework,
 									.getCapabilities(
 											HostNamespace.HOST_NAMESPACE)
 									.get(0));
-							filterCandidates(hooks.keySet(),
-									(BundleRequirement) frag
-											.getRequirements(
-													HostNamespace.HOST_NAMESPACE)
-											.get(0),
-									capList);
+							if (hooks != null && !hooks.isEmpty()) {
+								filterCandidates(hooks.keySet(),
+										(BundleRequirement) frag
+												.getRequirements(
+														HostNamespace.HOST_NAMESPACE)
+												.get(0),
+										capList);
+							}
 							if (capList.isEmpty()) {
 								continue;
 							}
