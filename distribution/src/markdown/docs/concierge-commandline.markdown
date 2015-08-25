@@ -53,7 +53,7 @@ an event admin, configuration admin and metatype:
  -Drepo=http://www.us.apache.org/dist/felix
 
  # load bundles
- -istart bundles/org.eclipse.concierge.shell-0.9.0.*.jar
+ -istart bundles/org.eclipse.concierge.shell-1.0.0.*.jar
  -istart ${repo}/org.apache.felix.log-1.0.1.jar
  -istart ${repo}/org.apache.felix.scr-1.8.0.jar
  -istart ${repo}/org.apache.felix.eventadmin-1.4.2.jar

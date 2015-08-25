@@ -6,17 +6,31 @@
 // Make complete fresh build:             ./gradlew clean build publish assembleMainDist installDist
 // Build and publish to local Maven repo: ./gradlew clean build publishToMavenLocal
 
+buildscript {
+  repositories {
+    maven { url 'http://oss.jfrog.org/artifactory/oss-snapshot-local' }
+    jcenter()
+  }
+
+  dependencies {
+    classpath "org.akhikhl.wuff:wuff-plugin:0.0.13-SNAPSHOT"
+  }
+}
 
 plugins {
 	// TODO jhi create p2 repo with this tool?
 	// see: https://github.com/stempler/bnd-platform
 	// id 'org.standardout.bnd-platform' version '1.2.0'
+	// see: https://github.com/akhikhl/wuff-sandbox/tree/master/007_repository
+	// id: ''
 
 	// see: https://github.com/netzwerg/gradle-release-plugin
     id 'ch.netzwerg.release' version '1.1.0'
 }
 
 // only include in top level project
+// apply plugin: 'org.standardout.bnd-platform'
+apply plugin: 'org.akhikhl.wuff.eclipse-repository'
 apply plugin: 'ch.netzwerg.release'
 
 def qualifier = buildTime()

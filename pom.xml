@@ -11,7 +11,7 @@
 
   <groupId>org.eclipse.concierge</groupId>
   <artifactId>concierge</artifactId>
-  <version>0.9.0-SNAPSHOT</version>
+  <version>1.0.0-SNAPSHOT</version>
 
   <name>Eclipse Concierge</name>
 

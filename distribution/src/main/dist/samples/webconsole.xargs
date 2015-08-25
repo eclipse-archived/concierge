@@ -10,6 +10,6 @@
 -Drepo=http://www.us.apache.org/dist/felix
 
 # load bundles
--istart bundles/org.eclipse.concierge.shell-0.9.0.*.jar
+-istart bundles/org.eclipse.concierge.shell-1.0.0.*.jar
 -istart ${repo}/org.apache.felix.httplite.complete-0.1.4.jar
 -istart ${repo}/org.apache.felix.webconsole-4.2.8-all.jar
