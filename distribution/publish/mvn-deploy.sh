@@ -30,21 +30,27 @@ if [ -d $WSP_LOC/tmp ] ; then rm -rf $WSP_LOC/tmp/* ; fi
 if [ ! -d $WSP_LOC/tmp ] ; then mkdir -p $WSP_LOC/tmp ; fi
 if [ -f $WSP_LOC/tmp/$logFile ] ; then rm $WSP_LOC/tmp/$logFile ; fi
 
-(
-# these files have to be uploaded to repo
-ls -al ./distribution/build/repo/releases/org/eclipse/concierge/org.eclipse.concierge/1.0.0.SNAPSHOT/*.jar
+
+echo "these files have to be uploaded to repo..."
+find ./distribution/build/repo/$BUILD_TYPE -name "*.jar"
+
+if [ "BUILD_TYPE == "snapshots" ] ; then
 
 $MAVEN_BIN \
   -DgroupId=org.eclipse.concierge						\
   -DartifactId=org.eclipse.concierge					\
   -Dversion=1.0.0-SNAPSHOT								\
   -Dpackaging=jar										\
-  -Dfile=./distribution/build/repo/releases/org/eclipse/concierge/org.eclipse.concierge/1.0.0.SNAPSHOT/org.eclipse.concierge-1.0.0.20150831.085350-1.jar	\
+  -Dfile=./distribution/build/repo/$BUILD_TYPE/org/eclipse/concierge/org.eclipse.concierge/$VERSION/org.eclipse.concierge-$VERSION.jar	\
   -DrepositoryId=repo.eclipse.org						\
   -Durl=https://repo.eclipse.org/content/repositories/concierge-snapshots/	\
   deploy:deploy-file 
 
-) >$WSP_LOC/tmp/$logFile 2>&1
+else 
+
+  echo "NOT YET IMPLEMENTED: Upload releases to repo"
+
+fi
 
 
 # cleanup
