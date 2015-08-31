@@ -10,6 +10,9 @@
 
 set -x
 
+MAVEN_HOME=/shared/common/apache-maven-latest
+MAVEN_BIN=$MAVEN_HOME/bin/mvn
+
 WSP_LOC=.
 logFile=mvn-deploy.log
 
@@ -33,7 +36,7 @@ rm -f $WSP_LOC/tmp/$logFile
 # these files have to be uploaded to repo
 ls -al ./distribution/build/repo/releases/org/eclipse/concierge/org.eclipse.concierge/1.0.0.SNAPSHOT/*.jar
 
-mvn \
+$MAVEN_BIN \
   -DgroupId=org.eclipse.concierge						\
   -DartifactId=org.eclipse.concierge					\
   -Dversion=1.0.0-SNAPSHOT								\
