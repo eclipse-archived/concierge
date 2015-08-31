@@ -28,9 +28,7 @@ echo "BUILD_TYPE=$BUILD_TYPE"
 
 if [ -d $WSP_LOC/tmp ] ; then rm -rf $WSP_LOC/tmp/* ; fi
 if [ ! -d $WSP_LOC/tmp ] ; then mkdir -p $WSP_LOC/tmp ; fi
-
-rm -f $WSP_LOC/tmp/$logFile
-
+if [ -f $WSP_LOC/tmp/$logFile ] ; then rm $WSP_LOC/tmp/$logFile ; fi
 
 (
 # these files have to be uploaded to repo
