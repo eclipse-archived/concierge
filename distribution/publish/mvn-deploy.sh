@@ -39,11 +39,11 @@ if [ "$BUILD_TYPE" == "snapshots" ] ; then
 $MAVEN_BIN \
   -DgroupId=org.eclipse.concierge						\
   -DartifactId=org.eclipse.concierge					\
-  -Dversion=1.0.0-SNAPSHOT								\
+  -Dversion=$version									\
   -Dpackaging=jar										\
-  -Dfile=./distribution/build/repo/$BUILD_TYPE/org/eclipse/concierge/org.eclipse.concierge/$VERSION/org.eclipse.concierge-$VERSION.jar	\
+  -Dfile=./distribution/build/repo/$BUILD_TYPE/org/eclipse/concierge/org.eclipse.concierge/$version/org.eclipse.concierge-$version.jar	\
   -DrepositoryId=repo.eclipse.org						\
-  -Durl=https://repo.eclipse.org/content/repositories/concierge-snapshots/	\
+  -Durl=https://repo.eclipse.org/content/repositories/concierge-$BUILD_TYPE/	\
   deploy:deploy-file 
 
 else 
