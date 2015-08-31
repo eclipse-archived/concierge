@@ -10,7 +10,7 @@
 
 set -x
 
-WSP_LOC=/home/data/httpd/download.eclipse.org/concierge
+WSP_LOC=.
 logFile=mvn-deploy.log
 
 version=`cat version.txt`
