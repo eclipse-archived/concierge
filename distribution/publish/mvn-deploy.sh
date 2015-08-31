@@ -43,7 +43,7 @@ mvn \
   -Durl=https://repo.eclipse.org/content/repositories/concierge-snapshots/	\
   deploy:deploy-file 
 
-) 2>&1 | tee $BUILD_LOC/tmp/$logFile
+) >$BUILD_LOC/tmp/$logFile 2>&1
 
 
 # cleanup
