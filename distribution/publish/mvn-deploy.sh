@@ -34,7 +34,7 @@ if [ -f $WSP_LOC/tmp/$logFile ] ; then rm $WSP_LOC/tmp/$logFile ; fi
 echo "these files have to be uploaded to repo..."
 find ./distribution/build/repo/$BUILD_TYPE -name "*.jar"
 
-if [ "BUILD_TYPE == "snapshots" ] ; then
+if [ "$BUILD_TYPE" == "snapshots" ] ; then
 
 $MAVEN_BIN \
   -DgroupId=org.eclipse.concierge						\
