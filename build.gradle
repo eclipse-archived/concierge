@@ -3,7 +3,7 @@
 // sample usages:
 // Cleanup:                               ./gradlew clean
 // Build and run tests:                   ./gradlew test
-// Make complete fresh build:             ./gradlew clean build publish assembleMainDist installDist
+// Make complete fresh build:             ./gradlew clean build publish assembleDist installDist
 // Build and publish to local Maven repo: ./gradlew clean build publishToMavenLocal
 
 buildscript {
@@ -39,7 +39,13 @@ def qualifier = buildTime()
 // project.version will be read from version.txt
 // must be called as function as not initialized in all phases
 def getProjectVersion() {
-	return project.version
+	if(project.version.endsWith('-SNAPSHOT')) {
+		// TODO change -SNAPSHOT to build number
+		// return project.version.replace ("-SNAPSHOT", "." + qualifier)
+		return project.version
+	} else {
+		return project.version
+	}
 }
 
 allprojects {
@@ -200,12 +206,14 @@ release {
   dependsOn distZip // 'distZip' could e.g be used in combination with the 'application' plugin
   push = false // 'true' would e.g. be useful when triggering the release task on a CI server
   versionSuffix = '-SNAPSHOT' // '.DEV' or '' (empty) could be useful alternatives
+// TODO  
+//  versionSuffix = qualifier // '.DEV' or '' (empty) could be useful alternatives
 }
 
 
 // task to create a gradle wrapper with used gradle version
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.4'
+    gradleVersion = '2.6'
     jarFile = '.gradle-wrapper/gradle-wrapper.jar'
 }
 
