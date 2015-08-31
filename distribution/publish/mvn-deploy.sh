@@ -10,23 +10,23 @@
 
 set -x
 
-BUILD_LOC=/home/data/httpd/download.eclipse.org/concierge
+WSP_LOC=/home/data/httpd/download.eclipse.org/concierge
 logFile=mvn-deploy.log
 
 version=`cat version.txt`
 echo "VERSION=$version"
 if [[ "$version" == *-SNAPSHOT ]] ; then
-  BUILD_LOC_TYPE=snapshots
+  BUILD_TYPE=snapshots
 else
-  BUILD_LOC_TYPE=releases
+  BUILD_TYPE=releases
 fi
-echo "BUILD_LOC_TYPE=$BUILD_LOC_TYPE"
+echo "BUILD_TYPE=$BUILD_TYPE"
 
 
-if [ -d $BUILD_LOC/tmp ] ; then rm -rf $BUILD_LOC/tmp/* ; fi
-if [ ! -d $BUILD_LOC/tmp ] ; then mkdir -p $BUILD_LOC/tmp ; fi
+if [ -d $WSP_LOC/tmp ] ; then rm -rf $WSP_LOC/tmp/* ; fi
+if [ ! -d $WSP_LOC/tmp ] ; then mkdir -p $WSP_LOC/tmp ; fi
 
-rm -f $BUILD_LOC/tmp/$logFile
+rm -f $WSP_LOC/tmp/$logFile
 
 
 (
@@ -43,8 +43,8 @@ mvn \
   -Durl=https://repo.eclipse.org/content/repositories/concierge-snapshots/	\
   deploy:deploy-file 
 
-) >$BUILD_LOC/tmp/$logFile 2>&1
+) >$WSP_LOC/tmp/$logFile 2>&1
 
 
 # cleanup
-# if [ -d $BUILD_LOC/tmp ] ; then rm -rf $BUILD_LOC/tmp/* ; rmdir $BUILD_LOC/tmp ; fi
+# if [ -d $WSP_LOC/tmp ] ; then rm -rf $WSP_LOC/tmp/* ; rmdir $WSP_LOC/tmp ; fi
