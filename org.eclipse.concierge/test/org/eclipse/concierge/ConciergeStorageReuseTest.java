@@ -16,7 +16,6 @@ import java.util.HashMap;
 import org.eclipse.concierge.test.util.AbstractConciergeTestCase;
 import org.eclipse.concierge.test.util.SyntheticBundleBuilder;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
