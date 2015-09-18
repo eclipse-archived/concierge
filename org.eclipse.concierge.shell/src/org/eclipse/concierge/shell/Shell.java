@@ -56,8 +56,7 @@ public class Shell extends Thread implements ServiceListener {
 	/**
 	 * the known command groups.
 	 */
-	private Map<String, ShellCommandGroup> commandGroups = new HashMap<String, ShellCommandGroup>(
-			1);
+	private Map<String, ShellCommandGroup> commandGroups = new HashMap<String, ShellCommandGroup>(1);
 
 	/**
 	 * empty string array.
@@ -89,8 +88,7 @@ public class Shell extends Thread implements ServiceListener {
 	 * @param groups
 	 *            all ShellCommandGroup plugins.
 	 */
-	public Shell(final PrintStream out, final PrintStream err,
-			final ShellCommandGroup[] groups) {
+	public Shell(final PrintStream out, final PrintStream err, final ShellCommandGroup[] groups) {
 		Shell.out = out;
 		Shell.err = err;
 		defaultCommands = new DefaultCommands();
@@ -105,8 +103,7 @@ public class Shell extends Thread implements ServiceListener {
 	 * main thread loop.
 	 */
 	public void run() {
-		final BufferedReader in = new BufferedReader(new InputStreamReader(
-				System.in));
+		final BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 
 		try {
 			while (running) {
@@ -138,19 +135,15 @@ public class Shell extends Thread implements ServiceListener {
 				return;
 			}
 
-			final String grcmd = (pos = s.indexOf(" ")) > -1 ? s.substring(0,
-					pos).toLowerCase() : s.toLowerCase();
-			final String[] args = pos > -1 ? getArgs(s.substring(pos + 1))
-					: EMPTY_STRING_ARRAY;
-			final String group = (pos = grcmd.indexOf(".")) > -1 ? grcmd
-					.substring(0, pos) : "";
+			final String grcmd = (pos = s.indexOf(" ")) > -1 ? s.substring(0, pos).toLowerCase() : s.toLowerCase();
+			final String[] args = pos > -1 ? getArgs(s.substring(pos + 1)) : EMPTY_STRING_ARRAY;
+			final String group = (pos = grcmd.indexOf(".")) > -1 ? grcmd.substring(0, pos) : "";
 			final String command = pos > -1 ? grcmd.substring(pos + 1) : grcmd;
 
 			if (command.equals("help")) {
 				out.println(defaultCommands.getHelp());
-				ShellCommandGroup[] groups = (ShellCommandGroup[]) commandGroups
-						.values().toArray(
-								new ShellCommandGroup[commandGroups.size()]);
+				ShellCommandGroup[] groups = (ShellCommandGroup[]) commandGroups.values()
+						.toArray(new ShellCommandGroup[commandGroups.size()]);
 				for (int i = 0; i < groups.length; i++) {
 					out.println(groups[i].getHelp());
 				}
@@ -160,8 +153,7 @@ public class Shell extends Thread implements ServiceListener {
 			if (group.equals("")) {
 				defaultCommands.handleCommand(command, args);
 			} else {
-				ShellCommandGroup commandGroup = (ShellCommandGroup) commandGroups
-						.get(group);
+				ShellCommandGroup commandGroup = (ShellCommandGroup) commandGroups.get(group);
 				if (commandGroup != null) {
 					commandGroup.handleCommand(command, args);
 				} else {
@@ -190,8 +182,7 @@ public class Shell extends Thread implements ServiceListener {
 				buffer.append(token.substring(1));
 				while (!token.endsWith("\"")) {
 					if (!tokenizer.hasMoreTokens()) {
-						throw new RuntimeException(
-								"Expression not well-formed.");
+						throw new RuntimeException("Expression not well-formed.");
 					}
 					token = tokenizer.nextToken();
 					buffer.append(' ');
@@ -213,9 +204,8 @@ public class Shell extends Thread implements ServiceListener {
 	 */
 	protected static Bundle getBundle(final String bundleIdString) {
 		int pos;
-		final long bundleId = Long
-				.parseLong((pos = bundleIdString.indexOf(" ")) > -1 ? bundleIdString
-						.substring(0, pos) : bundleIdString);
+		final long bundleId = Long.parseLong(
+				(pos = bundleIdString.indexOf(" ")) > -1 ? bundleIdString.substring(0, pos) : bundleIdString);
 		final Bundle bundle = ShellActivator.context.getBundle(bundleId);
 		if (bundle == null) {
 			err.println("Unknown bundle " + bundleId);
@@ -223,15 +213,13 @@ public class Shell extends Thread implements ServiceListener {
 		return bundle;
 	}
 
-	protected static ServiceReference<?> getServiceRef(
-			final String serviceIdString) {
+	protected static ServiceReference<?> getServiceRef(final String serviceIdString) {
 		try {
-			final ServiceReference<?>[] ref = ShellActivator.context
-					.getServiceReferences((String) null, "("
-							+ Constants.SERVICE_ID + "=" + serviceIdString
-							+ ")");
+			final ServiceReference<?>[] ref = ShellActivator.context.getServiceReferences((String) null,
+					"(" + Constants.SERVICE_ID + "=" + serviceIdString + ")");
 			if (ref == null) {
 				err.println("Unknown service " + serviceIdString);
+				return null;
 			}
 			return ref[0];
 		} catch (final InvalidSyntaxException e) {
@@ -279,8 +267,7 @@ public class Shell extends Thread implements ServiceListener {
 				if ("bundles".equals(command)) {
 					out.println("Bundles:");
 					final StringBuffer buffer = new StringBuffer();
-					final Bundle[] bundles = ShellActivator.context
-							.getBundles();
+					final Bundle[] bundles = ShellActivator.context.getBundles();
 					for (int i = 0; i < bundles.length; i++) {
 						buffer.append("[");
 						buffer.append(formatId(bundles[i].getBundleId()));
@@ -294,22 +281,18 @@ public class Shell extends Thread implements ServiceListener {
 					return;
 				} else if ("services".equals(command)) {
 					out.println("Services:");
-					final Bundle[] bundles = ShellActivator.context
-							.getBundles();
+					final Bundle[] bundles = ShellActivator.context.getBundles();
 					final StringBuffer buffer = new StringBuffer();
 					if (args.length == 0) {
 						for (int i = 0; i < bundles.length; i++) {
-							final ServiceReference<?>[] refs = bundles[i]
-									.getRegisteredServices();
+							final ServiceReference<?>[] refs = bundles[i].getRegisteredServices();
 							if (refs != null && refs.length > 0) {
 								buffer.append(bundles[i] + "\n");
 								for (int j = 0; j < refs.length; j++) {
 									buffer.append("\t[Service ");
-									buffer.append(refs[j]
-											.getProperty(Constants.SERVICE_ID));
+									buffer.append(refs[j].getProperty(Constants.SERVICE_ID));
 									buffer.append("] ");
-									buffer.append(Arrays.asList((Object[]) refs[j]
-											.getProperty(Constants.OBJECTCLASS)));
+									buffer.append(Arrays.asList((Object[]) refs[j].getProperty(Constants.OBJECTCLASS)));
 									buffer.append('\n');
 								}
 							}
@@ -317,17 +300,17 @@ public class Shell extends Thread implements ServiceListener {
 						out.println(buffer.toString());
 					} else {
 						final Bundle bundle = getBundle(args[0]);
-						final ServiceReference<?>[] refs = bundle
-								.getRegisteredServices();
+						if (bundle == null) {
+							return;
+						}
+						final ServiceReference<?>[] refs = bundle.getRegisteredServices();
 						buffer.append(bundle + "\n");
 						if (refs != null && refs.length > 0) {
 							for (int i = 0; i < refs.length; i++) {
 								buffer.append("\t[Service ");
-								buffer.append(refs[i]
-										.getProperty(Constants.SERVICE_ID));
+								buffer.append(refs[i].getProperty(Constants.SERVICE_ID));
 								buffer.append("] ");
-								buffer.append(Arrays.asList((Object[]) refs[i]
-										.getProperty(Constants.OBJECTCLASS)));
+								buffer.append(Arrays.asList((Object[]) refs[i].getProperty(Constants.OBJECTCLASS)));
 								buffer.append("\n");
 							}
 						} else {
@@ -339,6 +322,9 @@ public class Shell extends Thread implements ServiceListener {
 				} else if ("properties".equals(command)) {
 					if (args.length > 0) {
 						final ServiceReference<?> ref = getServiceRef(args[0]);
+						if (ref == null) {
+							return;
+						}
 						final String[] keys = ref.getPropertyKeys();
 						out.println("Service [" + args[0] + "]:");
 						for (int i = 0; i < keys.length; i++) {
@@ -353,16 +339,12 @@ public class Shell extends Thread implements ServiceListener {
 					}
 				} else if ("filter".equals(command)) {
 					if (args.length == 1) {
-						final ServiceReference<?>[] refs = ShellActivator.context
-								.getServiceReferences((String) null, args[0]);
+						final ServiceReference<?>[] refs = ShellActivator.context.getServiceReferences((String) null,
+								args[0]);
 						if (refs != null && refs.length > 0) {
 							for (int j = 0; j < refs.length; j++) {
-								out.println("\t["
-										+ refs[j]
-												.getProperty(Constants.SERVICE_ID)
-										+ "] "
-										+ Arrays.asList((Object[]) refs[j]
-												.getProperty(Constants.OBJECTCLASS)));
+								out.println("\t[" + refs[j].getProperty(Constants.SERVICE_ID) + "] "
+										+ Arrays.asList((Object[]) refs[j].getProperty(Constants.OBJECTCLASS)));
 							}
 						}
 					} else {
@@ -370,7 +352,11 @@ public class Shell extends Thread implements ServiceListener {
 					}
 				} else if ("install".equals(command)) {
 					if (args.length > 0) {
-						ShellActivator.context.installBundle(args[0]);
+						try {
+							ShellActivator.context.installBundle(args[0]);
+						} catch (final Exception e) {
+							err.println("Invalid bundle location or bundle content " + args[0]);
+						}
 					} else {
 						err.println("Missing argument <bundleURL>");
 					}
@@ -381,13 +367,14 @@ public class Shell extends Thread implements ServiceListener {
 						if ((bundle = getBundle(args[0])) != null) {
 							try {
 								bundle.start();
-							} catch (BundleException be) {
+							} catch (final BundleException be) {
 								be.printStackTrace();
 								final Throwable t = be.getNestedException();
 								if (t != null) {
 									System.err.println("Nested exception:");
 									t.printStackTrace();
 								}
+								return;
 							}
 							out.println(bundle.toString() + " started.");
 						}
@@ -421,7 +408,16 @@ public class Shell extends Thread implements ServiceListener {
 					final Bundle bundle;
 					if (args.length == 1) {
 						if ((bundle = getBundle(args[0])) != null) {
-							bundle.update();
+							try {
+								bundle.update();
+							} catch (final Exception e) {
+								err.println("Update failed:");
+								err.println(e.getMessage());
+								if (e.getCause() != null) {
+									err.println(e.getCause().getMessage());
+								}
+								return;
+							}
 							out.println(bundle.toString() + " updated.");
 						}
 					} else if (args.length > 1) {
@@ -437,15 +433,12 @@ public class Shell extends Thread implements ServiceListener {
 					final Bundle bundle;
 					if (args.length > 0) {
 						if ((bundle = getBundle(args[0])) != null) {
-							final Dictionary<String, String> dict = bundle
-									.getHeaders();
+							final Dictionary<String, String> dict = bundle.getHeaders();
 							final StringBuffer buffer = new StringBuffer();
 							buffer.append("Headers for " + bundle + ":\n");
-							for (Enumeration<String> en = dict.keys(); en
-									.hasMoreElements();) {
+							for (Enumeration<String> en = dict.keys(); en.hasMoreElements();) {
 								final Object key = en.nextElement();
-								buffer.append("\t" + key + " = "
-										+ dict.get(key) + "\n");
+								buffer.append("\t" + key + " = " + dict.get(key) + "\n");
 							}
 							out.println(buffer.toString());
 						}
@@ -457,10 +450,14 @@ public class Shell extends Thread implements ServiceListener {
 					if (args.length > 0) {
 						final Bundle bundle;
 						if ((bundle = getBundle(args[0])) != null) {
-							final BundleStartLevel bsl = bundle
-									.adapt(BundleStartLevel.class);
+							final BundleStartLevel bsl = bundle.adapt(BundleStartLevel.class);
 							if (args.length > 1) {
-								bsl.setStartLevel(Integer.parseInt(args[1]));
+								try {
+									bsl.setStartLevel(Integer.parseInt(args[1]));
+								} catch (final IllegalArgumentException e) {
+									err.println("Invalid start level " + args[1]);
+									return;
+								}
 							}
 							final StringBuffer buffer = new StringBuffer();
 							buffer.append("Startlevel for " + bundle + ": ");
@@ -493,8 +490,7 @@ public class Shell extends Thread implements ServiceListener {
 					running = false;
 					return;
 				} else if ("printenv".equals(command)) {
-					final String[] keys = (String[]) System.getProperties()
-							.keySet()
+					final String[] keys = (String[]) System.getProperties().keySet()
 							.toArray(new String[System.getProperties().size()]);
 					for (int i = 0; i < keys.length; i++) {
 						final String val = System.getProperty(keys[i]);
@@ -557,7 +553,6 @@ public class Shell extends Thread implements ServiceListener {
 		}
 	}
 
-
 	/**
 	 * service listener method.
 	 * 
@@ -567,13 +562,11 @@ public class Shell extends Thread implements ServiceListener {
 		final ServiceReference<?> ref = event.getServiceReference();
 		final int type = event.getType();
 		if (type == ServiceEvent.REGISTERED) {
-			final ShellCommandGroup group = (ShellCommandGroup) ShellActivator.context
-					.getService(ref);
+			final ShellCommandGroup group = (ShellCommandGroup) ShellActivator.context.getService(ref);
 			commandGroups.put(group.getGroup(), group);
 			return;
 		} else if (type == ServiceEvent.UNREGISTERING) {
-			final ShellCommandGroup group = (ShellCommandGroup) ShellActivator.context
-					.getService(ref);
+			final ShellCommandGroup group = (ShellCommandGroup) ShellActivator.context.getService(ref);
 			commandGroups.remove(group.getGroup());
 			return;
 		}

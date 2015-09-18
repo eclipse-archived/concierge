@@ -58,43 +58,46 @@ final class PackageAdminCommandGroup implements ShellCommandGroup {
 	 *      java.lang.String[])
 	 */
 	public void handleCommand(final String command, final String[] args) {
-		final String cmd = command.intern();
-		if (cmd == "packages") {
-			final Bundle bundle;
-			if (args.length > 0) {
-				if ((bundle = Shell.getBundle(args[0])) == null) {
-					return;
-				}
-			} else {
-				bundle = null;
-			}
-
-			Shell.out.println("Packages:");
-			ExportedPackage[] packages = pkgAdmin.getExportedPackages(bundle);
-			if (packages == null) {
-				Shell.out.println("Package "
-						+ Shell.getBundle(args[0]).getBundleId()
-						+ " has no exported packages.");
-			} else {
-				for (int i = 0; i < packages.length; i++) {
-					Shell.out.println(packages[i]);
-				}
-			}
-			return;
-		} else if (cmd == "refresh") {
-			final Bundle[] bundles;
-			if (args.length > 0) {
+		try {
+			final String cmd = command.intern();
+			if (cmd == "packages") {
 				final Bundle bundle;
-				if ((bundle = Shell.getBundle(args[0])) == null) {
-					return;
+				if (args.length > 0) {
+					if ((bundle = Shell.getBundle(args[0])) == null) {
+						return;
+					}
+				} else {
+					bundle = null;
 				}
-				bundles = new Bundle[] { bundle };
+
+				Shell.out.println("Packages:");
+				ExportedPackage[] packages = pkgAdmin.getExportedPackages(bundle);
+				if (packages == null) {
+					Shell.out.println(
+							"Package " + Shell.getBundle(args[0]).getBundleId() + " has no exported packages.");
+				} else {
+					for (int i = 0; i < packages.length; i++) {
+						Shell.out.println(packages[i]);
+					}
+				}
+				return;
+			} else if (cmd == "refresh") {
+				final Bundle[] bundles;
+				if (args.length > 0) {
+					final Bundle bundle;
+					if ((bundle = Shell.getBundle(args[0])) == null) {
+						return;
+					}
+					bundles = new Bundle[] { bundle };
+				} else {
+					bundles = null;
+				}
+				pkgAdmin.refreshPackages(bundles);
 			} else {
-				bundles = null;
+				Shell.err.println("Unknown command package." + cmd);
 			}
-			pkgAdmin.refreshPackages(bundles);
-		} else {
-			Shell.err.println("Unknown command package." + cmd);
+		} catch (final NumberFormatException nfe) {
+			Shell.err.println("Illegal argument " + args[0]);
 		}
 	}
 }
