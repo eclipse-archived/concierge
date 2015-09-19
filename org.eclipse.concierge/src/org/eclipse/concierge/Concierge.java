@@ -241,6 +241,11 @@ public final class Concierge extends AbstractBundle implements Framework,
 	boolean DEBUG_SERVICES;
 
 	/**
+	 * debug outputs from services ?
+	 */
+	boolean DEBUG_RESOLVER;
+
+	/**
 	 * the profile.
 	 */
 	private String PROFILE;
@@ -900,6 +905,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 				false);
 		DEBUG_SERVICES = getProperty("org.eclipse.concierge.debug.services",
 				false);
+		DEBUG_RESOLVER = getProperty("org.eclipse.concierge.debug.resolver",
+				false);
 		DEBUG_CLASSLOADING = getProperty(
 				"org.eclipse.concierge.debug.classloading", false);
 		if (getProperty("org.eclipse.concierge.debug", false)) {
@@ -910,6 +917,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 			DEBUG_PACKAGES = true;
 			DEBUG_SERVICES = true;
 			DEBUG_CLASSLOADING = true;
+			DEBUG_RESOLVER = true;
 			LOG_LEVEL = 4;
 		}
 
@@ -2536,8 +2544,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 			}, solution, unresolvedRequirements, unresolvedResources, false);
 
-			// TODO: introduce resolver debug flag
-			if (LOG_ENABLED) {
+			if (LOG_ENABLED && DEBUG_RESOLVER) {
 				logger.log(LogService.LOG_DEBUG, "Solution: " + solution);
 			}
 
@@ -2636,6 +2643,12 @@ public final class Concierge extends AbstractBundle implements Framework,
 						"Resolution failed " + unresolvedRequirements,
 						BundleException.RESOLVE_ERROR);
 			}
+
+			if (LOG_ENABLED && DEBUG_RESOLVER) {
+				logger.log(LogService.LOG_DEBUG,
+						"Unresolved Requirements: " + unresolvedRequirements);
+			}
+
 			return false;
 		} catch (final BundleException be) {
 			throw be;
@@ -4244,8 +4257,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 			if (filter == null) {
 				throw new NullPointerException();
 			}
-			return org.osgi.framework.FrameworkUtil.createFilter(filter);
-			// return RFC1960Filter.fromString(filter);
+			return RFC1960Filter.fromString(filter);
 		}
 
 		/**
@@ -4437,7 +4449,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 						throws InvalidSyntaxException {
 			checkValid();
 
-			// final Filter theFilter = FrameworkUtil.createFilter(filter);
 			final Filter theFilter = RFC1960Filter.fromString(filter);
 			final Collection<ServiceReference<?>> references;
 
@@ -4888,8 +4899,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 						throws InvalidSyntaxException {
 			this.bundle = bundle;
 			this.listener = listener;
-			// this.filter = filter == null ? null : FrameworkUtil
-			// .createFilter(filter);
 			this.removed = false;
 			this.filter = filter == null ? null
 					: RFC1960Filter.fromString(filter);

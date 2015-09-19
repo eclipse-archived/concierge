@@ -76,7 +76,7 @@ public class FrameworkUtil {
 	 * @see Filter
 	 */
 	public static Filter createFilter(String filter) throws InvalidSyntaxException {
-		return FilterImpl.newInstance(filter);
+		return org.eclipse.concierge.RFC1960Filter.fromString(filter);
 	}
 
 	/**

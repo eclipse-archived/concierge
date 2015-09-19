@@ -11,14 +11,19 @@
 
 package org.eclipse.concierge;
 
+import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Dictionary;
 import java.util.EmptyStackException;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
@@ -37,7 +42,7 @@ import org.osgi.resource.Requirement;
  * 
  * @author Jan S. Rellermeyer
  */
-final class RFC1960Filter implements Filter {
+public final class RFC1960Filter implements Filter {
 	/**
 	 * AND operator.
 	 */
@@ -77,11 +82,16 @@ final class RFC1960Filter implements Filter {
 	 * LESS (<=) operator.
 	 */
 	private static final int LESS = 4;
+	
+	/**
+	 * EQUALS with wildcard
+	 */
+	private static final int SUBSTRING = 5;
 
 	/**
 	 * the string presentations of the operators.
 	 */
-	protected static final String[] OP = { "=", "=*", "~=", ">=", "<=" };
+	protected static final String[] OP = { "=", "=*", "~=", ">=", "<=" , "="};
 
 	/**
 	 * the empty "null filter" is generated from null filter strings and matches
@@ -136,7 +146,8 @@ final class RFC1960Filter implements Filter {
 	 * @throws InvalidSyntaxException
 	 *             is the string is invalid.
 	 */
-	static Filter fromString(final String str) throws InvalidSyntaxException {
+	public static Filter fromString(final String str)
+			throws InvalidSyntaxException {
 		if (str == null) {
 			return NULL_FILTER;
 		}
@@ -156,13 +167,22 @@ final class RFC1960Filter implements Filter {
 			int comparator = -1;
 
 			final char[] chars = filterString.toCharArray();
-			stack.clear();
+			// stack.clear();
+			final BitSet esc = new BitSet(chars.length);
 
 			for (int i = 0; i < chars.length; i++) {
 
 				switch (chars[i]) {
 				case '\\':
 					// escaped character
+					if (i < chars.length) {
+						if (chars[i + 1] == '(' || chars[i + 1] == ')'
+								|| chars[i + 1] == '\\'
+								|| chars[i + 1] == '*') {
+							esc.set(i);
+						}
+					}
+
 					i++;
 					continue;
 				case '(':
@@ -234,9 +254,11 @@ final class RFC1960Filter implements Filter {
 							if (i == len - 1) {
 
 								// just a single simple filter
-								String value = filterString.substring(++oper,
-										len - 1);
-								if (value.equals("*") && comparator == EQUALS) {
+								// String value = filterString.substring(++oper,
+								// len - 1);
+								String value = value(filterString, ++oper,
+										len - 1, esc);
+								if (value.equals("*") && comparator == SUBSTRING) {
 									comparator = PRESENT;
 									value = null;
 								}
@@ -255,14 +277,15 @@ final class RFC1960Filter implements Filter {
 						final RFC1960Filter parent = (RFC1960Filter) stack
 								.peek();
 
-						String value = filterString.substring(++oper, i);
-						if (value.equals("*") && comparator == EQUALS) {
+						// String value = filterString.substring(++oper, i);
+						String value = value(filterString, ++oper, i, esc);
+						if (value.equals("*") && comparator == SUBSTRING) {
 							comparator = PRESENT;
 							value = null;
 						}
 						// link current element to parent
-						parent.operands.add(new RFC1960SimpleFilter(id,
-								comparator, value));
+						parent.operands.add(
+								new RFC1960SimpleFilter(id, comparator, value));
 
 						oper = 0;
 						last = -1;
@@ -305,17 +328,25 @@ final class RFC1960Filter implements Filter {
 								filterString);
 					}
 				case '=':
-					if (last + 1 == i) {
-						throw new InvalidSyntaxException("Missing identifier",
-								filterString);
+					if (oper == 0) {
+						if (last + 1 == i) {
+							throw new InvalidSyntaxException(
+									"Missing identifier", filterString);
+						}
+						// could also be a "=*" present production.
+						// if this is the case, it is fixed later, because
+						// value=* and value=*key would require a lookahead of
+						// at
+						// least two. (the symbol "=*" alone is ambiguous).
+						id = filterString.substring(last + 1, i).trim();
+						comparator = EQUALS;
+						oper = i;
 					}
-					// could also be a "=*" present production.
-					// if this is the case, it is fixed later, because
-					// value=* and value=*key would require a lookahead of at
-					// least two. (the symbol "=*" alone is ambiguous).
-					id = filterString.substring(last + 1, i).trim();
-					comparator = EQUALS;
-					oper = i;
+					continue;
+				case '*':
+					if (comparator == EQUALS) {
+						comparator = SUBSTRING;
+					}
 					continue;
 				}
 			}
@@ -325,6 +356,44 @@ final class RFC1960Filter implements Filter {
 			throw new InvalidSyntaxException(
 					"Filter expression not well-formed.", filterString);
 		}
+	}
+
+	private static final String value(final String str, final int start,
+			final int end, final BitSet esc) {
+		if (esc.isEmpty()) {
+			return str.substring(start, end);
+		}
+		final StringBuilder b = new StringBuilder();
+
+		int i = start;
+		int j;
+		while ((j = esc.nextSetBit(i)) > -1) {
+			b.append(str.substring(i, j));
+			i = j + 1;
+		}
+		b.append(str.substring(i, end));
+
+		return b.toString();
+	}
+
+	protected final static Map<String, ?> dict2map(
+			final Dictionary<String, ?> dict) {
+		if (dict == null) {
+			return null;
+		}
+
+		if (dict instanceof Hashtable) {
+			return (Hashtable<String, ?>) dict;
+		}
+
+		// legacy dictionary...
+		// don't care about the performance...
+		final HashMap<String, Object> map = new HashMap<String, Object>();
+		for (final Enumeration<String> e = dict.keys(); e.hasMoreElements();) {
+			final String key = e.nextElement();
+			map.put(key, dict.get(key));
+		}
+		return map;
 	}
 
 	/**
@@ -337,6 +406,7 @@ final class RFC1960Filter implements Filter {
 	 * @category Filter
 	 */
 	public boolean match(final ServiceReference<?> reference) {
+		// FIXME: should be a map...
 		try {
 			return match(((ServiceReferenceImpl<?>) reference).properties);
 		} catch (final ClassCastException ce) {
@@ -361,32 +431,32 @@ final class RFC1960Filter implements Filter {
 	 * @category Filter
 	 */
 	public boolean match(final Dictionary<String, ?> values) {
+		return matches(dict2map(values));
+	}
+
+	public boolean matches(final Map<String, ?> map) {
 		if (operator == AND_OPERATOR) {
-			final Filter[] operandArray = operands.toArray(new Filter[operands
-					.size()]);
+			final Filter[] operandArray = operands
+					.toArray(new Filter[operands.size()]);
 			for (int i = 0; i < operandArray.length; i++) {
-				if (!operandArray[i].match(values)) {
+				if (!operandArray[i].matches(map)) {
 					return false;
 				}
 			}
 			return true;
 		} else if (operator == OR_OPERATOR) {
-			final Filter[] operandArray = operands.toArray(new Filter[operands
-					.size()]);
+			final Filter[] operandArray = operands
+					.toArray(new Filter[operands.size()]);
 			for (int i = 0; i < operandArray.length; i++) {
-				if (operandArray[i].match(values)) {
+				if (operandArray[i].matches(map)) {
 					return true;
 				}
 			}
 			return false;
 		} else if (operator == NOT_OPERATOR) {
-			return !operands.get(0).match(values);
+			return !operands.get(0).matches(map);
 		}
 		throw new IllegalStateException("PARSER ERROR");
-	}
-
-	public boolean matches(final Map<String, ?> map) {
-		return match(new Hashtable<String, Object>(map));
 	}
 
 	/**
@@ -401,8 +471,8 @@ final class RFC1960Filter implements Filter {
 	 */
 	public boolean matchCase(final Dictionary<String, ?> values) {
 		if (operator == AND_OPERATOR) {
-			final Filter[] operandArray = operands.toArray(new Filter[operands
-					.size()]);
+			final Filter[] operandArray = operands
+					.toArray(new Filter[operands.size()]);
 			for (int i = 0; i < operandArray.length; i++) {
 				if (!operandArray[i].matchCase(values)) {
 					return false;
@@ -410,8 +480,8 @@ final class RFC1960Filter implements Filter {
 			}
 			return true;
 		} else if (operator == OR_OPERATOR) {
-			final Filter[] operandArray = operands.toArray(new Filter[operands
-					.size()]);
+			final Filter[] operandArray = operands
+					.toArray(new Filter[operands.size()]);
 			for (int i = 0; i < operandArray.length; i++) {
 				if (operandArray[i].matchCase(values)) {
 					return true;
@@ -436,8 +506,8 @@ final class RFC1960Filter implements Filter {
 		}
 		final StringBuffer buffer = new StringBuffer(
 				operator == AND_OPERATOR ? "(&" : "(|");
-		final Filter[] operandArray = operands.toArray(new Filter[operands
-				.size()]);
+		final Filter[] operandArray = operands
+				.toArray(new Filter[operands.size()]);
 		for (int i = 0; i < operandArray.length; i++) {
 			buffer.append(operandArray[i]);
 		}
@@ -462,8 +532,8 @@ final class RFC1960Filter implements Filter {
 			if (operands.size() != filter.operands.size()) {
 				return false;
 			}
-			final Filter[] operandArray = operands.toArray(new Filter[operands
-					.size()]);
+			final Filter[] operandArray = operands
+					.toArray(new Filter[operands.size()]);
 			final Filter[] operandArray2 = filter.operands
 					.toArray(new Filter[operands.size()]);
 			for (int i = 0; i < operandArray.length; i++) {
@@ -596,6 +666,7 @@ final class RFC1960Filter implements Filter {
 		 */
 		public boolean match(final ServiceReference<?> reference) {
 			try {
+				// FIXME: ref should use map...
 				return match(((ServiceReferenceImpl<?>) reference).properties);
 			} catch (final ClassCastException e) {
 				// so this was not instance of ServiceReferenceImpl. Someone
@@ -619,7 +690,30 @@ final class RFC1960Filter implements Filter {
 		 * @see org.osgi.framework.Filter#match(java.util.Dictionary)
 		 * @category Filter
 		 */
-		public boolean match(final Dictionary<String, ?> map) {
+		public boolean match(final Dictionary<String, ?> dict) {
+			return matches(dict2map(dict), false);
+		}
+
+		/**
+		 * check if the filter matches a dictionary of attributes. This method
+		 * is case sensitive.
+		 * 
+		 * @param map
+		 *            the attributes.
+		 * @return true if the filter matches, false otherwise.
+		 * @see org.osgi.framework.Filter#matchCase(Dictionary)
+		 * @category Filter
+		 */
+		public boolean matchCase(final Dictionary<String, ?> dict) {
+			return matches(dict2map(dict), true);
+		}
+
+		public boolean matches(final Map<String, ?> map) {
+			return matches(map, false);
+		}
+
+		private boolean matches(final Map<String, ?> map,
+				final boolean caseSensitive) {
 			if (map == null) {
 				return false;
 			}
@@ -629,15 +723,17 @@ final class RFC1960Filter implements Filter {
 			temp = map.get(id);
 
 			if (temp == null) {
+				if (caseSensitive) {
+					return false;
+				}
+
 				// no ? Then try lower case.
 				temp = map.get(id.toLowerCase());
 			}
 
 			if (temp == null) {
 				// bad luck, try case insensitive matching of all keys
-				for (final Enumeration<String> keys = map.keys(); keys
-						.hasMoreElements();) {
-					final String key = keys.nextElement();
+				for (final String key : map.keySet()) {
 					if (key.equalsIgnoreCase(id)) {
 						temp = map.get(key);
 						break;
@@ -669,8 +765,8 @@ final class RFC1960Filter implements Filter {
 					if (array.length == 0) {
 						return false;
 					}
-					final String val = comparator == APPROX ? stripWhitespaces(value)
-							: value;
+					final String val = comparator == APPROX
+							? stripWhitespaces(value) : value;
 					for (int i = 0; i < array.length; i++) {
 						if (compareString(val, comparator, array[i])) {
 							return true;
@@ -679,16 +775,15 @@ final class RFC1960Filter implements Filter {
 					return false;
 				} else if (attr instanceof Boolean) {
 					return (comparator == EQUALS || comparator == APPROX)
-							&& ((Boolean) attr).equals(Boolean.valueOf(value
-									.trim()));
+							&& ((Boolean) attr)
+									.equals(Boolean.valueOf(value.trim()));
 				} else if (attr instanceof Character) {
 					final String trimmed = value.trim();
-					return trimmed.length() == 1 ? compareTyped(new Character(
-							trimmed.charAt(0)), comparator, (Character) attr)
-							: trimmed.length() == 0
-									&& Character
-											.isWhitespace(((Character) attr)
-													.charValue());
+					return trimmed.length() == 1
+							? compareTyped(new Character(trimmed.charAt(0)),
+									comparator, (Character) attr)
+							: trimmed.length() == 0 && Character.isWhitespace(
+									((Character) attr).charValue());
 				} else if (attr instanceof Collection) {
 					final Collection<?> col = (Collection<?>) attr;
 					final Object[] obj = col.toArray();
@@ -699,99 +794,11 @@ final class RFC1960Filter implements Filter {
 					for (int i = 0; i < Array.getLength(attr); i++) {
 						final Object obj = Array.get(attr, i);
 						if (obj instanceof Number
-								&& compareNumber(value, comparator,
+								&& compareNumber(value.trim(), comparator,
 										(Number) obj)
-								|| obj instanceof Character
-								&& compareTyped(new Character(value.trim()
-										.charAt(0)), comparator,
-										(Character) obj)
-								|| compareReflective(value, comparator, obj)) {
-							return true;
-						}
-					}
-					return false;
-				} else {
-					return compareReflective(value, comparator, attr);
-				}
-			} catch (final Throwable t) {
-				return false;
-			}
-		}
-
-		public boolean matches(final Map<String, ?> map) {
-			return match(new Hashtable<String, Object>(map));
-		}
-
-		/**
-		 * check if the filter matches a dictionary of attributes. This method
-		 * id case sensitive.
-		 * 
-		 * @param map
-		 *            the attributes.
-		 * @return true if the filter matches, false otherwise.
-		 * @see org.osgi.framework.Filter#matchCase(Dictionary)
-		 * @category Filter
-		 */
-		public boolean matchCase(final Dictionary<String, ?> map) {
-			Object temp = null;
-
-			temp = map.get(id);
-
-			if (temp == null) {
-				return false;
-			}
-
-			// are we just checking for presence ? Then we are done ...
-			if (comparator == PRESENT) {
-				return true;
-			}
-
-			final Object attr = temp;
-
-			try {
-				if (attr instanceof String) {
-					return compareStringCase(value, comparator, (String) attr);
-				} else if (attr instanceof Number) {
-					// all the numbers checkings run a lot faster when compared
-					// in a primitive typed way
-					return compareNumber(value.trim(), comparator,
-							(Number) attr);
-				} else if (attr instanceof String[]) {
-					final String[] array = (String[]) attr;
-					if (array.length == 0) {
-						return false;
-					}
-					final String val = comparator == APPROX ? stripWhitespaces(value)
-							: value;
-					for (int i = 0; i < array.length; i++) {
-						if (compareStringCase(val, comparator, array[i])) {
-							return true;
-						}
-					}
-					return false;
-				} else if (attr instanceof Boolean) {
-					return (comparator == EQUALS || comparator == APPROX)
-							&& ((Boolean) attr).equals(Boolean.valueOf(value));
-				} else if (attr instanceof Character) {
-					return value.length() == 1 ? compareTyped(new Character(
-							value.charAt(0)), comparator, (Character) attr)
-							: false;
-				} else if (attr instanceof Collection) {
-					final Collection<?> col = (Collection<?>) attr;
-					final Object[] obj = col.toArray();
-					return compareArrayCase(value, comparator, obj);
-				} else if (attr instanceof Object[]) {
-					return compareArrayCase(value, comparator, (Object[]) attr);
-				} else if (attr.getClass().isArray()) {
-					for (int i = 0; i < Array.getLength(attr); i++) {
-						final Object obj = Array.get(attr, i);
-						if (obj instanceof Number
-								&& compareNumber(value, comparator,
-										(Number) obj)
-								|| obj instanceof Character
-								&& compareTyped(new Character(value.trim()
-										.charAt(0)), comparator,
-										(Character) obj)
+								|| obj instanceof Character && compareTyped(
+										new Character(value.trim().charAt(0)),
+										comparator, (Character) obj)
 								|| compareReflective(value, comparator, obj)) {
 							return true;
 						}
@@ -818,46 +825,14 @@ final class RFC1960Filter implements Filter {
 		 */
 		private static boolean compareString(final String val,
 				final int comparator, final String attr) {
-			final String value = comparator == APPROX ? stripWhitespaces(val)
-					.toLowerCase() : val;
-			final String attribute = comparator == APPROX ? stripWhitespaces(
-					attr).toLowerCase() : attr;
+			final String value = comparator == APPROX
+					? stripWhitespaces(val).toLowerCase() : val;
+			final String attribute = comparator == APPROX
+					? stripWhitespaces(attr).toLowerCase() : attr;
 			switch (comparator) {
 			case APPROX:
 			case EQUALS:
-				return RFC1960Filter.stringCompare(value.toCharArray(), 0,
-						attribute.toCharArray(), 0) == 0;
-			case GREATER:
-				return RFC1960Filter.stringCompare(value.toCharArray(), 0,
-						attribute.toCharArray(), 0) <= 0;
-			case LESS:
-				return RFC1960Filter.stringCompare(value.toCharArray(), 0,
-						attribute.toCharArray(), 0) >= 0;
-			default:
-				throw new IllegalStateException("Found illegal comparator.");
-			}
-		}
-
-		/**
-		 * compare a string. Case sensitive
-		 * 
-		 * @param val
-		 *            the filter value.
-		 * @param comparator
-		 *            the comparator.
-		 * @param attr
-		 *            the attribute.
-		 * @return true, iff matches.
-		 */
-		private static boolean compareStringCase(final String val,
-				final int comparator, final String attr) {
-			final String value = comparator == APPROX ? stripWhitespaces(val)
-					: val;
-			final String attribute = comparator == APPROX ? stripWhitespaces(attr)
-					: attr;
-			switch (comparator) {
-			case APPROX:
-			case EQUALS:
+			case SUBSTRING:
 				return RFC1960Filter.stringCompare(value.toCharArray(), 0,
 						attribute.toCharArray(), 0) == 0;
 			case GREATER:
@@ -1023,38 +998,6 @@ final class RFC1960Filter implements Filter {
 		}
 
 		/**
-		 * compare arrays. Case sensitive.
-		 * 
-		 * @param value
-		 *            the filter value.
-		 * @param comparator
-		 *            the comparator.
-		 * @param array
-		 *            the array.
-		 * @return true, iff matches.
-		 */
-		private static boolean compareArrayCase(final String value,
-				final int comparator, final Object[] array) {
-			for (int i = 0; i < array.length; i++) {
-				final Object obj = array[i];
-				if (obj instanceof String) {
-					if (compareStringCase(value, comparator, (String) obj)) {
-						return true;
-					}
-				} else if (obj instanceof Number) {
-					if (compareNumber(value.trim(), comparator, (Number) obj)) {
-						return true;
-					}
-				} else {
-					if (compareReflective(value, comparator, obj)) {
-						return true;
-					}
-				}
-			}
-			return false;
-		}
-
-		/**
 		 * compare in a generic way by using reflection to create a
 		 * corresponding object from the filter values string and compare this
 		 * object with the attribute.
@@ -1069,18 +1012,41 @@ final class RFC1960Filter implements Filter {
 		 */
 		private static boolean compareReflective(final String val,
 				final int comparator, final Object attr) {
-			final Class<?> clazz = attr.getClass();
+			if (comparator == SUBSTRING) {
+				return false;
+			}
+			
 			Object typedVal = null;
+
+			// check if there is a valueOf...
 			try {
-				final Constructor<?> constr = clazz
-						.getConstructor(String.class);
-				typedVal = constr.newInstance(new Object[] { val });
-				if (attr instanceof Comparable) {
-					return compareTyped(typedVal, comparator,
-							(Comparable<?>) attr);
-				} else {
-					return typedVal.equals(attr);
+				final Method m = attr.getClass().getDeclaredMethod("valueOf",
+						String.class);
+				if (Modifier.isStatic(m.getModifiers()) && attr.getClass()
+						.isAssignableFrom(m.getReturnType())) {
+					if (!((AccessibleObject) m).isAccessible()) {
+						m.setAccessible(true);
+					}
+					typedVal = m.invoke(null, val);
 				}
+			} catch (final Exception e) {
+				// ignore and move on
+			}
+
+			try {
+				if (typedVal == null) {
+					// check for constructor...
+					final Constructor<?> constr = attr.getClass()
+							.getConstructor(String.class);
+					if (!((AccessibleObject) constr).isAccessible()) {
+						constr.setAccessible(true);
+					}
+					typedVal = constr.newInstance(new Object[] { val });
+				}
+
+				return (attr instanceof Comparable) ? compareTyped(typedVal,
+						comparator, (Comparable<?>) attr)
+						: typedVal.equals(attr);
 			} catch (final Exception didNotWork) {
 				return false;
 			}
@@ -1104,8 +1070,24 @@ final class RFC1960Filter implements Filter {
 		 * @category Object
 		 */
 		public String toString() {
-			return "(" + id + OP[comparator] + (value == null ? "" : value)
-					+ ")";
+			return "(" + id + OP[comparator]
+					+ (value == null ? "" : escape(value)) + ")";
+		}
+
+		private final static String escape(final String s) {
+			final StringBuilder b = new StringBuilder();
+			final char[] chars = s.toCharArray();
+			for (int i = 0; i < chars.length; i++) {
+				switch (chars[i]) {
+				case '(':
+				case ')':
+				case '\\':
+					b.append('\\');
+				default:
+					b.append(chars[i]);
+				}
+			}
+			return b.toString();
 		}
 
 		/**
@@ -1144,7 +1126,7 @@ final class RFC1960Filter implements Filter {
 	static List<Capability> filterWithIndex(final Requirement requirement,
 			final String filterStr,
 			final Concierge.CapabilityRegistry capabilityIndex)
-			throws InvalidSyntaxException {
+					throws InvalidSyntaxException {
 		final Set<String> values = new HashSet<String>();
 
 		final String namespace = requirement.getNamespace();
@@ -1160,15 +1142,15 @@ final class RFC1960Filter implements Filter {
 			if (values.size() != 1) {
 				return Collections.emptyList();
 			}
-			return capabilityIndex.getByValue(namespace, values.iterator()
-					.next());
+			return capabilityIndex.getByValue(namespace,
+					values.iterator().next());
 		} else if (prefilterResult == NECESSARY) {
 			// FIXME: check
 			if (values.size() != 1) {
 				candidates = capabilityIndex.getAll(namespace);
 			} else {
-				candidates = capabilityIndex.getByKey(namespace, values
-						.iterator().next());
+				candidates = capabilityIndex.getByKey(namespace,
+						values.iterator().next());
 			}
 		} else {
 			candidates = capabilityIndex.getAll(namespace);
@@ -1181,9 +1163,8 @@ final class RFC1960Filter implements Filter {
 		final ArrayList<Capability> matches = new ArrayList<Capability>();
 
 		for (final Capability cap : candidates) {
-			if (filter.matches(cap.getAttributes())
-					&& Concierge.matches0(namespace, requirement, cap,
-							filterStr)) {
+			if (filter.matches(cap.getAttributes()) && Concierge
+					.matches0(namespace, requirement, cap, filterStr)) {
 				matches.add(cap);
 			}
 		}
@@ -1195,13 +1176,15 @@ final class RFC1960Filter implements Filter {
 			final Concierge.CapabilityRegistry capabilities, final int state,
 			final boolean inNegation, final Set<String> values) {
 		int newState = state;
+
 		if (filter instanceof RFC1960Filter) {
 			final RFC1960Filter f = (RFC1960Filter) filter;
 			final int operator = f.operator;
 			if (f.operands.size() == 1) {
 				return prefilter(namespace, f.operands.get(0), capabilities,
-						state, operator == NOT_OPERATOR ? !inNegation
-								: inNegation, values);
+						state,
+						operator == NOT_OPERATOR ? !inNegation : inNegation,
+						values);
 			}
 
 			for (final Filter next : f.operands) {
@@ -1239,4 +1222,5 @@ final class RFC1960Filter implements Filter {
 			return INSUFFICIENT;
 		}
 	}
+
 }
