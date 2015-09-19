@@ -3792,7 +3792,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 	@SuppressWarnings("deprecation")
 	void notifyServiceListeners(final int state,
 			final ServiceReference<?> reference,
-			final Dictionary<String, ?> oldProperties) {
+			final Map<String, ?> oldProperties) {
 		if (serviceListeners.isEmpty()) {
 			return;
 		}
@@ -3882,7 +3882,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 			}
 			if (entries[i].listener instanceof UnfilteredServiceListener
 					|| entries[i].filter == null
-					|| entries[i].filter.match(ref.properties)) {
+					|| entries[i].filter.matches(ref.properties)) {
 				final ServiceListener listener = entries[i].listener;
 				if (SECURITY_ENABLED) {
 					AccessController
@@ -3896,7 +3896,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 					listener.serviceChanged(event);
 				}
 			} else if (state == ServiceEvent.MODIFIED) {
-				if (entries[i].filter.match(oldProperties)) {
+				if (entries[i].filter.matches(oldProperties)) {
 					entries[i].listener.serviceChanged(endmatchEvent);
 				}
 			}

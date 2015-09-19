@@ -14,7 +14,6 @@ import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.Map;
 
 import org.osgi.framework.Bundle;
@@ -48,7 +47,7 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 	/**
 	 * the service properties.
 	 */
-	final Hashtable<String, Object> properties;
+	final Map<String, Object> properties;
 
 	/**
 	 * the bundles that are using the service.
@@ -108,7 +107,7 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 		this.framework = framework;
 		this.bundle = bundle;
 		this.service = service;
-		this.properties = new Hashtable<String, Object>(props == null ? 2
+		this.properties = new HashMap<String, Object>(props == null ? 2
 				: props.size() + 2);
 		if (props != null) {
 			for (final Enumeration<String> keys = props.keys(); keys
@@ -193,9 +192,7 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 		}
 
 		// bad luck, try case insensitive matching of the keys
-		for (final Enumeration<String> keys = properties.keys(); keys
-				.hasMoreElements();) {
-			final String k = keys.nextElement();
+		for (final String k : properties.keySet()) {
 			if (k.equalsIgnoreCase(key)) {
 				result = properties.get(k);
 				break;
@@ -483,14 +480,12 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 						"Service has already been uninstalled");
 			}
 
-			final Hashtable<String, Object> oldProps = new Hashtable<String, Object>(
+			final Map<String, Object> oldProps = new HashMap<String, Object>(
 					properties);
 
 			final HashMap<String, String> cases = new HashMap<String, String>(
 					properties.size());
-			for (final Enumeration<String> keys = properties.keys(); keys
-					.hasMoreElements();) {
-				final String key = keys.nextElement();
+			for (final String key : properties.keySet()) {
 				final String lower = key.toLowerCase();
 				if (cases.containsKey(lower)) {
 					throw new IllegalArgumentException(

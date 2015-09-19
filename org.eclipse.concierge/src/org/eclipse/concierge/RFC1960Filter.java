@@ -82,7 +82,7 @@ public final class RFC1960Filter implements Filter {
 	 * LESS (<=) operator.
 	 */
 	private static final int LESS = 4;
-	
+
 	/**
 	 * EQUALS with wildcard
 	 */
@@ -91,7 +91,7 @@ public final class RFC1960Filter implements Filter {
 	/**
 	 * the string presentations of the operators.
 	 */
-	protected static final String[] OP = { "=", "=*", "~=", ">=", "<=" , "="};
+	protected static final String[] OP = { "=", "=*", "~=", ">=", "<=", "=" };
 
 	/**
 	 * the empty "null filter" is generated from null filter strings and matches
@@ -258,7 +258,8 @@ public final class RFC1960Filter implements Filter {
 								// len - 1);
 								String value = value(filterString, ++oper,
 										len - 1, esc);
-								if (value.equals("*") && comparator == SUBSTRING) {
+								if (value.equals("*")
+										&& comparator == SUBSTRING) {
 									comparator = PRESENT;
 									value = null;
 								}
@@ -406,18 +407,17 @@ public final class RFC1960Filter implements Filter {
 	 * @category Filter
 	 */
 	public boolean match(final ServiceReference<?> reference) {
-		// FIXME: should be a map...
 		try {
-			return match(((ServiceReferenceImpl<?>) reference).properties);
+			return matches(((ServiceReferenceImpl<?>) reference).properties);
 		} catch (final ClassCastException ce) {
 			// so this was not instance of ServiceReferenceImpl. Someone
 			// must have created an own implementation.
-			final Dictionary<String, Object> dict = new Hashtable<String, Object>();
+			final HashMap<String, Object> dict = new HashMap<String, Object>();
 			final String[] keys = reference.getPropertyKeys();
 			for (int i = 0; i < keys.length; i++) {
 				dict.put(keys[i], reference.getProperty(keys[i]));
 			}
-			return match(dict);
+			return matches(dict);
 		}
 	}
 
@@ -666,18 +666,17 @@ public final class RFC1960Filter implements Filter {
 		 */
 		public boolean match(final ServiceReference<?> reference) {
 			try {
-				// FIXME: ref should use map...
-				return match(((ServiceReferenceImpl<?>) reference).properties);
+				return matches(
+						((ServiceReferenceImpl<?>) reference).properties);
 			} catch (final ClassCastException e) {
 				// so this was not instance of ServiceReferenceImpl. Someone
-				// must
-				// have created an own implementation.
-				final Dictionary<String, Object> dict = new Hashtable<String, Object>();
+				// must have created an own implementation.
+				final Map<String, Object> dict = new HashMap<String, Object>();
 				final String[] keys = reference.getPropertyKeys();
 				for (int i = 0; i < keys.length; i++) {
 					dict.put(keys[i], reference.getProperty(keys[i]));
 				}
-				return match(dict);
+				return matches(dict);
 			}
 		}
 
@@ -1015,7 +1014,7 @@ public final class RFC1960Filter implements Filter {
 			if (comparator == SUBSTRING) {
 				return false;
 			}
-			
+
 			Object typedVal = null;
 
 			// check if there is a valueOf...
