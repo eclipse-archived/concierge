@@ -4001,11 +4001,12 @@ public final class Concierge extends AbstractBundle implements Framework,
 		final BundleImpl bundle = new BundleImpl(this, context, location,
 				nextBundleID++, in);
 
+		bundle.install();
+		
 		// notify the listeners
 		notifyBundleListeners(BundleEvent.INSTALLED, bundle,
 				context.getBundle());
 
-		bundle.install();
 		storeMetadata();
 		return bundle;
 	}
