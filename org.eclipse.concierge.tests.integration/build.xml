@@ -1,5 +1,5 @@
 <project name="org.eclipse.concierge.tests.integration" default="jar">
-	<property name="project.version" value="1.0.0.alpha1" />
+	<property name="project.version" value="1.0.0.M2" />
 
 	<property name="src.dir" value="src" />
 	<property name="build.dir" value="build" />

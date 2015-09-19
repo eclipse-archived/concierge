@@ -272,7 +272,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 	/**
 	 * Version displayed upon startup and returned by System Bundle
 	 */
-	private static final String FRAMEWORK_VERSION = "5.0.0.alpha";
+	private static final String FRAMEWORK_VERSION = "1.0.0.M2";
 
 	static final HashSet<String> SUPPORTED_EE = new HashSet<String>();
 
