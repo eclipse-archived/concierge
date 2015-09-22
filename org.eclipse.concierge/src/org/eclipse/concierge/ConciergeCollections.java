@@ -1,3 +1,16 @@
+/*******************************************************************************
+ * Copyright (c) 2013 IBM Corporation and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * and Eclipse Distribution License v1.0 which accompany this distribution.
+ * The Eclipse Public License is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * and the Eclipse Distribution License is available at
+ * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * Contributors:
+ *     Jan S. Rellermeyer, IBM Research - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.concierge;
 
 import java.util.AbstractSet;
@@ -88,7 +101,8 @@ public interface ConciergeCollections {
 			}
 		}
 
-		public void insertAll(final K key, final Collection<? extends V> values) {
+		public void insertAll(final K key,
+				final Collection<? extends V> values) {
 			List<V> list = map.get(key);
 			if (list == null) {
 				list = new ArrayList<V>();
@@ -303,8 +317,8 @@ public interface ConciergeCollections {
 
 	}
 
-	public static class ParseResult extends
-			Tuple<HashMap<String, String>, HashMap<String, Object>> {
+	public static class ParseResult
+			extends Tuple<HashMap<String, String>, HashMap<String, Object>> {
 
 		public ParseResult(final HashMap<String, String> directives,
 				final HashMap<String, Object> attributes) {

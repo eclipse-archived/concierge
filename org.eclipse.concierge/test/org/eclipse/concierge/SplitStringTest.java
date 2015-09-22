@@ -1,3 +1,16 @@
+/*******************************************************************************
+ * Copyright (c) 2014 IBM Corporation and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * and Eclipse Distribution License v1.0 which accompany this distribution.
+ * The Eclipse Public License is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * and the Eclipse Distribution License is available at
+ * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * Contributors:
+ *     Jan S. Rellermeyer, IBM Research
+ *******************************************************************************/
 package org.eclipse.concierge;
 
 import static org.junit.Assert.assertEquals;
@@ -19,8 +32,8 @@ public class SplitStringTest {
 	private static final Pattern SPLIT_AT_COMMA = Pattern
 			.compile(",\\s*(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
 
-	private static final Pattern SPLIT_AT_COMMA_PLUS = Pattern
-			.compile("(?<!\\\\),\\s*(?=(?:[^\"]*((?<!\\\\)\")[^\"]*((?<!\\\\)\"))*[^\"]*$)");
+	private static final Pattern SPLIT_AT_COMMA_PLUS = Pattern.compile(
+			"(?<!\\\\),\\s*(?=(?:[^\"]*((?<!\\\\)\")[^\"]*((?<!\\\\)\"))*[^\"]*$)");
 
 	@Before
 	public void setUp() throws Exception {
@@ -41,13 +54,13 @@ public class SplitStringTest {
 		assertEquals(res[1],
 				"test; filter:=\"(&(version>=4.1)(string~=stringtest_1))\"");
 		assertEquals(res[2], "test; filter:=\"(&(version>=10.1)(long>=99))\"");
-		assertEquals(res[3], "test; filter:=\"(&(version>=1.1)(double>=1.0))\"");
+		assertEquals(res[3],
+				"test; filter:=\"(&(version>=1.1)(double>=1.0))\"");
 		assertEquals(res[4],
 				"test; filter:=\"(&(version>=2.2)(versions=9.0)(versions=1)(versions=1.2))\"");
 		assertEquals(res[5],
 				"test; filter:=\"(&(version>=1.10)(longs=1)(longs=2)(longs=3)(longs=4))\"");
-		assertEquals(
-				res[6],
+		assertEquals(res[6],
 				"test; filter:=\"(&(version>=1.1)(doubles=1.001)(doubles=1.002)(doubles=1.00002)(doubles<=1.3))\"");
 		assertEquals(res[7],
 				"test; filter:=\"(&(version>=10.1)(strings~=aaa)(strings~=bbb)(strings=ccc))\"");
@@ -136,8 +149,8 @@ public class SplitStringTest {
 		// assertTrue(time2 < time1);
 
 		System.out.println("difference (abs): " + (time2 - time1));
-		System.out.println("difference (%): " + (time2 - time1)
-				/ (float) Math.max(time1, time2) * 100);
+		System.out.println("difference (%): "
+				+ (time2 - time1) / (float) Math.max(time1, time2) * 100);
 	}
 
 	// test with quote support
@@ -171,8 +184,8 @@ public class SplitStringTest {
 		assertTrue(time2 < time1);
 
 		System.out.println("difference (abs): " + (time2 - time1));
-		System.out.println("difference (%): " + (time2 - time1)
-				/ (float) Math.max(time1, time2) * 100);
+		System.out.println("difference (%): "
+				+ (time2 - time1) / (float) Math.max(time1, time2) * 100);
 	}
 
 	// test with quote support and escaping
@@ -207,8 +220,8 @@ public class SplitStringTest {
 		assertTrue(time2 < time1);
 
 		System.out.println("difference (abs): " + (time2 - time1));
-		System.out.println("difference (%): " + (time2 - time1)
-				/ (float) Math.max(time1, time2) * 100);
+		System.out.println("difference (%): "
+				+ (time2 - time1) / (float) Math.max(time1, time2) * 100);
 	}
 
 	@Test
@@ -244,8 +257,8 @@ public class SplitStringTest {
 		assertTrue(time2 < time1);
 
 		System.out.println("difference (abs): " + (time2 - time1));
-		System.out.println("difference (%): " + (time2 - time1)
-				/ (float) Math.max(time1, time2) * 100);
+		System.out.println("difference (%): "
+				+ (time2 - time1) / (float) Math.max(time1, time2) * 100);
 	}
 
 	static String[] splitString(String values, final String delimiter)
