@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Eclipse Concierge Clock Client Example
+Bundle-SymbolicName: org.eclipse.concierge.example.client.clock
+Bundle-Version: 1.0.0.qualifier
+Bundle-Activator: org.eclipse.concierge.example.client.clock.Activator
+Bundle-Vendor: Eclipse.org/Concierge
+Export-Package: org.eclipse.concierge.example.client.clock
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
+Import-Package: org.eclipse.concierge.example.service.clock;version="[1.0.0,2.0.0)",
+ org.osgi.framework;version="1.3.0"
+Bundle-License: http://www.eclipse.org/legal/epl-v10.html, http://www.eclipse.org/org/documents/edl-v10.php
