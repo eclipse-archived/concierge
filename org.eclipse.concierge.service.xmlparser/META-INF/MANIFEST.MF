@@ -6,6 +6,6 @@ Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: org.eclipse.concierge.service.xmlparser.internal.Activator
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-Vendor: Eclipse.org/Concierge
-Bundle-License: http://www.eclipse.org/legal/epl-v10.html
+Bundle-License: http://www.eclipse.org/legal/epl-v10.html, http://www.eclipse.org/org/documents/edl-v10.php
 Import-Package: javax.xml.parsers,
  org.osgi.framework;version="1.7.0"
