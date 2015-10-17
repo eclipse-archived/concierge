@@ -142,6 +142,11 @@ public final class Concierge extends AbstractBundle implements Framework,
 	private static final String BUNDLE_REQUIREDEXECUTIONENVIRONMENT = Constants.BUNDLE_REQUIREDEXECUTIONENVIRONMENT;
 
 	private static final String BUNDLE_SYMBOLIC_NAME = "org.eclipse.concierge";
+	
+	/**
+	 * Version displayed upon startup and returned by System Bundle
+	 */
+	private static final String FRAMEWORK_VERSION = "5.0.0.RC1";
 
 	@SuppressWarnings("deprecation")
 	private static Class<?> SERVICE_EVENT_HOOK_CLASS = org.osgi.framework.hooks.service.EventHook.class;
@@ -271,11 +276,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 	private Hashtable<String, String> headers;
 
 	private final Version version = new Version("1.5.0");
-
-	/**
-	 * Version displayed upon startup and returned by System Bundle
-	 */
-	private static final String FRAMEWORK_VERSION = "1.0.0.M2";
 
 	static final HashSet<String> SUPPORTED_EE = new HashSet<String>();
 
@@ -3020,7 +3020,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 					// skip fragment requirements
 					continue;
 				}
-
+				
 				// find candidates for the requirement
 				final Collection<Capability> candidates = context
 						.findProviders(requirement);
@@ -3063,7 +3063,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 								(BundleRevision) capability.getResource(),
 								solution);
 
-						// dont' trigger resolution of the host
+						// don't trigger resolution of the host
 						continue;
 					}
 
@@ -3104,8 +3104,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 								final BundleWiring wiring = cap.getResource()
 										.getWiring();
 								// TODO: what does it mean that wiring is null
-								// at
-								// this point???
+								// at this point???
 								if (wiring != null && wiring.isInUse()) {
 									final List<BundleWire> wires = wiring
 											.getRequiredWires(
@@ -4005,7 +4004,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 				nextBundleID++, in);
 
 		bundle.install();
-		
+
 		// notify the listeners
 		notifyBundleListeners(BundleEvent.INSTALLED, bundle,
 				context.getBundle());

@@ -1,8 +1,8 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Eclipse Concierge Clock Client Example
+Bundle-Name: Eclipse Concierge Clock Client Example (Incubation)
 Bundle-SymbolicName: org.eclipse.concierge.example.client.clock
-Bundle-Version: 1.0.0.qualifier
+Bundle-Version: 5.0.0.RC1-qualifier
 Bundle-Activator: org.eclipse.concierge.example.client.clock.Activator
 Bundle-Vendor: Eclipse.org/Concierge
 Export-Package: org.eclipse.concierge.example.client.clock

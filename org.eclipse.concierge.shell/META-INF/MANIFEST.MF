@@ -1,8 +1,8 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-SymbolicName: org.eclipse.concierge.shell
-Bundle-Name: Eclipse Concierge Shell
-Bundle-Version: 1.0.0.qualifier
+Bundle-Name: Eclipse Concierge Shell (Incubation)
+Bundle-Version: 5.0.0.RC1-qualifier
 Bundle-Activator: org.eclipse.concierge.shell.ShellActivator
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-Vendor: Eclipse.org/Concierge

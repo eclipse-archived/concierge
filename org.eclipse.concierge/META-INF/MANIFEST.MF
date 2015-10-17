@@ -2,8 +2,8 @@ Manifest-Version: 1.0
 Main-Class: org.eclipse.concierge.Concierge
 Bundle-ManifestVersion: 2
 Bundle-SymbolicName: org.eclipse.concierge
-Bundle-Name: Eclipse Concierge Framework
-Bundle-Version: 1.0.0.M2-qualifier
+Bundle-Name: Eclipse Concierge Framework (Incubation)
+Bundle-Version: 5.0.0.RC1-qualifier
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-Activator: org.eclipse.concierge.Concierge
 Bundle-Vendor: Eclipse.org/Concierge
