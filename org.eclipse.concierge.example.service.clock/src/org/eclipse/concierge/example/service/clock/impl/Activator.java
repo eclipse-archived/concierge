@@ -22,14 +22,12 @@ import org.osgi.framework.BundleContext;
 
 public class Activator implements BundleActivator {
 
-	@Override
 	public void start(final BundleContext context) throws Exception {
 		final Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(ClockService.IMPLEMENTATION, ClockService.SIMPLE_IMPL);
 		context.registerService(ClockService.class, new ClockServiceImpl(), properties);
 	}
 
-	@Override
 	public void stop(final BundleContext context) throws Exception {
 
 	}

@@ -12,7 +12,6 @@ public class Activator implements BundleActivator {
 
 	private ClockClient client;
 
-	@Override
 	public void start(final BundleContext context) throws Exception {
 		final Collection<ServiceReference<ClockService>> clockRefs = context.getServiceReferences(ClockService.class,
 				"(" + ClockService.IMPLEMENTATION + "=" + ClockService.SIMPLE_IMPL + ")");
@@ -24,7 +23,6 @@ public class Activator implements BundleActivator {
 		}
 	}
 
-	@Override
 	public void stop(final BundleContext context) throws Exception {
 		client.stopClient();
 	}
