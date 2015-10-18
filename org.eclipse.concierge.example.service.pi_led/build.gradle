@@ -1,0 +1,14 @@
+
+publishing {
+    publications {
+   	    mavenJava(MavenPublication) {
+	   	    groupId 'org.eclipse.concierge'
+            artifactId 'org.eclipse.concierge.example.service.pi_led'
+            version version
+       	    from components.java
+	       	artifact sourceJar {
+                classifier "sources"
+            }
+       	}
+   	}
+}
