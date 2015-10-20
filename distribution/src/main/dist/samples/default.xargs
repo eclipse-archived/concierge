@@ -4,5 +4,5 @@
 -Dorg.osgi.framework.storage.clean=onFirstInit
 
 # load shell bundle
--istart bundles/org.eclipse.concierge.shell-1.0.0.*.jar
+-istart bundles/org.eclipse.concierge.shell-5.0.0.*.jar
 
