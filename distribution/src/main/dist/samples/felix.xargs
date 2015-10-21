@@ -3,16 +3,21 @@
 # uncomment to clean storage first
 # -Dorg.osgi.framework.storage.clean=onFirstInit
 
-# use our own profile
+# use a separate profile
 -Dorg.eclipse.concierge.profile=felix
 
 # repos to load bundles from
--Drepo=http://www.us.apache.org/dist/felix
+-Drepo=https://archive.apache.org/dist/felix/
 
 # load bundles
 -istart bundles/org.eclipse.concierge.shell-5.0.0.*.jar
--istart ${repo}/org.apache.felix.log-1.0.1.jar
--istart ${repo}/org.apache.felix.scr-2.0.2.jar
--istart ${repo}/org.apache.felix.eventadmin-1.4.4.jar
--istart ${repo}/org.apache.felix.metatype-1.1.2.jar
--istart ${repo}/org.apache.felix.configadmin-1.8.8.jar
+-istart ${repo}/org.apache.felix.scr-1.8.0.jar
+-istart ${repo}/org.apache.felix.eventadmin-1.4.2.jar
+-install ${repo}/org.apache.felix.metatype-1.0.12.jar
+-install ${repo}/org.apache.felix.configadmin-1.8.4.jar
+
+-level 1
+-start ${repo}/org.apache.felix.metatype-1.0.12.jar
+
+-level 2
+-start ${repo}/org.apache.felix.configadmin-1.8.4.jar
