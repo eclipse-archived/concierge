@@ -370,8 +370,7 @@ public class XargsFileLauncher {
 			for (int i = 0; i < foundFiles.length; i++) {
 				sortedFiles.add(foundFiles[i].getPath());
 			}
-			Collections.sort(sortedFiles);
-			Collections.reverse(sortedFiles);
+			Collections.sort(sortedFiles, Collections.reverseOrder());
 			return sortedFiles.get(0);
 		}
 		return bundleName;
