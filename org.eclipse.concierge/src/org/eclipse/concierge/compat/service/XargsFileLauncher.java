@@ -44,6 +44,8 @@ import org.osgi.framework.wiring.BundleRevision;
 
 public class XargsFileLauncher {
 
+	protected static final boolean WIN = System.getProperty("os.name").toLowerCase().startsWith("win");
+	
 	/**
 	 * process an init.xargs-style file.
 	 * 
@@ -351,8 +353,11 @@ public class XargsFileLauncher {
 						bundleName.lastIndexOf("*"));
 				final String postStar = bundleName.substring(bundleName
 						.lastIndexOf("*") + 1);
-				return pathname.getPath().startsWith(preStar)
-						&& pathname.getPath().endsWith(postStar);
+				
+				final String path = WIN ? pathname.getPath().replace('\\', '/') : pathname.getPath();
+				
+				return path.startsWith(preStar)
+						&& path.endsWith(postStar);
 			}
 		};
 		final File foundFiles[] = dir.listFiles(filter);
