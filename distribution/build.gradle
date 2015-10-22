@@ -25,7 +25,7 @@ distTar.dependsOn markdownCopy, markdownCopyContributor
 
 distributions {
 	main {
-		baseName 'concierge'
+		baseName 'concierge-incubation'
 		contents {
 			into('framework') {
                 from { project(':org.eclipse.concierge').jar }

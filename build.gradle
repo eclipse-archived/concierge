@@ -34,25 +34,51 @@ plugins {
 apply plugin: 'org.akhikhl.wuff.eclipse-repository'
 apply plugin: 'ch.netzwerg.release'
 
-def qualifier = buildTime()
+def qualifier = getQualifier()
+
+// qualifier can be used to replace in Bundle-Version
+// for release candidates (RC) this is the qualifier
+// otherwise use the build time
+def getQualifier() {
+    String ver = project.version
+    String q
+	if(ver.endsWith('.SNAPSHOT')) {
+	    q = ver.substring(ver.indexOf("SNAPSHOT"),ver.length()) + "-" + buildTime()
+	} else if(ver.substring(0, ver.length()-1).endsWith('.RC')) {
+	    // for RC versions: use RCn as qualifier for bundle versions
+	    q = ver.substring(ver.indexOf("RC"),ver.length()) + "-" + buildTime()
+	} else {
+		q = buildTime()
+	}
+	// for debugging
+	// println ("getQualifier: " + q)
+	return q
+}
 
 
 // project.version will be read from version.txt
 // must be called as function as not initialized in all phases
+// in case of SNAPSHOT the qualifier yet contains the SNAPSHOT prefix 
 def getProjectVersion() {
-	if(project.version.endsWith('-SNAPSHOT')) {
-		// TODO change -SNAPSHOT to build number
-		// return project.version.replace ("-SNAPSHOT", "." + qualifier)
-		return project.version
+    String ver = project.version
+    String projVersion
+	if(ver.endsWith('-SNAPSHOT')) {
+		projVersion = ver.replace ("-SNAPSHOT", "." + qualifier)
+	} else if(ver.endsWith('.SNAPSHOT')) {
+		projVersion = ver.replace (".SNAPSHOT", "." + qualifier)
 	} else {
-		return project.version
+		projVersion = ver
 	}
+	// for debugging
+	// println ("getProjectVersion: " + projVersion)
+	return projVersion
 }
 
 allprojects {
 	apply plugin: 'distribution'
 
 	group = 'org.eclipse.concierge'
+	qualifier = getQualifier()
 	version = getProjectVersion()
 
 	// create all TARs as tar.gz compressed
@@ -144,21 +170,14 @@ configure(subprojects.findAll {it.name != 'distribution'}) {
 	publishing {
 		repositories {
 	        maven {
+	        // TODO remove completely
 	        	// see https://bugs.eclipse.org/bugs/show_bug.cgi?id=467163
 	        	// https://repo.eclipse.org/content/repositories/concierge-snapshots/
 	        	// https://repo.eclipse.org/content/repositories/concierge-releases/
-	        	if(project.version.endsWith('-SNAPSHOT')) {
+	        	if(project.version.endsWith('SNAPSHOT')) {
 	        	    url "../distribution/build/repo/snapshots"
-//		            credentials {
-//            			username "admin"
-//            			password "password"
-//          			}
  		        } else {
 	        	    url "../distribution/build/repo/releases"
-//		            credentials {
-//            			username "admin"
-//            			password "password"
-//          			}
           		}
         	}
     	}
@@ -206,7 +225,7 @@ project(':org.eclipse.concierge.tests.integration') {
 release {
   dependsOn distZip // 'distZip' could e.g be used in combination with the 'application' plugin
   push = false // 'true' would e.g. be useful when triggering the release task on a CI server
-  versionSuffix = '-SNAPSHOT' // '.DEV' or '' (empty) could be useful alternatives
+  versionSuffix = '.SNAPSHOT' // '.DEV' or '' (empty) could be useful alternatives
 // TODO  
 //  versionSuffix = qualifier // '.DEV' or '' (empty) could be useful alternatives
 }

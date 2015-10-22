@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-SymbolicName: org.eclipse.concierge.example.service.clock
 Bundle-Name: Eclipse Concierge Clock Service Example (Incubation)
-Bundle-Version: 5.0.0.RC1-qualifier
+Bundle-Version: 5.0.0.qualifier
 Bundle-Activator: org.eclipse.concierge.example.service.clock.impl.Activator
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-Vendor: Eclipse.org/Concierge
