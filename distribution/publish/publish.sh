@@ -28,7 +28,8 @@ rm -f $logFile
 now=`date '+%Y/%m/%d %H:%M:%S'`
 echo "$now: getting last successful build" >>$logFile
 
-find . -name "*.zip"
+pwd ; find .
+find /home/hudson/genie.concierge/.hudson/jobs/ConciergeDistribution/lastSuccessfulBuild
 # wget --no-check-certificate https://hudson.eclipse.org/concierge/job/ConciergeDistribution/lastSuccessfulBuild/artifact/distribution/build/distributions/concierge-incubation-$version.zip -a $logFile
 # wget --no-check-certificate https://hudson.eclipse.org/concierge/job/ConciergeDistribution/lastSuccessfulBuild/artifact/distribution/build/distributions/concierge-incubation-$version.tar.gz -a $logFile
 
