@@ -6,36 +6,28 @@
 
 set -x
 
-BUILD_LOC=/home/data/httpd/download.eclipse.org/concierge
-logFile=publish.log
-
 version=`cat version.txt`
 echo "VERSION=$version"
 if [[ "$version" == *"SNAPSHOT"* ]] ; then
-  BUILD_LOC_TYPE=snapshots
+  BUILD_TYPE=snapshots
 else
-  BUILD_LOC_TYPE=releases
+  BUILD_TYPE=releases
 fi
-echo "BUILD_LOC_TYPE=$BUILD_LOC_TYPE"
-
-# pwd ; find .
-# find /home/hudson/genie.concierge/.hudson/jobs/ConciergeDistribution/lastSuccessfulBuild
-
-# if [ -d $BUILD_LOC/tmp ] ; then rm -rf $BUILD_LOC/tmp/* ; fi
-# if [ ! -d $BUILD_LOC/tmp ] ; then mkdir -p $BUILD_LOC/tmp ; fi
+echo "BUILD_TYPE=$BUILD_TYPE"
+UPLOAD_LOCATION=/home/data/httpd/download.eclipse.org/concierge/$BUILD_TYPE
+PUBLISH_LOG=$UPLOAD_LOCATION/publish.log
+echo "UPLOAD_LOCATION=$UPLOAD_LOCATION"
+echo "PUBLISH_LOG=$PUBLISH_LOG"
 
 now=`date '+%Y/%m/%d %H:%M:%S'`
-echo "$now: publishing last successful build" >>$BUILD_LOC/$logFile
+echo "$now: publishing last successful build" >>$PUBLISH_LOG
 
-cp ./distribution/build/distributions/*.zip $BUILD_LOC
-cp ./distribution/build/distributions/*.tar.gz $BUILD_LOC
-
-# mv -fv *.zip *.tar.gz ../$BUILD_LOC_TYPE/ >>$logFile
+cp ./distribution/build/distributions/*.zip $UPLOAD_LOCATION
+cp ./distribution/build/distributions/*.tar.gz $UPLOAD_LOCATION
 
 now=`date '+%Y/%m/%d %H:%M:%S'`
-echo "$now: finished publishing last successful build" >>$BUILD_LOC/$logFile
+echo "$now: finished publishing last successful build" >>$PUBLISH_LOG
 
-# mv -f $logFile ../$BUILD_LOC_TYPE/
-
-# cd ..
-if [ -d $BUILD_LOC/tmp ] ; then rm -rf $BUILD_LOC/tmp/* ; rmdir $BUILD_LOC/tmp ; fi
+# cleanup
+rm /home/data/httpd/download.eclipse.org/concierge/concierge-incubation-5.0.0.SNAPSHOT-20151023130058.tar.gz
+rm /home/data/httpd/download.eclipse.org/concierge/concierge-incubation-5.0.0.SNAPSHOT-20151023130058.zip
