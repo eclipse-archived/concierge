@@ -18,6 +18,10 @@ else
 fi
 echo "BUILD_LOC_TYPE=$BUILD_LOC_TYPE"
 
+pwd ; find .
+find /home/hudson/genie.concierge/.hudson/jobs/ConciergeDistribution/lastSuccessfulBuild
+
+
 
 if [ -d $BUILD_LOC/tmp ] ; then rm -rf $BUILD_LOC/tmp/* ; fi
 if [ ! -d $BUILD_LOC/tmp ] ; then mkdir -p $BUILD_LOC/tmp ; fi
@@ -28,8 +32,6 @@ rm -f $logFile
 now=`date '+%Y/%m/%d %H:%M:%S'`
 echo "$now: getting last successful build" >>$logFile
 
-pwd ; find .
-find /home/hudson/genie.concierge/.hudson/jobs/ConciergeDistribution/lastSuccessfulBuild
 # wget --no-check-certificate https://hudson.eclipse.org/concierge/job/ConciergeDistribution/lastSuccessfulBuild/artifact/distribution/build/distributions/concierge-incubation-$version.zip -a $logFile
 # wget --no-check-certificate https://hudson.eclipse.org/concierge/job/ConciergeDistribution/lastSuccessfulBuild/artifact/distribution/build/distributions/concierge-incubation-$version.tar.gz -a $logFile
 
