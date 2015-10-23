@@ -11,7 +11,7 @@ logFile=publish.log
 
 version=`cat version.txt`
 echo "VERSION=$version"
-if [[ "$version" == *SNAPSHOT ]] ; then
+if [[ "$version" == *"SNAPSHOT"* ]] ; then
   BUILD_LOC_TYPE=snapshots
 else
   BUILD_LOC_TYPE=releases
@@ -28,8 +28,9 @@ rm -f $logFile
 now=`date '+%Y/%m/%d %H:%M:%S'`
 echo "$now: getting last successful build" >>$logFile
 
-wget --no-check-certificate https://hudson.eclipse.org/concierge/job/ConciergeDistribution/lastSuccessfulBuild/artifact/distribution/build/distributions/concierge-$version.zip -a $logFile
-wget --no-check-certificate https://hudson.eclipse.org/concierge/job/ConciergeDistribution/lastSuccessfulBuild/artifact/distribution/build/distributions/concierge-$version.tar.gz -a $logFile
+find . -name "*.zip"
+# wget --no-check-certificate https://hudson.eclipse.org/concierge/job/ConciergeDistribution/lastSuccessfulBuild/artifact/distribution/build/distributions/concierge-incubation-$version.zip -a $logFile
+# wget --no-check-certificate https://hudson.eclipse.org/concierge/job/ConciergeDistribution/lastSuccessfulBuild/artifact/distribution/build/distributions/concierge-incubation-$version.tar.gz -a $logFile
 
 now=`date '+%Y/%m/%d %H:%M:%S'`
 echo "$now: publishing last successful build" >>$logFile
