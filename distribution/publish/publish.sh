@@ -20,14 +20,15 @@ echo "UPLOAD_LOCATION=$UPLOAD_LOCATION"
 echo "PUBLISH_LOG=$PUBLISH_LOG"
 
 now=`date '+%Y/%m/%d %H:%M:%S'`
-echo "$now: publishing last successful build" >>$PUBLISH_LOG
+echo "$now: publishing last successful build for $version" >>$PUBLISH_LOG
 
+echo `ls ./distribution/build/distributions/*.zip` >>$PUBLISH_LOG
 cp ./distribution/build/distributions/*.zip $UPLOAD_LOCATION
+echo `ls ./distribution/build/distributions/*.tar.gz` >>$PUBLISH_LOG
 cp ./distribution/build/distributions/*.tar.gz $UPLOAD_LOCATION
 
-now=`date '+%Y/%m/%d %H:%M:%S'`
-echo "$now: finished publishing last successful build" >>$PUBLISH_LOG
-
 # cleanup
-rm /home/data/httpd/download.eclipse.org/concierge/concierge-incubation-5.0.0.SNAPSHOT-20151023130058.tar.gz
-rm /home/data/httpd/download.eclipse.org/concierge/concierge-incubation-5.0.0.SNAPSHOT-20151023130058.zip
+rm /home/data/httpd/download.eclipse.org/concierge/snapshots/concierge-0.8.0*
+rm /home/data/httpd/download.eclipse.org/concierge/snapshots/concierge-0.9.0*
+rm /home/data/httpd/download.eclipse.org/concierge/snapshots/concierge-1.0.0*
+rm /home/data/httpd/download.eclipse.org/concierge/snapshots/publish.log
