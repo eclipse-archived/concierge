@@ -4,7 +4,7 @@
 # chmod u+x ./distribution/publish/publish.sh
 # ./distribution/publish/publish.sh
 
-set -x
+set-x
 
 version=`cat version.txt`
 echo "VERSION=$version"
@@ -28,7 +28,6 @@ echo `ls ./distribution/build/distributions/*.tar.gz` >>$PUBLISH_LOG
 cp ./distribution/build/distributions/*.tar.gz $UPLOAD_LOCATION
 
 # cleanup
-rm /home/data/httpd/download.eclipse.org/concierge/snapshots/concierge-0.8.0*
-rm /home/data/httpd/download.eclipse.org/concierge/snapshots/concierge-0.9.0*
-rm /home/data/httpd/download.eclipse.org/concierge/snapshots/concierge-1.0.0*
-rm /home/data/httpd/download.eclipse.org/concierge/snapshots/publish.log
+rm /home/data/httpd/download.eclipse.org/concierge/releases/publish.log
+rm /home/data/httpd/download.eclipse.org/concierge/publish.log
+mv /home/data/httpd/download.eclipse.org/concierge/concierge-incubation-5.0.0* /home/data/httpd/download.eclipse.org/concierge/releases
