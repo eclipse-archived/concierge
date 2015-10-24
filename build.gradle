@@ -37,8 +37,8 @@ apply plugin: 'ch.netzwerg.release'
 def qualifier = getQualifier()
 
 // qualifier can be used to replace in Bundle-Version
-// for release candidates (RC) this is the qualifier
-// otherwise use the build time
+// for release versions (RCn, Mn) this is the qualifier
+// otherwise use the build time for the final build
 def getQualifier() {
     String ver = project.version
     String q
@@ -47,7 +47,11 @@ def getQualifier() {
 	} else if(ver.substring(0, ver.length()-1).endsWith('.RC')) {
 	    // for RC versions: use RCn as qualifier for bundle versions
 	    q = ver.substring(ver.indexOf("RC"),ver.length()) + "-" + buildTime()
+	} else if(ver.substring(0, ver.length()-1).endsWith('.M')) {
+	    // for Milestone versions: use Mn as qualifier for bundle versions
+	    q = ver.substring(ver.indexOf("M"),ver.length()) + "-" + buildTime()
 	} else {
+	    // final build
 		q = buildTime()
 	}
 	// for debugging
@@ -62,9 +66,7 @@ def getQualifier() {
 def getProjectVersion() {
     String ver = project.version
     String projVersion
-	if(ver.endsWith('-SNAPSHOT')) {
-		projVersion = ver.replace ("-SNAPSHOT", "." + qualifier)
-	} else if(ver.endsWith('.SNAPSHOT')) {
+	if(ver.endsWith('.SNAPSHOT')) {
 		projVersion = ver.replace (".SNAPSHOT", "." + qualifier)
 	} else {
 		projVersion = ver
@@ -233,7 +235,7 @@ release {
 
 // task to create a gradle wrapper with used gradle version
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.6'
+    gradleVersion = '2.8'
     jarFile = '.gradle-wrapper/gradle-wrapper.jar'
 }
 
