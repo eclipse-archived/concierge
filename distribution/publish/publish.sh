@@ -24,8 +24,8 @@ now=`date -u '+%Y-%m-%d %H:%M:%S %Z'`
 echo "$now: publishing last successful build for $version" >>$PUBLISH_LOG
 
 echo -n "$BUILD_TYPE/" >>$PUBLISH_LOG
-echo `(cd ./distribution/build/distributions/ ; ls *.zip)` >>$PUBLISH_LOG
-cp ./distribution/build/distributions/*.zip $UPLOAD_LOCATION
-echo -n "$BUILD_TYPE/" >>$PUBLISH_LOG
 echo `(cd ./distribution/build/distributions/ ; ls *.tar.gz)` >>$PUBLISH_LOG
 cp ./distribution/build/distributions/*.tar.gz $UPLOAD_LOCATION
+echo -n "$BUILD_TYPE/" >>$PUBLISH_LOG
+echo `(cd ./distribution/build/distributions/ ; ls *.zip)` >>$PUBLISH_LOG
+cp ./distribution/build/distributions/*.zip $UPLOAD_LOCATION
