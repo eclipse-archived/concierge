@@ -20,7 +20,7 @@ PUBLISH_LOG=$UPLOAD_BASE/publish.log
 echo "UPLOAD_LOCATION=$UPLOAD_LOCATION"
 echo "PUBLISH_LOG=$PUBLISH_LOG"
 
-now=`date '+%Y-%m-%d %H:%M:%S %Z'`
+now=`date -u '+%Y-%m-%d %H:%M:%S %Z'`
 echo "$now: publishing last successful build for $version" >>$PUBLISH_LOG
 
 echo -n "$BUILD_TYPE/" >>$PUBLISH_LOG
@@ -29,8 +29,3 @@ cp ./distribution/build/distributions/*.zip $UPLOAD_LOCATION
 echo -n "$BUILD_TYPE/" >>$PUBLISH_LOG
 echo `(cd ./distribution/build/distributions/ ; ls *.tar.gz)` >>$PUBLISH_LOG
 cp ./distribution/build/distributions/*.tar.gz $UPLOAD_LOCATION
-
-# cleanup
-rm /home/data/httpd/download.eclipse.org/concierge/releases/concierge-incubation-5.0.0.RC2.*
-rm /home/data/httpd/download.eclipse.org/concierge/releases/publish.log
-rm /home/data/httpd/download.eclipse.org/concierge/snapshots/publish.log
