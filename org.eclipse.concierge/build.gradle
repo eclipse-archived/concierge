@@ -1,3 +1,27 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
+// we change the version "5.0.0.qualifier" by the current build version
+// note: if this will change also update the configuration here
+def versionFile = 'src/org/eclipse/concierge/Concierge.java'
+def versionFileName = 'Concierge.java'
+def versionTempDir = 'build/tmp/sourcesCache'
+def versionPattern = '5.0.0.qualifier'
+
+compileJava.doFirst {
+    copy {
+        from(versionFile)
+        into(versionTempDir)
+    }
+    ant.replace(file: versionFile, token: versionPattern, value: version)
+}
+
+compileJava.doLast {
+    copy {
+        from(versionTempDir + '/' + versionFileName)
+        into(project.file(versionFile).parent)
+    }
+}
+
 // add . folder to test classpath, to lookup META-INF/micro-services
 sourceSets {
     test {

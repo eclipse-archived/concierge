@@ -4,7 +4,8 @@
 # chmod u+x ./distribution/publish/publish.sh
 # ./distribution/publish/publish.sh
 
-set -x
+# enable for "debugging" of script
+# set -x
 
 version=`cat version.txt`
 echo "VERSION=$version"
@@ -20,9 +21,11 @@ PUBLISH_LOG=$UPLOAD_BASE/publish.log
 echo "UPLOAD_LOCATION=$UPLOAD_LOCATION"
 echo "PUBLISH_LOG=$PUBLISH_LOG"
 
+# current time in UTC with Timezone information
 now=`date -u '+%Y-%m-%d %H:%M:%S %Z'`
 echo "$now: publishing last successful build for $version" >>$PUBLISH_LOG
 
+# copy latest build artifacts (tar.gz, zip)
 echo -n "$BUILD_TYPE/" >>$PUBLISH_LOG
 echo `(cd ./distribution/build/distributions/ ; ls *.tar.gz)` >>$PUBLISH_LOG
 cp ./distribution/build/distributions/*.tar.gz $UPLOAD_LOCATION
