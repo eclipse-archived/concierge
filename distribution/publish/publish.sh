@@ -24,7 +24,7 @@ echo "UPLOAD_LOCATION=$UPLOAD_LOCATION"
 echo "PUBLISH_LOG=$PUBLISH_LOG"
 
 # get the version of this build
-buildVersion=`(cd ./distribution/build/distributions/ ; ls *.tar.gz)` | sed -e 's/\.tar\.gz//g'
+buildVersion=`(cd ./distribution/build/distributions/ ; ls *.tar.gz)` | sed -e 's/\.tar\.gz//g'
 echo "buildVersion=$buildVersion"
 
 (
@@ -44,10 +44,10 @@ echo " "
 # now link latest snapshot to this build
 if [ "$BUILD_TYPE" == "snapshots" ] ; then
   echo "Now link latest snapshot to $version"
-  rm concierge-incubation-SNAPSHOT-latest.tar.gz
-  rm concierge-incubation-SNAPSHOT-latest.zip
   (
     cd $UPLOAD_LOCATION
+    rm concierge-incubation-SNAPSHOT-latest.tar.gz
+    rm concierge-incubation-SNAPSHOT-latest.zip
     echo ln -s "$buildVersion".tar.gz concierge-incubation-SNAPSHOT-latest.tar.gz
     echo ln -s "$buildVersion".zip concierge-incubation-SNAPSHOT-latest.zip
   )
