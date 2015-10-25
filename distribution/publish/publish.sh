@@ -21,14 +21,19 @@ PUBLISH_LOG=$UPLOAD_BASE/publish.log
 echo "UPLOAD_LOCATION=$UPLOAD_LOCATION"
 echo "PUBLISH_LOG=$PUBLISH_LOG"
 
+(
 # current time in UTC with Timezone information
 now=`date -u '+%Y-%m-%d %H:%M:%S %Z'`
-echo "$now: publishing last successful build for $version" >>$PUBLISH_LOG
+echo "$now: publishing last successful build for $version"
 
 # copy latest build artifacts (tar.gz, zip)
-echo -n "$BUILD_TYPE/" >>$PUBLISH_LOG
-echo `(cd ./distribution/build/distributions/ ; ls *.tar.gz)` >>$PUBLISH_LOG
+echo -n "$BUILD_TYPE/"
+echo `(cd ./distribution/build/distributions/ ; ls *.tar.gz)`
 cp ./distribution/build/distributions/*.tar.gz $UPLOAD_LOCATION
-echo -n "$BUILD_TYPE/" >>$PUBLISH_LOG
-echo `(cd ./distribution/build/distributions/ ; ls *.zip)` >>$PUBLISH_LOG
+echo -n "$BUILD_TYPE/"
+echo `(cd ./distribution/build/distributions/ ; ls *.zip)`
 cp ./distribution/build/distributions/*.zip $UPLOAD_LOCATION
+echo " "
+) | tee >>$PUBLISH_LOG
+
+echo "See http://download.eclipse.org/concierge/$BUILD_TYPE/?d for uploaded files..."

@@ -2,23 +2,29 @@ import org.apache.tools.ant.filters.ReplaceTokens
 
 // we change the version "5.0.0.qualifier" by the current build version
 // note: if this will change also update the configuration here
-def versionFile = 'src/org/eclipse/concierge/Concierge.java'
-def versionFileName = 'Concierge.java'
-def versionTempDir = 'build/tmp/sourcesCache'
-def versionPattern = '5.0.0.qualifier'
+// See http://stackoverflow.com/questions/30038540/replace-token-in-file-before-building-but-keep-token-in-sources
+def buildVersionFile = 'src/org/eclipse/concierge/Concierge.java'
+def buildVersionFileName = 'Concierge.java'
+def buildVersionTempDir = 'build/tmp/sourcesCache'
+def buildVersionPattern = '5.0.0.qualifier'
 
 compileJava.doFirst {
     copy {
-        from(versionFile)
-        into(versionTempDir)
+        from(buildVersionFile)
+        into(buildVersionTempDir)
     }
-    ant.replace(file: versionFile, token: versionPattern, value: version)
+    // we use buildVersion to inject
+    ant.replace(file: buildVersionFile, token: buildVersionPattern, value: buildVersion)
+    copy {
+        from(buildVersionFile)
+        into(buildVersionTempDir + '/' + buildVersionFileName + '.gen')
+    }
 }
 
 compileJava.doLast {
     copy {
-        from(versionTempDir + '/' + versionFileName)
-        into(project.file(versionFile).parent)
+        from(buildVersionTempDir + '/' + buildVersionFileName)
+        into(project.file(buildVersionFile).parent)
     }
 }
 

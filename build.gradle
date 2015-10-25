@@ -8,14 +8,13 @@
 // Build and publish to local Maven repo: ./gradlew clean build publishToMavenLocal
 
 buildscript {
-  repositories {
-    maven { url 'http://oss.jfrog.org/artifactory/oss-snapshot-local' }
-    jcenter()
-  }
-
-  dependencies {
-    classpath "org.akhikhl.wuff:wuff-plugin:0.0.13-SNAPSHOT"
-  }
+	repositories {
+    	maven { url 'http://oss.jfrog.org/artifactory/oss-snapshot-local' }
+    	jcenter()
+	}
+	dependencies {
+    	classpath "org.akhikhl.wuff:wuff-plugin:0.0.13-SNAPSHOT"
+	}
 }
 
 plugins {
@@ -34,54 +33,20 @@ plugins {
 apply plugin: 'org.akhikhl.wuff.eclipse-repository'
 apply plugin: 'ch.netzwerg.release'
 
-def qualifier = getQualifier()
 
-// qualifier can be used to replace in Bundle-Version
-// for release versions (RCn, Mn) this is the qualifier
-// otherwise use the build time for the final build
-def getQualifier() {
-    String ver = project.version
-    String q
-	if(ver.endsWith('.SNAPSHOT')) {
-	    q = ver.substring(ver.indexOf("SNAPSHOT"),ver.length()) + "-" + buildTime()
-	} else if(ver.substring(0, ver.length()-1).endsWith('.RC')) {
-	    // for RC versions: use RCn as qualifier for bundle versions
-	    q = ver.substring(ver.indexOf("RC"),ver.length()) + "-" + buildTime()
-	} else if(ver.substring(0, ver.length()-1).endsWith('.M')) {
-	    // for Milestone versions: use Mn as qualifier for bundle versions
-	    q = ver.substring(ver.indexOf("M"),ver.length()) + "-" + buildTime()
-	} else {
-	    // final build
-		q = buildTime()
-	}
-	// for debugging
-	// println ("getQualifier: " + q)
-	return q
-}
-
-
-// project.version will be read from version.txt
-// must be called as function as not initialized in all phases
-// in case of SNAPSHOT the qualifier yet contains the SNAPSHOT prefix 
-def getProjectVersion() {
-    String ver = project.version
-    String projVersion
-	if(ver.endsWith('.SNAPSHOT')) {
-		projVersion = ver.replace (".SNAPSHOT", "." + qualifier)
-	} else {
-		projVersion = ver
-	}
-	// for debugging
-	// println ("getProjectVersion: " + projVersion)
-	return projVersion
+// global variables
+project.ext {
+ 	buildQualifier = getBuildQualifier()
+ 	buildVersion = getBuildVersion()
 }
 
 allprojects {
 	apply plugin: 'distribution'
 
 	group = 'org.eclipse.concierge'
-	qualifier = getQualifier()
-	version = getProjectVersion()
+	buildQualifier = rootProject.buildQualifier
+	buildVersion = rootProject.buildVersion
+	version = rootProject.buildVersion
 
 	// create all TARs as tar.gz compressed
 	tasks.withType(Tar){
@@ -89,7 +54,6 @@ allprojects {
     	extension = 'tar.gz'
 	}
 }
-
 
 // configure all java projects
 configure(subprojects.findAll {it.name != 'distribution'}) {
@@ -150,7 +114,8 @@ configure(subprojects.findAll {it.name != 'distribution'}) {
 			from('META-INF/MANIFEST.MF') {
 				eachEntry { details ->
 					if (details.key == 'Bundle-Version') {
-                    	details.value = details.value.replace ("qualifier", qualifier)
+                    	details.value = details.value.replace ("qualifier", rootProject.buildQualifier)
+                    	// for debugging
 						// println details.key + "=" + details.value
     	            }
         		}
@@ -240,8 +205,53 @@ task wrapper(type: Wrapper) {
 }
 
 // helper methods
+
+// qualifier can be used to replace in Bundle-Version
+// for release versions (RCn, Mn) this is the qualifier
+// otherwise use the build time for the final build
+def getBuildQualifier() {
+    String ver = project.version
+    String q
+    String now = buildTime()
+	if(ver.endsWith('.SNAPSHOT')) {
+	    q = ver.substring(ver.indexOf("SNAPSHOT"),ver.length()) + "-" + now
+	} else if(ver.substring(0, ver.length()-1).endsWith('.RC')) {
+	    // for RC versions: use RCn as qualifier for bundle versions
+	    q = ver.substring(ver.indexOf("RC"),ver.length()) + "-" + now
+	} else if(ver.substring(0, ver.length()-1).endsWith('.M')) {
+	    // for Milestone versions: use Mn as qualifier for bundle versions
+	    q = ver.substring(ver.indexOf("M"),ver.length()) + "-" + now
+	} else {
+	    // final build
+		q = now
+	}
+	// for debugging
+	// println ("getBuildQualifier: " + q)
+	return q
+}
+
+
+// project.version will be read from version.txt
+// must be called as function as not initialized in all phases
+// in case of SNAPSHOT the qualifier yet contains the SNAPSHOT prefix 
+def getBuildVersion() {
+    String ver = project.version
+    String buildVersion
+	if(ver.endsWith('.SNAPSHOT')) {
+		buildVersion = ver.replace (".SNAPSHOT", "." + rootProject.buildQualifier)
+	} else {
+		buildVersion = ver
+	}
+	// for debugging
+	// println ("getBuildVersion: " + buildVersion)
+	return buildVersion
+}
+
 def buildTime() {
-    def date = new Date()
-    def formattedDate = date.format('yyyyMMddHHmmss')
-    return formattedDate
+   	def date = new Date()
+   	def formattedDate = date.format('yyyyMMddHHmmss')
+   	// for debugging: add "SSS" to date to get ms
+   	// def formattedDate = date.format('yyyyMMddHHmmssSSS')
+	// println ("buildTime: " + formattedDate)
+   	return formattedDate
 }
