@@ -23,6 +23,10 @@ PUBLISH_LOG=$UPLOAD_BASE/publish.log
 echo "UPLOAD_LOCATION=$UPLOAD_LOCATION"
 echo "PUBLISH_LOG=$PUBLISH_LOG"
 
+# get the version of this build
+buildVersion=`(cd ./distribution/build/distributions/ ; ls *.tar.gz)` | sed -e 's/\.tar\.gz//g'
+echo "buildVersion=$buildVersion"
+
 (
 # current time in UTC with Timezone information
 now=`date -u '+%Y-%m-%d %H:%M:%S %Z'`
@@ -42,8 +46,11 @@ if [ "$BUILD_TYPE" == "snapshots" ] ; then
   echo "Now link latest snapshot to $version"
   rm concierge-incubation-SNAPSHOT-latest.tar.gz
   rm concierge-incubation-SNAPSHOT-latest.zip
-  ln -s $UPLAD_LOCATION/`(cd ./distribution/build/distributions/ ; ls *.tar.gz)` concierge-incubation-SNAPSHOT-latest.tar.gz
-  ln -s $UPLAD_LOCATION/`(cd ./distribution/build/distributions/ ; ls *.zip)` concierge-incubation-SNAPSHOT-latest.zip
+  (
+    cd $UPLOAD_LOCATION
+    echo ln -s "$buildVersion".tar.gz concierge-incubation-SNAPSHOT-latest.tar.gz
+    echo ln -s "$buildVersion".zip concierge-incubation-SNAPSHOT-latest.zip
+  )
 fi
 
 ) | tee >>$PUBLISH_LOG
