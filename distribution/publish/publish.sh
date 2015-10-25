@@ -4,8 +4,10 @@
 # chmod u+x ./distribution/publish/publish.sh
 # ./distribution/publish/publish.sh
 
+# TODO: cleanup SNAPSHOT builds if more >50, older >30 days
+
 # enable for "debugging" of script
-# set -x
+set -x
 
 version=`cat version.txt`
 echo "VERSION=$version"
@@ -34,6 +36,16 @@ echo -n "$BUILD_TYPE/"
 echo `(cd ./distribution/build/distributions/ ; ls *.zip)`
 cp ./distribution/build/distributions/*.zip $UPLOAD_LOCATION
 echo " "
+
+# now link latest snapshot to this build
+if [ "$BUILD_TYPE" == "snapshots" ] ; then
+  echo "Now link latest snapshot to $version"
+  rm concierge-incubation-SNAPSHOT-latest.tar.gz
+  rm concierge-incubation-SNAPSHOT-latest.zip
+  ln -s $UPLAD_LOCATION/`(cd ./distribution/build/distributions/ ; ls *.tar.gz)` concierge-incubation-SNAPSHOT-latest.tar.gz
+  ln -s $UPLAD_LOCATION/`(cd ./distribution/build/distributions/ ; ls *.zip)` concierge-incubation-SNAPSHOT-latest.zip
+fi
+
 ) | tee >>$PUBLISH_LOG
 
 echo "See http://download.eclipse.org/concierge/$BUILD_TYPE/?d for uploaded files..."
