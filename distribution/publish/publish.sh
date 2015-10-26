@@ -7,7 +7,7 @@
 # TODO: cleanup SNAPSHOT builds if more >50, older >30 days
 
 # enable for "debugging" of script
-set -x
+# set -x
 
 version=`cat version.txt`
 echo "VERSION=$version"
@@ -30,15 +30,13 @@ echo "buildVersion=$buildVersion"
 (
 # current time in UTC with Timezone information
 now=`date -u '+%Y-%m-%d %H:%M:%S %Z'`
-echo "$now: publishing last successful build for $version"
+echo "$now: publishing last successful build for $$buildVersion"
 
 # copy latest build artifacts (tar.gz, zip)
-echo -n "$BUILD_TYPE/"
-echo `(cd ./distribution/build/distributions/ ; ls *.tar.gz)`
-cp ./distribution/build/distributions/*.tar.gz $UPLOAD_LOCATION
-echo -n "$BUILD_TYPE/"
-echo `(cd ./distribution/build/distributions/ ; ls *.zip)`
-cp ./distribution/build/distributions/*.zip $UPLOAD_LOCATION
+echo cp "./distribution/build/distributions/$buildVersion".tar.gz $UPLOAD_LOCATION
+cp "./distribution/build/distributions/$buildVersion".tar.gz $UPLOAD_LOCATION
+echo cp "./distribution/build/distributions/$buildVersion".zip $UPLOAD_LOCATION
+cp "./distribution/build/distributions/$buildVersion".zip $UPLOAD_LOCATION
 
 # now link latest snapshot to this build
 if [ "$BUILD_TYPE" == "snapshots" ] ; then
@@ -53,8 +51,6 @@ if [ "$BUILD_TYPE" == "snapshots" ] ; then
     cp "$buildVersion".tar.gz concierge-incubation-SNAPSHOT-latest.tar.gz
     echo cp "$buildVersion".zip concierge-incubation-SNAPSHOT-latest.zip
     cp "$buildVersion".zip concierge-incubation-SNAPSHOT-latest.zip
-    
-    ls -al
   )
 fi
 
@@ -63,3 +59,6 @@ echo " "
 ) | tee >>$PUBLISH_LOG
 
 echo "See http://download.eclipse.org/concierge/$BUILD_TYPE/?d for uploaded files..."
+
+# cleanup
+rm /home/data/httpd/download.eclipse.org/concierge/publish.log
