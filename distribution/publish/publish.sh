@@ -24,7 +24,7 @@ echo "UPLOAD_LOCATION=$UPLOAD_LOCATION"
 echo "PUBLISH_LOG=$PUBLISH_LOG"
 
 # get the version of this build
-buildVersion=`(cd ./distribution/build/distributions/ ; ls *.tar.gz)` | sed -e 's/\.tar\.gz//g'
+buildVersion=`(cd ./distribution/build/distributions/ ; ls *.tar.gz) | sed -e 's/\.tar\.gz//g'`
 echo "buildVersion=$buildVersion"
 
 (
