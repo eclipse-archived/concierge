@@ -59,6 +59,3 @@ echo " "
 ) | tee >>$PUBLISH_LOG
 
 echo "See http://download.eclipse.org/concierge/$BUILD_TYPE/?d for uploaded files..."
-
-# cleanup
-rm /home/data/httpd/download.eclipse.org/concierge/publish.log
