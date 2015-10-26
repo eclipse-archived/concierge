@@ -39,20 +39,23 @@ cp ./distribution/build/distributions/*.tar.gz $UPLOAD_LOCATION
 echo -n "$BUILD_TYPE/"
 echo `(cd ./distribution/build/distributions/ ; ls *.zip)`
 cp ./distribution/build/distributions/*.zip $UPLOAD_LOCATION
-echo " "
 
 # now link latest snapshot to this build
 if [ "$BUILD_TYPE" == "snapshots" ] ; then
-  echo "Now link latest snapshot to $version"
+  echo "Link latest snapshot to $buildVersion"
   (
     cd $UPLOAD_LOCATION
     for f in concierge-incubation-SNAPSHOT-latest.tar.gz concierge-incubation-SNAPSHOT-latest.zip ; do
-      if [ -f $f ] ; then rm $f ; fi
+      if [ -f $f ] ; then rm $f ; fi
     done
+    echo ln -s "$buildVersion".tar.gz concierge-incubation-SNAPSHOT-latest.tar.gz
     ln -s "$buildVersion".tar.gz concierge-incubation-SNAPSHOT-latest.tar.gz
+    echo ln -s "$buildVersion".zip concierge-incubation-SNAPSHOT-latest.zip
     ln -s "$buildVersion".zip concierge-incubation-SNAPSHOT-latest.zip
   )
 fi
+
+echo " "
 
 ) | tee >>$PUBLISH_LOG
 
