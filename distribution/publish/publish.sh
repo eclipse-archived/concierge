@@ -46,10 +46,11 @@ if [ "$BUILD_TYPE" == "snapshots" ] ; then
   echo "Now link latest snapshot to $version"
   (
     cd $UPLOAD_LOCATION
-    rm concierge-incubation-SNAPSHOT-latest.tar.gz
-    rm concierge-incubation-SNAPSHOT-latest.zip
-    echo ln -s "$buildVersion".tar.gz concierge-incubation-SNAPSHOT-latest.tar.gz
-    echo ln -s "$buildVersion".zip concierge-incubation-SNAPSHOT-latest.zip
+    for f in concierge-incubation-SNAPSHOT-latest.tar.gz concierge-incubation-SNAPSHOT-latest.zip ; do
+      if [ -f $f ] ; then rm $f ; fi
+    done
+    ln -s "$buildVersion".tar.gz concierge-incubation-SNAPSHOT-latest.tar.gz
+    ln -s "$buildVersion".zip concierge-incubation-SNAPSHOT-latest.zip
   )
 fi
 
