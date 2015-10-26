@@ -48,10 +48,11 @@ if [ "$BUILD_TYPE" == "snapshots" ] ; then
     for f in concierge-incubation-SNAPSHOT-latest.tar.gz concierge-incubation-SNAPSHOT-latest.zip ; do
       if [ -f $f ] ; then rm $f ; fi
     done
-    echo ln -s "$buildVersion".tar.gz concierge-incubation-SNAPSHOT-latest.tar.gz
-    ln -s "$buildVersion".tar.gz concierge-incubation-SNAPSHOT-latest.tar.gz
-    echo ln -s "$buildVersion".zip concierge-incubation-SNAPSHOT-latest.zip
-    ln -s "$buildVersion".zip concierge-incubation-SNAPSHOT-latest.zip
+    # copy files, sym links does not work when downloading files
+    echo cp "$buildVersion".tar.gz concierge-incubation-SNAPSHOT-latest.tar.gz
+    cp "$buildVersion".tar.gz concierge-incubation-SNAPSHOT-latest.tar.gz
+    echo cp "$buildVersion".zip concierge-incubation-SNAPSHOT-latest.zip
+    cp "$buildVersion".zip concierge-incubation-SNAPSHOT-latest.zip
     
     ls -al
   )
