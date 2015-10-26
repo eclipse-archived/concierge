@@ -18,12 +18,16 @@ logFile=mvn-deploy.log
 
 version=`cat version.txt`
 echo "VERSION=$version"
-if [[ "$version" == *-SNAPSHOT ]] ; then
+if [[ "$version" == *SNAPSHOT* ]] ; then
   BUILD_TYPE=snapshots
 else
   BUILD_TYPE=releases
 fi
 echo "BUILD_TYPE=$BUILD_TYPE"
+
+# get the version of this build
+buildVersion=`(cd ./distribution/build/distributions/ ; ls *.tar.gz) | sed -e 's/concierge-incubation-//g' | sed -e 's/\.tar\.gz//g'`
+echo "buildVersion=$buildVersion"
 
 
 if [ -d $WSP_LOC/tmp ] ; then rm -rf $WSP_LOC/tmp/* ; fi
@@ -41,7 +45,7 @@ $MAVEN_BIN \
   -DartifactId=org.eclipse.concierge					\
   -Dversion=$version									\
   -Dpackaging=jar										\
-  -Dfile=./distribution/build/repo/$BUILD_TYPE/org/eclipse/concierge/org.eclipse.concierge/$version/org.eclipse.concierge-$version.jar	\
+  -Dfile=./distribution/build/repo/$BUILD_TYPE/org/eclipse/concierge/org.eclipse.concierge/$buildVersion/org.eclipse.concierge-$buildVersion.jar	\
   -DrepositoryId=repo.eclipse.org						\
   -Durl=https://repo.eclipse.org/content/repositories/concierge-$BUILD_TYPE/	\
   deploy:deploy-file 

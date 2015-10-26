@@ -30,12 +30,12 @@ echo "buildVersion=$buildVersion"
 (
 # current time in UTC with Timezone information
 now=`date -u '+%Y-%m-%d %H:%M:%S %Z'`
-echo "$now: publishing last successful build for $$buildVersion"
+echo "$now: publishing last successful build for $buildVersion"
 
 # copy latest build artifacts (tar.gz, zip)
-echo cp "./distribution/build/distributions/$buildVersion".tar.gz $UPLOAD_LOCATION
+echo "$BUILD_TYPE/$buildVersion".tar.gz
 cp "./distribution/build/distributions/$buildVersion".tar.gz $UPLOAD_LOCATION
-echo cp "./distribution/build/distributions/$buildVersion".zip $UPLOAD_LOCATION
+echo "$BUILD_TYPE/$buildVersion".zip
 cp "./distribution/build/distributions/$buildVersion".zip $UPLOAD_LOCATION
 
 # now link latest snapshot to this build
@@ -47,9 +47,9 @@ if [ "$BUILD_TYPE" == "snapshots" ] ; then
       if [ -f $f ] ; then rm $f ; fi
     done
     # copy files, sym links does not work when downloading files
-    echo cp "$buildVersion".tar.gz concierge-incubation-SNAPSHOT-latest.tar.gz
+    echo "$buildVersion".tar.gz " -> " concierge-incubation-SNAPSHOT-latest.tar.gz
     cp "$buildVersion".tar.gz concierge-incubation-SNAPSHOT-latest.tar.gz
-    echo cp "$buildVersion".zip concierge-incubation-SNAPSHOT-latest.zip
+    echo "$buildVersion".zip " -> " concierge-incubation-SNAPSHOT-latest.zip
     cp "$buildVersion".zip concierge-incubation-SNAPSHOT-latest.zip
   )
 fi
