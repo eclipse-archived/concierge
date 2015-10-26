@@ -52,6 +52,8 @@ if [ "$BUILD_TYPE" == "snapshots" ] ; then
     ln -s "$buildVersion".tar.gz concierge-incubation-SNAPSHOT-latest.tar.gz
     echo ln -s "$buildVersion".zip concierge-incubation-SNAPSHOT-latest.zip
     ln -s "$buildVersion".zip concierge-incubation-SNAPSHOT-latest.zip
+    
+    ls -al
   )
 fi
 
