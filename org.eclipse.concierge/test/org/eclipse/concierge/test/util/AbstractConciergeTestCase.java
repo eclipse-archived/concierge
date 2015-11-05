@@ -80,7 +80,7 @@ public abstract class AbstractConciergeTestCase {
 		this.bundleContext = this.framework.getBundleContext();
 
 		if (stayInShell()) {
-			String shellJarName = "./test/resources/org.eclipse.concierge.shell-1.0.0.jar";
+			String shellJarName = "./test/resources/org.eclipse.concierge.shell-5.0.0.20151029184259.jar";
 			if (!new File(shellJarName).exists()) {
 				System.err.println("Oops, could not find shell bundle at "
 						+ shellJarName);

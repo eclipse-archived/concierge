@@ -28,26 +28,36 @@ import org.junit.runners.Parameterized.Parameters;
 import org.osgi.framework.Bundle;
 
 /**
- * This tests will check whether fragment bundles will be resolved when using
+ * These tests will check whether fragment bundles will be resolved when using
  * import package statements. These import package statements can match the host
  * one's or will have a conflict with host based on version or other directives.
  * 
- * The test is setup this way:
+ * The test is setup using 3 types of bundles:
  * 
  * <pre>
- * Bundle "Provider": Export-Package = package1;version="1.2.3"
- * Bundle "Host":     Import-Package = package1
- * Bundle "Fragment": Import-Package = package1
+ * Bundle "Provider": Export-Package = p1;version="1.2.3"
+ * Bundle "Host":     Import-Package = p1
+ * Bundle "Fragment": Import-Package = p1
  * </pre>
  *
  * The Import-Package statements will be specified with different versions, to
  * check whether this resolvement from Fragment to Host to Provider bundle is
  * possible or not.
  * 
- * TODO This tests does fail due to temporary change in
- * BundleImpl.checkConflicts, Line 2348.
+ * See OSGi Spec R5, chapter 3.14
  * 
- * TODO add more tests for directives
+ * <pre>
+ * When attaching a fragment bundle to a host bundle the Framework must perform the following
+ * ...
+ * 1. Append the import definitions for the Fragment bundle that do not conflict with an import 
+ * definition of the host to the import definitions of the host bundle. A Fragment can provide an
+ * import statement for a private package of the host. The private package in the host is 
+ * hidden in that case.
+ * ...
+ * </pre>
+ * 
+ * TODO This tests does fail due to temporary change in
+ * BundleImpl.checkConflicts, Line 2348. TODO add more tests for directives
  * 
  * @author Jochen Hiller - Initial Contribution
  */
@@ -55,27 +65,26 @@ import org.osgi.framework.Bundle;
 @Ignore("TODO Does not work due to temporary change in BundleImpl.Revision.checkConflicts")
 public class FragmentBundleWithImportsTest extends AbstractConciergeTestCase {
 
-	@Parameters(name = "{index}: {0} should be resolved: {3}")
+	// Parameterized tests:
+	// {0} description of test
+	// {1} import package statement of host
+	// {2} import package statement of fragment
+	// {3} expected result: "has to be resolved": true/false
+	@Parameters(name = "{index}: {0} for host={1} and fragment={2} resolved to: {3}")
 	public static Collection<Object[]> data() {
-		return Arrays
-				.asList(new Object[][] {
-						// note: provided version is 1.2.3
-						{ "Import packages are equals", "package1", "package1",
-								true },
-						{ "Import of fragment is newer than host",
-								"package1;version=\"1.0.0\"",
-								"package1;version=\"2.0.0\"", false },
-						{
-								"Import of fragment is older than host, and host is less than provider",
-								"package1;version=\"1.0.0\"",
-								"package1;version=\"0.0.1\"", false },
-						{ "Import of fragment is exact the host",
-								"package1;version=\"1.2.3\"",
-								"package1;version=\"1.2.3\"", true },
-						{
-								"Import of host is exact the provider, fragment is less than",
-								"package1;version=\"1.2.3\"",
-								"package1;version=\"1.0.0\"", true }, });
+		return Arrays.asList(new Object[][] {
+				// note: provided version is package;version="1.2.3"
+				{ "Import packages are equals", "p1", "p1", true },
+				{ "Import of fragment is newer than host",
+						"p1;version=\"1.0.0\"", "p1;version=\"2.0.0\"", false },
+				{ "Import of fragment is older than host, and host is less than provider",
+						"p1;version=\"1.0.0\"", "p1;version=\"0.0.1\"", false },
+				{ "Import of fragment is exact the host",
+						"p1;version=\"1.2.3\"", "p1;version=\"1.2.3\"", true },
+				// TODO is this correct?
+				{ "Import of host is exact the provider, fragment is less than",
+						"p1;version=\"1.2.3\"", "p1;version=\"1.0.0\"",
+						true }, });
 	}
 
 	private String hostImportPackage;
@@ -95,8 +104,8 @@ public class FragmentBundleWithImportsTest extends AbstractConciergeTestCase {
 
 		// provider bundle for hosting a package
 		SyntheticBundleBuilder builder = SyntheticBundleBuilder.newBuilder();
-		builder.bundleSymbolicName("Provider").addManifestHeader(
-				"Export-Package", "package1;version=\"1.2.3\"");
+		builder.bundleSymbolicName("Provider")
+				.addManifestHeader("Export-Package", "p1;version=\"1.2.3\"");
 		Bundle providerBundle = installBundle(builder);
 		providerBundle.start();
 		assertBundleActive(providerBundle);
@@ -110,7 +119,8 @@ public class FragmentBundleWithImportsTest extends AbstractConciergeTestCase {
 	@Test
 	public void test() throws Exception {
 		Bundle hostBundle = installHostBundle(this.hostImportPackage);
-		Bundle fragmentBundle = installFragmentBundle(this.fragmentImportPackage);
+		Bundle fragmentBundle = installFragmentBundle(
+				this.fragmentImportPackage);
 		// now start host bundle. Check for fragment state based on expected
 		// result
 		hostBundle.start();
