@@ -25,7 +25,7 @@ import org.junit.Test;
 /**
  * Tests the XargsLauncher with its pattern replacement and wildcard support.
  */
-public class XargsFileLauncherTest {
+public class XargsFileLauncherPropertiesTest {
 
 	@Test
 	public void testConstructor() {

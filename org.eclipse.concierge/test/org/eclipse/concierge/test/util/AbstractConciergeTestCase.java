@@ -41,7 +41,9 @@ import org.osgi.framework.wiring.FrameworkWiring;
  */
 public abstract class AbstractConciergeTestCase {
 
-	/** This property allows to wait some time when framework has been shutdown. */
+	/**
+	 * This property allows to wait some time when framework has been shutdown.
+	 */
 	private final static String PROPERTY_WAIT_AFTER_FRAMEWORK_SHUTDOWN = "org.eclipse.concierge.tests.waitAfterFrameworkShutdown";
 
 	protected Framework framework = null;
@@ -53,6 +55,12 @@ public abstract class AbstractConciergeTestCase {
 	public void startFramework() throws Exception {
 		final Map<String, String> launchArgs = new HashMap<String, String>();
 		// start OSGi framework in clean mode as default
+		startFrameworkClean(launchArgs);
+	}
+
+	/** Start framework in clean mode. */
+	public void startFrameworkClean() throws Exception {
+		Map<String, String> launchArgs = new HashMap<String, String>();
 		startFrameworkClean(launchArgs);
 	}
 
@@ -74,7 +82,8 @@ public abstract class AbstractConciergeTestCase {
 	}
 
 	/** Start framework for a given framework. */
-	public void useFramework(final Framework frameworkToStart) throws Exception {
+	public void useFramework(final Framework frameworkToStart)
+			throws Exception {
 		// start OSGi framework
 		this.framework = frameworkToStart;
 		this.bundleContext = this.framework.getBundleContext();
@@ -82,8 +91,8 @@ public abstract class AbstractConciergeTestCase {
 		if (stayInShell()) {
 			String shellJarName = "./test/resources/org.eclipse.concierge.shell-5.0.0.20151029184259.jar";
 			if (!new File(shellJarName).exists()) {
-				System.err.println("Oops, could not find shell bundle at "
-						+ shellJarName);
+				System.err.println(
+						"Oops, could not find shell bundle at " + shellJarName);
 			} else {
 				// assume to get shell jar file in target folder
 				installAndStartBundle(shellJarName);
@@ -235,13 +244,14 @@ public abstract class AbstractConciergeTestCase {
 	 */
 	protected void enforceResolveBundle(final Bundle bundle) {
 		// initiate resolver
-		framework.adapt(FrameworkWiring.class).resolveBundles(
-				Collections.singleton(bundle));
+		framework.adapt(FrameworkWiring.class)
+				.resolveBundles(Collections.singleton(bundle));
 	}
 
 	/** Returns true when the specified bundle is a fragment. */
 	protected boolean isFragmentBundle(final Bundle bundle) {
-		return (bundle.adapt(BundleRevision.class).getTypes() & BundleRevision.TYPE_FRAGMENT) != 0;
+		return (bundle.adapt(BundleRevision.class).getTypes()
+				& BundleRevision.TYPE_FRAGMENT) != 0;
 	}
 
 	/** Checks about Bundle RESOLVED state for all bundles. */
@@ -272,7 +282,8 @@ public abstract class AbstractConciergeTestCase {
 
 	/** Checks about Bundle RESOLVED or ACTIVE state. */
 	protected boolean isBundleResolved(final Bundle bundle) {
-		return ((bundle.getState() == Bundle.RESOLVED) || (bundle.getState() == Bundle.ACTIVE));
+		return ((bundle.getState() == Bundle.RESOLVED)
+				|| (bundle.getState() == Bundle.ACTIVE));
 	}
 
 	/** Checks about Bundle ACTIVE state. */
@@ -400,8 +411,8 @@ public abstract class AbstractConciergeTestCase {
 			final Class<?> clazz = this.bundle.loadClass(className);
 			final Field field = clazz.getField(classFieldName);
 			if (!Modifier.isStatic(field.getModifiers())) {
-				throw new RuntimeException("Oops, field " + field.toString()
-						+ " is not static");
+				throw new RuntimeException(
+						"Oops, field " + field.toString() + " is not static");
 			}
 			// get the value of field, as class field object == null
 			final Object result = field.get(null);
@@ -414,7 +425,7 @@ public abstract class AbstractConciergeTestCase {
 		 */
 		public Object callClassMethod(final String className,
 				final String classMethodName, final Object[] args)
-				throws Exception {
+						throws Exception {
 			final Class<?> clazz = this.bundle.loadClass(className);
 			// get parameter types from args
 			final Class<?>[] parameterTypes = new Class[args.length];
@@ -424,8 +435,8 @@ public abstract class AbstractConciergeTestCase {
 			final Method method = clazz.getDeclaredMethod(classMethodName,
 					parameterTypes);
 			if (!Modifier.isStatic(method.getModifiers())) {
-				throw new RuntimeException("Oops, method " + method.toString()
-						+ " is not static");
+				throw new RuntimeException(
+						"Oops, method " + method.toString() + " is not static");
 			}
 			// TODO jhi Maybe set accessible if private?
 			final Object result = method.invoke(null, args);
@@ -454,7 +465,7 @@ public abstract class AbstractConciergeTestCase {
 
 		public Object createInstance(String className,
 				final String[] parameterTypeNames, final Object[] args)
-				throws Exception {
+						throws Exception {
 			final Class<?> clazz = this.bundle.loadClass(className);
 			dumpDeclaredConstructors(clazz);
 			// get parameter types from args
@@ -489,8 +500,8 @@ public abstract class AbstractConciergeTestCase {
 			dumpDeclaredMethods(clazz);
 			final Method method = clazz.getMethod(methodName, parameterTypes);
 			if (Modifier.isStatic(method.getModifiers())) {
-				throw new RuntimeException("Oops, method " + method.toString()
-						+ " is static");
+				throw new RuntimeException(
+						"Oops, method " + method.toString() + " is static");
 			}
 			final Object result = method.invoke(obj, args);
 			return result;
@@ -504,14 +515,14 @@ public abstract class AbstractConciergeTestCase {
 		 */
 		public Object callMethod(final Object obj, final String methodName,
 				final Class<?>[] parameterTypes, final Object[] args)
-				throws Exception {
+						throws Exception {
 			final Class<?> clazz = obj.getClass();
 			dumpMethods(clazz);
 			dumpDeclaredMethods(clazz);
 			final Method method = clazz.getMethod(methodName, parameterTypes);
 			if (Modifier.isStatic(method.getModifiers())) {
-				throw new RuntimeException("Oops, method " + method.toString()
-						+ " is static");
+				throw new RuntimeException(
+						"Oops, method " + method.toString() + " is static");
 			}
 			final Object result = method.invoke(obj, args);
 			return result;

@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.eclipse.concierge.BundleImpl;
 import org.eclipse.concierge.BundleImpl.Revision;
 import org.eclipse.concierge.Concierge;
 import org.eclipse.concierge.Factory;
@@ -40,12 +39,14 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
+import org.osgi.framework.startlevel.BundleStartLevel;
 import org.osgi.framework.wiring.BundleRevision;
 
 public class XargsFileLauncher {
 
-	protected static final boolean WIN = System.getProperty("os.name").toLowerCase().startsWith("win");
-	
+	protected static final boolean WIN = System.getProperty("os.name")
+			.toLowerCase().startsWith("win");
+
 	/**
 	 * process an init.xargs-style file.
 	 * 
@@ -58,12 +59,13 @@ public class XargsFileLauncher {
 	 *             if something goes wrong. For example, if strict startup is
 	 *             set and the installation of a bundle fails.
 	 */
-	public Concierge processXargsFile(final File file) throws BundleException,
-			FileNotFoundException {
+	public Concierge processXargsFile(final File file)
+			throws BundleException, FileNotFoundException {
 		InputStream inputStream = new FileInputStream(file);
 		// we have to preserve the properties for later variable and wildcard
 		// replacement
-		final Map<String, String> passedProperties = getPropertiesFromXargsInputStream(inputStream);
+		final Map<String, String> passedProperties = getPropertiesFromXargsInputStream(
+				inputStream);
 
 		// now process again for install/start options with given properties
 		inputStream = new FileInputStream(file);
@@ -72,8 +74,8 @@ public class XargsFileLauncher {
 
 	public Concierge processXargsInputStream(
 			final Map<String, String> passedProperties,
-			final InputStream inputStream) throws BundleException,
-			FileNotFoundException {
+			final InputStream inputStream)
+					throws BundleException, FileNotFoundException {
 
 		// create framework with given properties
 		final Concierge concierge = (Concierge) new Factory()
@@ -88,13 +90,11 @@ public class XargsFileLauncher {
 		if (concierge.restart) {
 			return concierge;
 		}
-		
+
 		final BundleContext context = concierge.getBundleContext();
 
-		int maxLevel = 1;
-
-		final BufferedReader reader = new BufferedReader(new InputStreamReader(
-				inputStream));
+		final BufferedReader reader = new BufferedReader(
+				new InputStreamReader(inputStream));
 
 		try {
 			final HashMap<String, Bundle> memory = new HashMap<String, Bundle>(
@@ -112,9 +112,6 @@ public class XargsFileLauncher {
 				} else if (token.startsWith("-initlevel")) {
 					token = getArg(token, 10);
 					initLevel = Integer.parseInt(token);
-					if (initLevel > maxLevel) {
-						maxLevel = initLevel;
-					}
 					continue;
 				} else if (token.startsWith("-all")) {
 					token = getArg(token, 4);
@@ -127,64 +124,79 @@ public class XargsFileLauncher {
 					}
 					final File files[];
 					files = jardir.listFiles(new FilenameFilter() {
-						public boolean accept(File arg0, String arg1) {
-							return arg1.toLowerCase().endsWith(".jar")
-									|| arg1.toLowerCase().endsWith(".zip");
+						public boolean accept(File dir, String name) {
+							return name.toLowerCase().endsWith(".jar")
+									|| name.toLowerCase().endsWith(".zip");
 						}
 					});
 					if (files == null) {
-						logError("NO FILES FOUND IN "
-								+ concierge.BUNDLE_LOCATION);
+						logError("NO FILES FOUND IN " + jardir.getPath());
 						break;
 					}
+					// first install all bundles
 					final List<Bundle> bundlesToStart = new ArrayList<Bundle>();
 					for (int i = 0; i < files.length; i++) {
 						if (files[i].isDirectory()) {
 							continue;
 						}
-						final BundleImpl b = (BundleImpl) context
+						final Bundle b = (Bundle) context
 								.installBundle(files[i].getPath());
-						b.setStartLevel(initLevel);
+						// adapt to BundleStartLevel
+						final BundleStartLevel bundleStartLevel = b
+								.adapt(BundleStartLevel.class);
+						bundleStartLevel.setStartLevel(initLevel);
 						bundlesToStart.add(b);
 					}
-					// TODO start bundles in start level order?
+					// then start all bundles (if not a fragment)
 					for (Iterator<Bundle> iter = bundlesToStart.iterator(); iter
 							.hasNext();) {
 						Bundle b = iter.next();
+						// is it a fragment?
 						final Revision rev = (Revision) b
 								.adapt(BundleRevision.class);
 						if (!rev.isFragment()) {
 							b.start();
 						}
 					}
-
 					continue;
 				} else if (token.startsWith("-istart")) {
-					token = getArg(token, 7);
-					token = replaceVariable(token, passedProperties);
-					token = resolveWildcardName(token);
-					final BundleImpl bundle = (BundleImpl) context
-							.installBundle(token);
-					bundle.setStartLevel(initLevel);
+					String bundleLocation = getArg(token, 7);
+					bundleLocation = replaceVariable(bundleLocation,
+							passedProperties);
+					bundleLocation = resolveWildcardName(bundleLocation);
+					final Bundle bundle = context.installBundle(bundleLocation);
+					// adapt to BundleStartLevel
+					final BundleStartLevel bundleStartLevel = bundle
+							.adapt(BundleStartLevel.class);
+					bundleStartLevel.setStartLevel(initLevel);
 					bundle.start();
 				} else if (token.startsWith("-install")) {
-					token = getArg(token, 8);
-					token = replaceVariable(token, passedProperties);
-					token = resolveWildcardName(token);
-					final BundleImpl bundle = (BundleImpl) context
-							.installBundle(token);
-					bundle.setStartLevel(initLevel);
-					memory.put(token, bundle);
+					String bundleLocation = getArg(token, 8);
+					bundleLocation = replaceVariable(bundleLocation,
+							passedProperties);
+					bundleLocation = resolveWildcardName(bundleLocation);
+					final Bundle bundle = context.installBundle(bundleLocation);
+					// adapt to BundleStartLevel
+					final BundleStartLevel bundleStartLevel = bundle
+							.adapt(BundleStartLevel.class);
+					bundleStartLevel.setStartLevel(initLevel);
+					memory.put(bundleLocation, bundle);
 				} else if (token.startsWith("-start")) {
-					token = getArg(token, 6);
-					token = replaceVariable(token, passedProperties);
-					token = resolveWildcardName(token);
-					final Bundle bundle = (Bundle) memory.remove(token);
+					String bundleLocation = getArg(token, 6);
+					bundleLocation = replaceVariable(bundleLocation,
+							passedProperties);
+					bundleLocation = resolveWildcardName(bundleLocation);
+					final Bundle bundle = memory.remove(bundleLocation);
 					if (bundle == null) {
-						logError("Bundle " + token
+						logError("Bundle " + bundleLocation
 								+ " is marked to be started but has not been "
 								+ "installed before. Ignoring the command !");
 					} else {
+						// set start level again in case it has been changed
+						// meanwhile
+						final BundleStartLevel bundleStartLevel = bundle
+								.adapt(BundleStartLevel.class);
+						bundleStartLevel.setStartLevel(initLevel);
 						bundle.start();
 					}
 				} else if (token.startsWith("-skip")) {
@@ -211,8 +223,8 @@ public class XargsFileLauncher {
 	public Map<String, String> getPropertiesFromXargsInputStream(
 			final InputStream inputStream) {
 		final Map<String, String> properties = new HashMap<String, String>();
-		final BufferedReader reader = new BufferedReader(new InputStreamReader(
-				inputStream));
+		final BufferedReader reader = new BufferedReader(
+				new InputStreamReader(inputStream));
 
 		try {
 			String line;
@@ -259,8 +271,8 @@ public class XargsFileLauncher {
 						value = replaceVariable(value, properties);
 						if (doAdd) {
 							String oldValue = properties.get(key);
-							properties.put(key, (oldValue == null ? ""
-									: oldValue) + value);
+							properties.put(key,
+									(oldValue == null ? "" : oldValue) + value);
 						} else {
 							properties.put(key, value);
 						}
@@ -344,20 +356,20 @@ public class XargsFileLauncher {
 			return bundleName;
 		}
 		// TODO how to check http protocol?
-		final File dir = new File(bundleName.substring(0,
-				bundleName.lastIndexOf("/")));
+		final File dir = new File(
+				bundleName.substring(0, bundleName.lastIndexOf("/")));
 		// try to use a file filter
 		final FileFilter filter = new FileFilter() {
 			public boolean accept(final File pathname) {
 				final String preStar = bundleName.substring(0,
 						bundleName.lastIndexOf("*"));
-				final String postStar = bundleName.substring(bundleName
-						.lastIndexOf("*") + 1);
-				
-				final String path = WIN ? pathname.getPath().replace('\\', '/') : pathname.getPath();
-				
-				return path.startsWith(preStar)
-						&& path.endsWith(postStar);
+				final String postStar = bundleName
+						.substring(bundleName.lastIndexOf("*") + 1);
+
+				final String path = WIN ? pathname.getPath().replace('\\', '/')
+						: pathname.getPath();
+
+				return path.startsWith(preStar) && path.endsWith(postStar);
 			}
 		};
 		final File foundFiles[] = dir.listFiles(filter);
@@ -366,6 +378,7 @@ public class XargsFileLauncher {
 		} else if (foundFiles.length == 1) {
 			return foundFiles[0].getPath(); // exact match
 		} else if (foundFiles.length > 1) {
+			// sort the list of found files, takes the "newest" one
 			final ArrayList<String> sortedFiles = new ArrayList<String>();
 			for (int i = 0; i < foundFiles.length; i++) {
 				sortedFiles.add(foundFiles[i].getPath());

@@ -1,4 +1,5 @@
 # xargs sample file to load some Felix bundles
+# We will start the bundles in different start levels to show that capability
 
 # uncomment to clean storage first
 # -Dorg.osgi.framework.storage.clean=onFirstInit
@@ -7,17 +8,25 @@
 -Dorg.eclipse.concierge.profile=felix
 
 # repos to load bundles from
--Drepo=https://archive.apache.org/dist/felix/
+-Drepo=https://archive.apache.org/dist/felix
 
-# load bundles
+# load shell with start level 1
+-initlevel 1
 -istart bundles/org.eclipse.concierge.shell-5.0.0.*.jar
+
+# start DS with start level 2
+-initlevel 2
 -istart ${repo}/org.apache.felix.scr-1.8.0.jar
--istart ${repo}/org.apache.felix.eventadmin-1.4.2.jar
+
+# start other services with level 3
+# First install (will use current start level 2), then start with level 3
+-install ${repo}/org.apache.felix.eventadmin-1.4.2.jar
 -install ${repo}/org.apache.felix.metatype-1.0.12.jar
 -install ${repo}/org.apache.felix.configadmin-1.8.4.jar
 
--level 1
+-initlevel 3
+-start ${repo}/org.apache.felix.eventadmin-1.4.2.jar
 -start ${repo}/org.apache.felix.metatype-1.0.12.jar
-
--level 2
 -start ${repo}/org.apache.felix.configadmin-1.8.4.jar
+
+# check in shell with command "startlevel <bundle-id>"

@@ -1,7 +1,7 @@
 # xargs sample file to load Equinox Console
 
 # uncomment to clean storage first
--Dorg.osgi.framework.storage.clean=onFirstInit
+# -Dorg.osgi.framework.storage.clean=onFirstInit
 
 # use our own profile
 -Dorg.eclipse.concierge.profile=equinox-console
