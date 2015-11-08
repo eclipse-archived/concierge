@@ -131,6 +131,22 @@ public class XargsFileLauncherXargsTest extends AbstractConciergeTestCase {
 		Assert.assertThat(asBSL(bundles[3]).getStartLevel(), is(1));
 	}
 
+	/** Test if start level of 4 will be applied correct. */
+	@Test
+	@Ignore("TODO does not work: bundles with startlevel > 3 will NOT be started")
+	public void testStartLevelIStart4() throws Exception {
+		File f = TestUtils.createFileFromString(
+				"-Dorg.osgi.framework.storage.clean=onFirstInit             \n"
+						+ "-initlevel 4                   # Comment to align\n"
+						+ "-istart " + fileA.getPath() + "# Comment to align\n",
+				"xargs");
+		framework = Concierge.doMain(new String[] { f.toString() });
+		Bundle[] bundles = framework.getBundleContext().getBundles();
+		Assert.assertThat(bundles.length, is(2));
+		assertBundlesActive(bundles);
+		Assert.assertThat(asBSL(bundles[1]).getStartLevel(), is(4));
+	}
+
 	/**
 	 * Test if start level will be applied correct, when start levels are bigger
 	 * than 3.
