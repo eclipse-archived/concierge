@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Eclipse Concierge Raspberry Pi LED Service (Incubation)
 Bundle-SymbolicName: org.eclipse.concierge.example.service.pi_led
-Bundle-Version: 5.1.0.alpha
+Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: org.eclipse.concierge.example.service.pi_led.impl.Activator
 Bundle-Vendor: Eclipse.org/Concierge
 Export-Package: org.eclipse.concierge.example.service.pi_led;version="5.1.0"
