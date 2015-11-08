@@ -12,8 +12,8 @@
 # load bundles
 -istart bundles/org.eclipse.concierge.shell-5.0.0.*.jar
 # WebConsole 4.2.14 needs startlevel service and packageadmin service
--istart bundles/org.eclipse.concierge.service.startlevel-5.0.0.*.jar
--istart bundles/org.eclipse.concierge.service.packageadmin-5.0.0.*.jar
+-istart bundles/org.eclipse.concierge.service.startlevel-5.1.0.*.jar
+-istart bundles/org.eclipse.concierge.service.packageadmin-5.1.0.*.jar
 # use simple HttpService
 -istart ${repo}/org.apache.felix.httplite.complete-0.1.4.jar
 # Use all version of WebConsole
