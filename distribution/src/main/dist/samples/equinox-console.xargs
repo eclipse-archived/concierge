@@ -19,8 +19,8 @@
 -istart ${repo.apache}/org.apache.felix.configadmin-1.8.8.jar
 -istart ${repo.equinox}/org.eclipse.equinox.util_1.0.500.v20130404-1337.jar
 
-# equinox.console requires equinox.common which requires 
-# supplement bundle to get Equinox specific extensions
+# equinox.console requires equinox.common which requires supplement bundle
+# to get Equinox specific extensions
 -istart ${repo.equinox}/org.eclipse.equinox.supplement_1.6.0.v20141009-1504.jar
 -istart ${repo.equinox}/org.eclipse.equinox.common_3.7.0.v20150402-1709.jar
 

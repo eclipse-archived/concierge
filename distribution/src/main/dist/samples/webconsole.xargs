@@ -1,4 +1,4 @@
-# xargs sample file to load WebConsole
+# xargs sample file to load Apache Felix WebConsole
 
 # uncomment to clean storage first
 # -Dorg.osgi.framework.storage.clean=onFirstInit
@@ -14,5 +14,7 @@
 # WebConsole 4.2.14 needs startlevel service and packageadmin service
 -istart bundles/org.eclipse.concierge.service.startlevel-5.0.0.*.jar
 -istart bundles/org.eclipse.concierge.service.packageadmin-5.0.0.*.jar
+# use simple HttpService
 -istart ${repo}/org.apache.felix.httplite.complete-0.1.4.jar
+# Use all version of WebConsole
 -istart ${repo}/org.apache.felix.webconsole-4.2.14-all.jar

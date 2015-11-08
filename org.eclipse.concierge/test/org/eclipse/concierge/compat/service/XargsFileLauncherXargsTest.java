@@ -30,7 +30,7 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.startlevel.BundleStartLevel;
 
 /**
- * Tests the XargsFileLauncher with xargs files.
+ * Tests the XargsFileLauncher with different xargs files.
  */
 public class XargsFileLauncherXargsTest extends AbstractConciergeTestCase {
 
@@ -41,7 +41,7 @@ public class XargsFileLauncherXargsTest extends AbstractConciergeTestCase {
 
 	@Before
 	public void setUp() throws Exception {
-		dir = "build/tests/testBundles";
+		dir = "build/tests/testXargsFileLauncher";
 		new File(dir).mkdirs();
 		SyntheticBundleBuilder builder;
 
@@ -76,9 +76,9 @@ public class XargsFileLauncherXargsTest extends AbstractConciergeTestCase {
 	public void testDefaultStartLevel() throws Exception {
 		File f = TestUtils.createFileFromString(
 				"-Dorg.osgi.framework.storage.clean=onFirstInit             \n"
-						+ "-istart " + fileA.getPath() + "#Comment to align\n"
-						+ "-istart " + fileB.getPath() + "#Comment to align\n"
-						+ "-istart " + fileC.getPath() + "#Comment to align\n",
+						+ "-istart " + fileA.getPath() + "# Comment to align\n"
+						+ "-istart " + fileB.getPath() + "# Comment to align\n"
+						+ "-istart " + fileC.getPath() + "# Comment to align\n",
 				"xargs");
 		framework = Concierge.doMain(new String[] { f.toString() });
 		Bundle[] bundles = framework.getBundleContext().getBundles();
@@ -94,12 +94,12 @@ public class XargsFileLauncherXargsTest extends AbstractConciergeTestCase {
 	public void testStartLevelIStart123() throws Exception {
 		File f = TestUtils.createFileFromString(
 				"-Dorg.osgi.framework.storage.clean=onFirstInit             \n"
-						+ "-initlevel 1                    #Comment to align\n"
-						+ "-istart  " + fileA.getPath() + "#Comment to align\n"
-						+ "-initlevel 2                    #Comment to align\n"
-						+ "-istart  " + fileB.getPath() + "#Comment to align\n"
-						+ "-initlevel 3                    #Comment to align\n"
-						+ "-istart  " + fileC.getPath() + "#Comment to align\n",
+						+ "-initlevel 1                   # Comment to align\n"
+						+ "-istart " + fileA.getPath() + "# Comment to align\n"
+						+ "-initlevel 2                   # Comment to align\n"
+						+ "-istart " + fileB.getPath() + "# Comment to align\n"
+						+ "-initlevel 3                   # Comment to align\n"
+						+ "-istart " + fileC.getPath() + "# Comment to align\n",
 				"xargs");
 		framework = Concierge.doMain(new String[] { f.toString() });
 		Bundle[] bundles = framework.getBundleContext().getBundles();
@@ -115,12 +115,12 @@ public class XargsFileLauncherXargsTest extends AbstractConciergeTestCase {
 	public void testStartLevelIStart321() throws Exception {
 		File f = TestUtils.createFileFromString(
 				"-Dorg.osgi.framework.storage.clean=onFirstInit             \n"
-						+ "-initlevel 3                    #Comment to align\n"
-						+ "-istart  " + fileA.getPath() + "#Comment to align\n"
-						+ "-initlevel 2                    #Comment to align\n"
-						+ "-istart  " + fileB.getPath() + "#Comment to align\n"
-						+ "-initlevel 1                    #Comment to align\n"
-						+ "-istart  " + fileC.getPath() + "#Comment to align\n",
+						+ "-initlevel 3                   # Comment to align\n"
+						+ "-istart " + fileA.getPath() + "# Comment to align\n"
+						+ "-initlevel 2                   # Comment to align\n"
+						+ "-istart " + fileB.getPath() + "# Comment to align\n"
+						+ "-initlevel 1                   # Comment to align\n"
+						+ "-istart " + fileC.getPath() + "# Comment to align\n",
 				"xargs");
 		framework = Concierge.doMain(new String[] { f.toString() });
 		Bundle[] bundles = framework.getBundleContext().getBundles();
@@ -131,18 +131,21 @@ public class XargsFileLauncherXargsTest extends AbstractConciergeTestCase {
 		Assert.assertThat(asBSL(bundles[3]).getStartLevel(), is(1));
 	}
 
-	/** Test if start level will be applied correct. */
+	/**
+	 * Test if start level will be applied correct, when start levels are bigger
+	 * than 3.
+	 */
 	@Test
 	@Ignore("TODO does not work: bundles with startlevel > 3 will NOT be started")
 	public void testStartLevelIStart102030() throws Exception {
 		File f = TestUtils.createFileFromString(
 				"-Dorg.osgi.framework.storage.clean=onFirstInit             \n"
-						+ "-initlevel 10                   #Comment to align\n"
-						+ "-istart  " + fileA.getPath() + "#Comment to align\n"
-						+ "-initlevel 20                   #Comment to align\n"
-						+ "-istart  " + fileB.getPath() + "#Comment to align\n"
-						+ "-initlevel 30                   #Comment to align\n"
-						+ "-istart  " + fileC.getPath() + "#Comment to align\n",
+						+ "-initlevel 10                  # Comment to align\n"
+						+ "-istart " + fileA.getPath() + "# Comment to align\n"
+						+ "-initlevel 20                  # Comment to align\n"
+						+ "-istart " + fileB.getPath() + "# Comment to align\n"
+						+ "-initlevel 30                  # Comment to align\n"
+						+ "-istart " + fileC.getPath() + "# Comment to align\n",
 				"xargs");
 		framework = Concierge.doMain(new String[] { f.toString() });
 		Bundle[] bundles = framework.getBundleContext().getBundles();
@@ -155,24 +158,24 @@ public class XargsFileLauncherXargsTest extends AbstractConciergeTestCase {
 
 	/**
 	 * Test if start level will be applied correct when using install and start
-	 * seperately.
+	 * separately.
 	 */
 	@Test
 	public void testStartLevelInstallStart123() throws Exception {
 		File f = TestUtils.createFileFromString(
 				"-Dorg.osgi.framework.storage.clean=onFirstInit             \n"
-						+ "-initlevel 1                    #Comment to align\n"
+						+ "-initlevel 1                   # Comment to align\n"
 						+ "-install " + fileA.getPath() + "#Comment to align\n"
-						+ "-initlevel 2                    #Comment to align\n"
+						+ "-initlevel 2                   # Comment to align\n"
 						+ "-install " + fileB.getPath() + "#Comment to align\n"
-						+ "-initlevel 3                    #Comment to align\n"
+						+ "-initlevel 3                   # Comment to align\n"
 						+ "-install " + fileC.getPath() + "#Comment to align\n"
-						+ "-initlevel 1                    #Comment to align\n"
-						+ "-start   " + fileA.getPath() + "#Comment to align\n"
-						+ "-initlevel 2                    #Comment to align\n"
-						+ "-start   " + fileB.getPath() + "#Comment to align\n"
-						+ "-initlevel 3                    #Comment to align\n"
-						+ "-start   " + fileC.getPath() + "#Comment to align\n",
+						+ "-initlevel 1                   # Comment to align\n"
+						+ "-start  " + fileA.getPath() + "# Comment to align\n"
+						+ "-initlevel 2                   # Comment to align\n"
+						+ "-start  " + fileB.getPath() + "# Comment to align\n"
+						+ "-initlevel 3                   # Comment to align\n"
+						+ "-start  " + fileC.getPath() + "# Comment to align\n",
 				"xargs");
 		framework = Concierge.doMain(new String[] { f.toString() });
 		Bundle[] bundles = framework.getBundleContext().getBundles();

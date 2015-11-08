@@ -29,4 +29,4 @@
 -start ${repo}/org.apache.felix.metatype-1.0.12.jar
 -start ${repo}/org.apache.felix.configadmin-1.8.4.jar
 
-# check in shell with command "startlevel <bundle-id>"
+# check different start levels in shell with command "startlevel <bundle-id>"
