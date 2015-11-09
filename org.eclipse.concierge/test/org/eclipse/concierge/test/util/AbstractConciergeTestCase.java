@@ -13,6 +13,9 @@
  *******************************************************************************/
 package org.eclipse.concierge.test.util;
 
+import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.is;
+
 import java.io.File;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
@@ -58,10 +61,10 @@ public abstract class AbstractConciergeTestCase {
 		startFrameworkClean(launchArgs);
 	}
 
-	/** Start framework in clean mode. */
-	public void startFrameworkClean() throws Exception {
+	/** Start framework in NON clean mode. */
+	public void startFrameworkNonClean() throws Exception {
 		Map<String, String> launchArgs = new HashMap<String, String>();
-		startFrameworkClean(launchArgs);
+		startFramework(launchArgs);
 	}
 
 	/** Start framework with given settings but in clean mode. */
@@ -108,7 +111,7 @@ public abstract class AbstractConciergeTestCase {
 			} else {
 				this.framework.stop();
 				FrameworkEvent event = framework.waitForStop(10000);
-				Assert.assertEquals(FrameworkEvent.STOPPED, event.getType());
+				Assert.assertThat(FrameworkEvent.STOPPED, is(event.getType()));
 
 				// force a GC to allow cleanup of files
 				// on Mac from time to time files from storage can not be
@@ -273,10 +276,12 @@ public abstract class AbstractConciergeTestCase {
 		if (isBundleResolved(bundle)) {
 			// all fine
 		} else {
-			Assert.fail("Bundle " + bundle.getSymbolicName() + " needs to be "
-					+ getBundleStateAsString(Bundle.RESOLVED) + " or "
-					+ getBundleStateAsString(Bundle.ACTIVE) + " but was "
-					+ getBundleStateAsString(bundle.getState()));
+			Assert.assertThat(
+					"Bundle " + bundle.getSymbolicName()
+							+ " needs to be RESOLVED or ACTIVE",
+					getBundleStateAsString(bundle.getState()),
+					anyOf(is(getBundleStateAsString(Bundle.RESOLVED)),
+							is(getBundleStateAsString(Bundle.ACTIVE))));
 		}
 	}
 
@@ -294,10 +299,11 @@ public abstract class AbstractConciergeTestCase {
 			if (isFragmentBundle(bundle) && isBundleResolved(bundle)) {
 				// all fine
 			} else {
-				Assert.fail("Bundle " + bundle.getSymbolicName()
-						+ " needs to be "
-						+ getBundleStateAsString(Bundle.ACTIVE) + " but was "
-						+ getBundleStateAsString(bundle.getState()));
+				Assert.assertThat(
+						"Bundle " + bundle.getSymbolicName()
+								+ " needs to be ACTIVE",
+						getBundleStateAsString(bundle.getState()),
+						is(getBundleStateAsString(Bundle.ACTIVE)));
 			}
 		}
 	}
@@ -307,9 +313,11 @@ public abstract class AbstractConciergeTestCase {
 		if (bundle.getState() == Bundle.INSTALLED) {
 			// all fine
 		} else {
-			Assert.fail("Bundle " + bundle.getSymbolicName() + " needs to be "
-					+ getBundleStateAsString(Bundle.INSTALLED) + " but was "
-					+ getBundleStateAsString(bundle.getState()));
+			Assert.assertThat(
+					"Bundle " + bundle.getSymbolicName()
+							+ " needs to be INSTALLED",
+					getBundleStateAsString(bundle.getState()),
+					is(getBundleStateAsString(Bundle.INSTALLED)));
 		}
 	}
 
@@ -327,6 +335,16 @@ public abstract class AbstractConciergeTestCase {
 			throws BundleException {
 		final Bundle b = bundleContext.installBundle(bundleName, is);
 		return b;
+	}
+
+	/** Get bundle with given symbolic name from a list of bundles. */
+	protected Bundle getBundleForBSN(Bundle[] bundles, String bsn) {
+		for (int i = 0; i < bundles.length; i++) {
+			if (bundles[i].getSymbolicName().equals(bsn)) {
+				return bundles[i];
+			}
+		}
+		return null;
 	}
 
 	/** Returns bundle state as readable string. */
