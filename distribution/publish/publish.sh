@@ -9,6 +9,16 @@
 # enable for "debugging" of script
 # set -x
 
+if [[ "$1" == "snapshots" ]] ; then
+  TARGET_BUILD_TYPE=snapshots
+elif [[ "$1" == "release" ]] ; then
+  TARGET_BUILD_TYPE=releases
+else
+  echo "Usage: Wrong build type: use ./publish.s {snapshots|release} ..."
+  exit 1
+fi
+echo "TARGET_BUILD_TYPE=$TARGET_BUILD_TYPE"
+
 version=`cat version.txt`
 echo "VERSION=$version"
 if [[ "$version" == *"SNAPSHOT"* ]] ; then
@@ -17,6 +27,16 @@ else
   BUILD_TYPE=releases
 fi
 echo "BUILD_TYPE=$BUILD_TYPE"
+
+
+if [[ "$BUILD_TYPE" == "release" ]]
+  if [[ ! "$TARGET_BUILD_TYPE" == "release" ]]
+    echo "Usage: You build a release version (see version.txt), but are NOT allowed to publish as a release build ..."
+    exit 1
+  fi
+fi
+
+
 UPLOAD_BASE=/home/data/httpd/download.eclipse.org/concierge
 UPLOAD_LOCATION=$UPLOAD_BASE/$BUILD_TYPE
 PUBLISH_LOG=$UPLOAD_BASE/publish.log
@@ -47,11 +67,20 @@ if [ "$BUILD_TYPE" == "snapshots" ] ; then
       if [ -f $f ] ; then rm $f ; fi
     done
     # copy files, sym links does not work when downloading files
-    echo "$buildVersion".tar.gz " -> " concierge-incubation-SNAPSHOT-latest.tar.gz
+    echo "$buildVersion".tar.gz "->" concierge-incubation-SNAPSHOT-latest.tar.gz
     cp "$buildVersion".tar.gz concierge-incubation-SNAPSHOT-latest.tar.gz
-    echo "$buildVersion".zip " -> " concierge-incubation-SNAPSHOT-latest.zip
+    echo "$buildVersion".zip "->" concierge-incubation-SNAPSHOT-latest.zip
     cp "$buildVersion".zip concierge-incubation-SNAPSHOT-latest.zip
   )
+fi
+
+# copy release build to one directy up for IP checks
+if [ "$BUILD_TYPE" == "release" ] ; then
+  echo "Copy release version $buildVersion to $UPLOAD_BASE"
+  echo "$BUILD_TYPE/$buildVersion".tar.gz "->" "$UPLOAD_BASE"
+  cp "./distribution/build/distributions/$buildVersion".tar.gz $UPLOAD_BASE
+  echo "$BUILD_TYPE/$buildVersion".zip "->" "$UPLOAD_BASE"
+  cp "./distribution/build/distributions/$buildVersion".zip $UPLOAD_BASE
 fi
 
 echo " "

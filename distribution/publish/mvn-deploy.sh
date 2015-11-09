@@ -16,7 +16,8 @@ MAVEN_BIN=$MAVEN_HOME/bin/mvn
 WSP_LOC=.
 logFile=mvn-deploy.log
 
-version=`cat version.txt`
+# version=`cat version.txt`
+version=`cat version.txt | tr -d '\r' | tr -d '\n'`
 echo "VERSION=$version"
 if [[ "$version" == *SNAPSHOT* ]] ; then
   BUILD_TYPE=snapshots
