@@ -29,8 +29,8 @@ fi
 echo "BUILD_TYPE=$BUILD_TYPE"
 
 
-if [[ "$BUILD_TYPE" == "release" ]]
-  if [[ ! "$TARGET_BUILD_TYPE" == "release" ]]
+if [[ "$BUILD_TYPE" == "release" ]] ; then
+  if [[ ! "$TARGET_BUILD_TYPE" == "release" ]] ; then
     echo "Usage: You build a release version (see version.txt), but are NOT allowed to publish as a release build ..."
     exit 1
   fi
