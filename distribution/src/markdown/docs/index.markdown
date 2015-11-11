@@ -3,7 +3,6 @@
 Concierge is a small-footprint implementation of the OSGi Core Specification R5 standard 
 optimized for mobile and embedded devices.
 
-
 ## User documentation
 
 * [Getting started](getting-started.html)
@@ -13,10 +12,9 @@ optimized for mobile and embedded devices.
 * [OSGi Options supported by Concierge](options-osgi.html)
 * [Concierge Options](options-concierge.html)
 * [Concierge AddOn bundles](concierge-bundles.html)
+* [Concierge Release Notes](release-notes.html)
 
 ## Developer documentation
 
 * [Building Concierge from source](contributor/build-concierge.html)
 * [How to contribute](contributor/contribute.html)
-
-
