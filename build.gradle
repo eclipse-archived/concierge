@@ -1,5 +1,5 @@
 // Build script for Concierge
-// first change using Gerrit
+// second change using Gerrit
 
 // sample usages:
 // Cleanup:                               ./gradlew clean
