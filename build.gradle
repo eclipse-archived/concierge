@@ -169,6 +169,11 @@ project(':org.eclipse.concierge.service.packageadmin') {
         compile project(':org.eclipse.concierge')
     }
 }
+project(':org.eclipse.concierge.service.eventadmin') {
+    dependencies {
+        compile project(':org.eclipse.concierge')
+    }
+}
 project(':org.eclipse.concierge.service.startlevel') {
     dependencies {
         compile project(':org.eclipse.concierge')

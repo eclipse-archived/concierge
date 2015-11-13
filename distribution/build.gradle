@@ -35,6 +35,7 @@ distributions {
                 from { project(':org.eclipse.concierge.extension.permission').jar }
                 from { project(':org.eclipse.concierge.service.permission').jar }
                 from { project(':org.eclipse.concierge.service.packageadmin').jar }
+                from { project(':org.eclipse.concierge.service.eventadmin').jar }
                 from { project(':org.eclipse.concierge.service.startlevel').jar }
                 from { project(':org.eclipse.concierge.service.xmlparser').jar }
                 from { project(':org.eclipse.concierge.shell').jar }

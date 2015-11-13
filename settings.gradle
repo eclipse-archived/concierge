@@ -5,6 +5,7 @@ include	'org.eclipse.concierge',
 		'org.eclipse.concierge.service.permission',
 		'org.eclipse.concierge.service.startlevel',
 		'org.eclipse.concierge.service.xmlparser',
+		'org.eclipse.concierge.service.eventadmin',
 		'org.eclipse.concierge.shell',
 		'org.eclipse.concierge.tests.integration',
 		'distribution'

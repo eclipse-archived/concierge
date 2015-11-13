@@ -28,7 +28,7 @@ import org.osgi.service.event.TopicPermission;
  * provided that will be checked against the properties of incoming events.
  * </p>
  * 
- * @author Jan S. Rellermeyer, ETH Zürich
+ * @author Jan S. Rellermeyer, ETH Zurich
  */
 final class Subscription {
 	/**
