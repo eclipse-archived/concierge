@@ -299,7 +299,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 		in.close();
 		this.context = framework.createBundleContext(this);
 
-		System.err.println("RESTORED BUNDLE " + toString() + " WITH SL " + this.startlevel + " and autostart " + this.autostart);
+		// System.err.println("RESTORED BUNDLE " + toString() + " WITH SL " + this.startlevel + " and autostart " + this.autostart);
 		
 		if (framework.SECURITY_ENABLED) {
 			domain = new ProtectionDomain(null, null);

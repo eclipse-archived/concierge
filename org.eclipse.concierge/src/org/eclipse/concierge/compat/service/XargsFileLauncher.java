@@ -22,6 +22,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,6 +47,16 @@ public class XargsFileLauncher {
 
 	protected static final boolean WIN = System.getProperty("os.name")
 			.toLowerCase().startsWith("win");
+
+	private PrintStream streamErr;
+
+	public XargsFileLauncher() {
+		this(System.err);
+	}
+
+	public XargsFileLauncher(PrintStream err) {
+		streamErr = err;
+	}
 
 	/**
 	 * process an init.xargs-style file.
@@ -130,7 +141,7 @@ public class XargsFileLauncher {
 						}
 					});
 					if (files == null) {
-						logError("NO FILES FOUND IN " + jardir.getPath());
+						printErr("NO FILES FOUND IN " + jardir.getPath());
 						break;
 					}
 					// first install all bundles
@@ -188,7 +199,7 @@ public class XargsFileLauncher {
 					bundleLocation = resolveWildcardName(bundleLocation);
 					final Bundle bundle = memory.remove(bundleLocation);
 					if (bundle == null) {
-						logError("Bundle " + bundleLocation
+						printErr("Bundle " + bundleLocation
 								+ " is marked to be started but has not been "
 								+ "installed before. Ignoring the command !");
 					} else {
@@ -240,11 +251,11 @@ public class XargsFileLauncher {
 					// get key and value
 					int pos = token.indexOf("=");
 					if (pos < 0) {
-						logError("WRONG PROPERTY DEFINITION: "
+						printErr("WRONG PROPERTY DEFINITION: "
 								+ "EQUALS for -Dname=value IS MISSING, IGNORE '"
 								+ line + "'");
 					} else if (pos == 0) {
-						logError("WRONG PROPERTY DEFINITION: "
+						printErr("WRONG PROPERTY DEFINITION: "
 								+ "NAME for -Dname=value IS MISSING, IGNORE '"
 								+ line + "'");
 					} else if (pos > 0) {
@@ -252,7 +263,7 @@ public class XargsFileLauncher {
 						boolean doAdd = token.charAt(pos - 1) == '+';
 						String key = token.substring(0, doAdd ? pos - 1 : pos);
 						if (key.length() == 0) {
-							logError("WRONG PROPERTY DEFINITION: "
+							printErr("WRONG PROPERTY DEFINITION: "
 									+ "NAME for -Dname+=value IS MISSING, IGNORE '"
 									+ line + "'");
 							continue;
@@ -389,7 +400,7 @@ public class XargsFileLauncher {
 		return bundleName;
 	}
 
-	private void logError(String msg) {
-		System.err.println("[XargsFileLauncher] " + msg);
+	private void printErr(String msg) {
+		streamErr.println("[XargsFileLauncher] " + msg);
 	}
 }

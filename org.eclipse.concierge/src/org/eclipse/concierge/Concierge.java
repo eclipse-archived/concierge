@@ -545,7 +545,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 	public static Concierge doMain(final String[] args) throws Exception {
 		// TODO: temporary solution to use xargs file launcher for argument
 		// processing
-		final XargsFileLauncher xargsLauncher = new XargsFileLauncher();
+		final XargsFileLauncher xargsLauncher = new XargsFileLauncher(System.err);
 		String xargsFile = null;
 		final StringBuffer argsBuf = new StringBuffer();
 		for (int i = 0; args != null && i < args.length; i++) {
