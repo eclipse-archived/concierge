@@ -34,7 +34,7 @@
 
 # equinox.console requires condpermadmin, taken as framework extension
 # As this is a fragment just install, not start
--install bundles/org.eclipse.concierge.extension.permission-5.1.0.*.jar
+-install framework/org.eclipse.concierge.extension.permission-5.1.0.*.jar
 
 # Finally install and start Equinox console
 -istart ${repo.equinox}/org.eclipse.equinox.console_1.1.100.v20141023-1406.jar

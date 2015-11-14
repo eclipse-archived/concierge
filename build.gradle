@@ -1,5 +1,4 @@
 // Build script for Concierge
-// third change using Gerrit
 
 // sample usages:
 // Cleanup:                               ./gradlew clean
@@ -56,7 +55,8 @@ allprojects {
 }
 
 // configure all java projects
-configure(subprojects.findAll {it.name != 'distribution'}) {
+// ignore distribution and intermediate projects
+configure(subprojects.findAll {! (it.name in ['distribution', 'bundles', 'framework', 'tests']) }) {
 	apply plugin: 'java'
 	apply plugin: 'maven-publish'
 
@@ -76,7 +76,7 @@ configure(subprojects.findAll {it.name != 'distribution'}) {
             	srcDir 'src'
         	}
 	        resources {
-    	        srcDirs = [ ".", "../distribution/src/config" ]
+    	        srcDirs = [ ".", "../../distribution/src/config" ]
 				include "META-INF/services/**", "META-INF/micro-services", "about.html", "about_files/**"
         	}
 	    }
@@ -126,6 +126,8 @@ configure(subprojects.findAll {it.name != 'distribution'}) {
 	// name jar file to given bundle symbolic name and version, NOT to project version
 	// as project version is for overall packaging
 	// we maintain the bundle version manually (or using bndtools)
+	// for debugging
+	// println ("configure: jar=" + jar)
 	jar.archiveName = jar.manifest.getEffectiveManifest().getAttributes().get("Bundle-SymbolicName") \
 						+ "-" + jar.manifest.getEffectiveManifest().getAttributes().get("Bundle-Version") \
 						+ ".jar"
@@ -143,9 +145,9 @@ configure(subprojects.findAll {it.name != 'distribution'}) {
 	        	// https://repo.eclipse.org/content/repositories/concierge-releases/
 	        	// println ("project.version=" + project.version)
 	        	if(project.version.contains('SNAPSHOT')) {
-	        	    url "../distribution/build/repo/snapshots"
+	        	    url "../../distribution/build/repo/snapshots"
  		        } else {
-	        	    url "../distribution/build/repo/releases"
+	        	    url "../../distribution/build/repo/releases"
           		}
 	        	// println ("url=" + url)
         	}
@@ -154,44 +156,44 @@ configure(subprojects.findAll {it.name != 'distribution'}) {
 }
 
 
-project(':org.eclipse.concierge.extension.permission') {
+project(':framework:org.eclipse.concierge.extension.permission') {
     dependencies {
-        compile project(':org.eclipse.concierge')
+        compile project(':framework:org.eclipse.concierge')
     }
 }
-project(':org.eclipse.concierge.service.permission') {
+project(':bundles:org.eclipse.concierge.service.permission') {
     dependencies {
-        compile project(':org.eclipse.concierge')
+        compile project(':framework:org.eclipse.concierge')
     }
 }
-project(':org.eclipse.concierge.service.packageadmin') {
+project(':bundles:org.eclipse.concierge.service.packageadmin') {
     dependencies {
-        compile project(':org.eclipse.concierge')
+        compile project(':framework:org.eclipse.concierge')
     }
 }
-project(':org.eclipse.concierge.service.eventadmin') {
+project(':bundles:org.eclipse.concierge.service.eventadmin') {
     dependencies {
-        compile project(':org.eclipse.concierge')
+        compile project(':framework:org.eclipse.concierge')
     }
 }
-project(':org.eclipse.concierge.service.startlevel') {
+project(':bundles:org.eclipse.concierge.service.startlevel') {
     dependencies {
-        compile project(':org.eclipse.concierge')
+        compile project(':framework:org.eclipse.concierge')
     }
 }
-project(':org.eclipse.concierge.service.xmlparser') {
+project(':bundles:org.eclipse.concierge.service.xmlparser') {
     dependencies {
-        compile project(':org.eclipse.concierge')
+        compile project(':framework:org.eclipse.concierge')
     }
 }
-project(':org.eclipse.concierge.shell') {
+project(':bundles:org.eclipse.concierge.shell') {
     dependencies {
-        compile project(':org.eclipse.concierge')
+        compile project(':framework:org.eclipse.concierge')
     }
 }
-project(':org.eclipse.concierge.tests.integration') {
+project(':tests:org.eclipse.concierge.tests.integration') {
     dependencies {
-        compile project(':org.eclipse.concierge')
+        compile project(':framework:org.eclipse.concierge')
     }
 }
 

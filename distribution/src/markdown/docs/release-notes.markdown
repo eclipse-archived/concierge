@@ -2,6 +2,7 @@
 
 ## Release 5.1.0 (SNAPSHOT)
 
+* Restructured code base, moved extension.permission to framework folder
 * Added EventAdmin to distribution
 * Removed System.err message when restoring bundle
 * Added documentation for contributing with Gerrit

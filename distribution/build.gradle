@@ -28,17 +28,17 @@ distributions {
 		baseName 'concierge-incubation'
 		contents {
 			into('framework') {
-                from { project(':org.eclipse.concierge').jar }
-                from { project(':org.eclipse.concierge').strippedJar }
+                from { project(':framework:org.eclipse.concierge').jar }
+                from { project(':framework:org.eclipse.concierge').strippedJar }
+                from { project(':framework:org.eclipse.concierge.extension.permission').jar }
 			}
 			into('bundles') {
-                from { project(':org.eclipse.concierge.extension.permission').jar }
-                from { project(':org.eclipse.concierge.service.permission').jar }
-                from { project(':org.eclipse.concierge.service.packageadmin').jar }
-                from { project(':org.eclipse.concierge.service.eventadmin').jar }
-                from { project(':org.eclipse.concierge.service.startlevel').jar }
-                from { project(':org.eclipse.concierge.service.xmlparser').jar }
-                from { project(':org.eclipse.concierge.shell').jar }
+                from { project(':bundles:org.eclipse.concierge.service.permission').jar }
+                from { project(':bundles:org.eclipse.concierge.service.packageadmin').jar }
+                from { project(':bundles:org.eclipse.concierge.service.eventadmin').jar }
+                from { project(':bundles:org.eclipse.concierge.service.startlevel').jar }
+                from { project(':bundles:org.eclipse.concierge.service.xmlparser').jar }
+                from { project(':bundles:org.eclipse.concierge.shell').jar }
             }
 			into('docs') {
                 from ('build/gen-html/docs')

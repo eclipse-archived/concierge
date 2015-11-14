@@ -7,7 +7,7 @@
 -Dorg.eclipse.concierge.profile=concierge
 
 # install framework extensions
--install bundles/org.eclipse.concierge.extension.permission-5.1.0.*.jar
+-install framework/org.eclipse.concierge.extension.permission-5.1.0.*.jar
 
 # install and start bundles
 -istart bundles/org.eclipse.concierge.shell-5.0.0.*.jar
