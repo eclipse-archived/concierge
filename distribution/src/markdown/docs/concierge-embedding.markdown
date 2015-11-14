@@ -26,7 +26,7 @@ Once you have created and started the Framework instance, you can interact with 
 
 ```
 BundleContext context = concierge.getBundleContext();
-Bundle shell = context.installBundle("file:org.eclipse.concierge.shell-1.0.0.jar"));
+Bundle shell = context.installBundle("file:org.eclipse.concierge.shell-5.0.0.jar"));
 shell.start();
 ```
 

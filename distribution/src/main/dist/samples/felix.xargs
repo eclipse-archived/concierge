@@ -10,9 +10,10 @@
 # repos to load bundles from
 -Drepo=https://archive.apache.org/dist/felix
 
-# load shell with start level 1
+# load shell and logservice with start level 1
 -initlevel 1
 -istart bundles/org.eclipse.concierge.shell-5.0.0.*.jar
+-istart ${repo}/org.apache.felix.log-1.0.1.jar
 
 # start DS with start level 2
 -initlevel 2
