@@ -1,0 +1,20 @@
+# xargs sample file to load Concierge bundles
+
+# uncomment to clean storage first
+# -Dorg.osgi.framework.storage.clean=onFirstInit
+
+# use our own profile
+-Dorg.eclipse.concierge.profile=concierge
+
+# install framework extensions
+-install bundles/org.eclipse.concierge.extension.permission-5.1.0.*.jar
+
+# install and start bundles
+-istart bundles/org.eclipse.concierge.shell-5.0.0.*.jar
+-istart bundles/org.eclipse.concierge.service.startlevel-5.1.0.*.jar
+-istart bundles/org.eclipse.concierge.service.packageadmin-5.1.0.*.jar
+-istart bundles/org.eclipse.concierge.service.eventadmin-1.3.0.*.jar
+
+# XML parser needs extra system packages
+-Dorg.osgi.framework.system.packages.extra+=javax.xml.parsers
+-istart bundles/org.eclipse.concierge.service.xmlparser-5.1.0.*.jar
