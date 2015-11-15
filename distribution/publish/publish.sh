@@ -37,7 +37,7 @@ if [[ "$BUILD_TYPE" == "release" ]] ; then
 fi
 
 
-UPLOAD_BASE=/home/data/httpd/download.eclipse.org/concierge
+UPLOAD_BASE=/home/data/httpd/download.eclipse.org/concierge/download
 UPLOAD_LOCATION=$UPLOAD_BASE/$BUILD_TYPE
 PUBLISH_LOG=$UPLOAD_BASE/publish.log
 echo "UPLOAD_LOCATION=$UPLOAD_LOCATION"
@@ -74,17 +74,17 @@ if [ "$BUILD_TYPE" == "snapshots" ] ; then
   )
 fi
 
-# copy release build to one directy up for IP checks
+# copy release build to two directories up for IP checks
 if [ "$BUILD_TYPE" == "release" ] ; then
   echo "Copy release version $buildVersion to $UPLOAD_BASE"
-  echo "$BUILD_TYPE/$buildVersion".tar.gz "->" "$UPLOAD_BASE"
-  cp "./distribution/build/distributions/$buildVersion".tar.gz $UPLOAD_BASE
-  echo "$BUILD_TYPE/$buildVersion".zip "->" "$UPLOAD_BASE"
-  cp "./distribution/build/distributions/$buildVersion".zip $UPLOAD_BASE
+  echo "$BUILD_TYPE/$buildVersion".tar.gz "->" "$UPLOAD_BASE"/..
+  cp "./distribution/build/distributions/$buildVersion".tar.gz $UPLOAD_BASE/..
+  echo "$BUILD_TYPE/$buildVersion".zip "->" "$UPLOAD_BASE"/..
+  cp "./distribution/build/distributions/$buildVersion".zip $UPLOAD_BASE/..
 fi
 
 echo " "
 
 ) | tee >>$PUBLISH_LOG
 
-echo "See http://download.eclipse.org/concierge/$BUILD_TYPE/?d for uploaded files..."
+echo "See http://download.eclipse.org/concierge/download/$BUILD_TYPE/?d for uploaded files..."
