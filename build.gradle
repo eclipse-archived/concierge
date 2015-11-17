@@ -145,9 +145,9 @@ configure(subprojects.findAll {! (it.name in ['distribution', 'bundles', 'framew
 	        	// https://repo.eclipse.org/content/repositories/concierge-releases/
 	        	// println ("project.version=" + project.version)
 	        	if(project.version.contains('SNAPSHOT')) {
-	        	    url "../../distribution/build/repo/snapshots"
+	        	    url "../../distribution/build/repo/maven/snapshots"
  		        } else {
-	        	    url "../../distribution/build/repo/releases"
+	        	    url "../../distribution/build/repo/maven/releases"
           		}
 	        	// println ("url=" + url)
         	}
@@ -157,6 +157,11 @@ configure(subprojects.findAll {! (it.name in ['distribution', 'bundles', 'framew
 
 
 project(':framework:org.eclipse.concierge.extension.permission') {
+    dependencies {
+        compile project(':framework:org.eclipse.concierge')
+    }
+}
+project(':framework:org.eclipse.concierge.profile.javase7') {
     dependencies {
         compile project(':framework:org.eclipse.concierge')
     }

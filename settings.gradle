@@ -1,6 +1,7 @@
 // all projects to include in build
 include	'framework:org.eclipse.concierge',
 		'framework:org.eclipse.concierge.extension.permission',
+		'framework:org.eclipse.concierge.profile.javase7',
 		'bundles:org.eclipse.concierge.service.packageadmin',
 		'bundles:org.eclipse.concierge.service.permission',
 		'bundles:org.eclipse.concierge.service.startlevel',
