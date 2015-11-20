@@ -2,5 +2,6 @@
 /.metadata/
 /.gradle/
 /tmp/
-/build/
 /tools/
+build/
+bin/
