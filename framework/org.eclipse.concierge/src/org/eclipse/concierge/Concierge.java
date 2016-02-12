@@ -79,7 +79,9 @@ import org.osgi.framework.FrameworkEvent;
 import org.osgi.framework.FrameworkListener;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceEvent;
+import org.osgi.framework.ServiceFactory;
 import org.osgi.framework.ServiceListener;
+import org.osgi.framework.ServiceObjects;
 import org.osgi.framework.ServicePermission;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
@@ -847,7 +849,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 		}
 
 		defaultProperties.setProperty(Constants.FRAMEWORK_SYSTEMPACKAGES,
-				"org.osgi.framework;version=1.7,org.osgi.framework.hooks.bundle;version=1.1,org.osgi.framework.hooks.resolver;version=1.0,org.osgi.framework.hooks.service;version=1.1,org.osgi.framework.hooks.weaving;version=1.0,org.osgi.framework.launch;version=1.1,org.osgi.framework.namespace;version=1.0,org.osgi.framework.startlevel;version=1.0,org.osgi.framework.wiring;version=1.1,org.osgi.resource;version=1.0,org.osgi.service.log;version=1.3,org.osgi.service.packageadmin;version=1.2,org.osgi.service.startlevel;version=1.1,org.osgi.service.url;version=1.0,org.osgi.service.resolver;version=1.0,org.osgi.util.tracker;version=1.5.1,META-INF.services");
+				"org.osgi.framework;version=1.8,org.osgi.framework.dto;version=1.8,org.osgi.dto;version=1.0,org.osgi.framework.hooks.bundle;version=1.1,org.osgi.framework.hooks.resolver;version=1.0,org.osgi.framework.hooks.service;version=1.1,org.osgi.framework.hooks.weaving;version=1.1,org.osgi.framework.launch;version=1.2,org.osgi.framework.namespace;version=1.1,org.osgi.framework.startlevel;version=1.0,org.osgi.framework.startlevel.dto;version=1.0,org.osgi.framework.wiring;version=1.2,org.osgi.framework.wiring.dto;version=1.2,org.osgi.resource;version=1.0,org.osgi.resource.dto;version=1.0,org.osgi.service.log;version=1.3,org.osgi.service.packageadmin;version=1.2,org.osgi.service.startlevel;version=1.1,org.osgi.service.url;version=1.0,org.osgi.service.resolver;version=1.0.1,org.osgi.util.tracker;version=1.5.1,META-INF.services");
 
 		Object obj;
 		defaultProperties.put(Constants.FRAMEWORK_OS_NAME,
@@ -4814,7 +4816,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 				final Object service, final Dictionary<String, ?> properties) {
 			return registerService(new String[] { clazz }, service, properties);
 		}
-
+		
+		
 		/**
 		 * remove a bundle listener.
 		 * 
@@ -4912,6 +4915,12 @@ public final class Concierge extends AbstractBundle implements Framework,
 			return (ServiceRegistration<S>) registerService(clazz.getName(),
 					service, properties);
 		}
+		
+		public <S> ServiceRegistration<S> registerService(final Class<S> clazz,
+				final ServiceFactory<S> factory, final Dictionary<String, ?> properties) {
+			// TODO R6 method
+			return null;
+		}
 
 		// FIXME: should be the other way around...
 		@SuppressWarnings("unchecked")
@@ -4934,6 +4943,12 @@ public final class Concierge extends AbstractBundle implements Framework,
 				return (Collection) Arrays.asList(refs);
 			}
 		}
+		
+		public <S> ServiceObjects<S> getServiceObjects(
+				final ServiceReference<S> reference) {
+			// TODO R6 method
+			return null;
+		}
 
 		/**
 		 * @see org.osgi.framework.BundleContext#getBundle(java.lang.String)
@@ -4942,6 +4957,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 		public Bundle getBundle(final String location) {
 			return location_bundles.get(location);
 		}
+
 	}
 
 	/**
@@ -5215,6 +5231,16 @@ public final class Concierge extends AbstractBundle implements Framework,
 		} catch (final Throwable t) {
 			t.printStackTrace();
 		}
+	}
+
+	public Collection<BundleCapability> findProviders(Requirement requirement) {
+		// TODO R6 method
+		return null;
+	}
+
+	public void init(FrameworkListener... listeners) throws BundleException {
+		// TODO R6 method
+		
 	}
 
 }

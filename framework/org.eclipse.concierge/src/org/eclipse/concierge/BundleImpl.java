@@ -3484,6 +3484,10 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				dynamicImports = Collections.unmodifiableList(dynamicImports);
 			}
 
+			public int getState() {
+				// TODO R6 method
+				return 0;
+			}
 		}
 
 		void addHostedCapability(final HostedCapability hostedCap) {

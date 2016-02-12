@@ -1,5 +1,5 @@
 /*
- * Copyright (c) OSGi Alliance (2001, 2010). All Rights Reserved.
+ * Copyright (c) OSGi Alliance (2001, 2013). All Rights Reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import org.osgi.framework.Bundle;
  * 
  * @ThreadSafe
  * @noimplement
- * @version $Id: bd3b38d1fda2461828e00a96dd414b4611d49df8 $
+ * @author $Id: 4aad25d2f145d9a2d24825bc481dcc254b74ed51 $
  * @deprecated This service has been replaced by the
  *             <code>org.osgi.framework.wiring</code> package.
  * @see org.osgi.service.packageadmin.ExportedPackage

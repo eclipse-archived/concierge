@@ -1,5 +1,5 @@
 /*
- * Copyright (c) OSGi Alliance (2000, 2012). All Rights Reserved.
+ * Copyright (c) OSGi Alliance (2000, 2013). All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import org.osgi.framework.ServiceReference;
  * 
  * @ThreadSafe
  * @noimplement
- * @version $Id: 23ba7188920db739b250871b6d202ad172cd6d90 $
+ * @author $Id: 1a6c322e64ee1470fb1b2d6b57b610b4df962089 $
  * @see LogReaderService#getLog
  * @see LogListener
  */
