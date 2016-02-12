@@ -1,5 +1,5 @@
 /*
- * Copyright (c) OSGi Alliance (2000, 2012). All Rights Reserved.
+ * Copyright (c) OSGi Alliance (2000, 2013). All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,15 +29,15 @@ import org.osgi.framework.ServiceReference;
  * Bundles must log messages in the OSGi environment with a severity level
  * according to the following hierarchy:
  * <ol>
- * <li>{@link #LOG_ERROR}
- * <li>{@link #LOG_WARNING}
- * <li>{@link #LOG_INFO}
- * <li>{@link #LOG_DEBUG}
+ * <li>{@link #LOG_ERROR}</li>
+ * <li>{@link #LOG_WARNING}</li>
+ * <li>{@link #LOG_INFO}</li>
+ * <li>{@link #LOG_DEBUG}</li>
  * </ol>
  * 
  * @ThreadSafe
  * @noimplement
- * @version $Id: 8021b36ab0d58ce6c27455ccbfba951679fc7b2d $
+ * @author $Id: dc7a9f634f0f0ccf9bd224e12d15d092861efc0e $
  */
 public interface LogService {
 	/**

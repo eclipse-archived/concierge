@@ -1,5 +1,5 @@
 /*
- * Copyright (c) OSGi Alliance (2000, 2012). All Rights Reserved.
+ * Copyright (c) OSGi Alliance (2000, 2013). All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,13 +25,14 @@ import java.util.Enumeration;
  * <ul>
  * <li>The primary way to retrieve {@code LogEntry} objects is to register a
  * {@code LogListener} object whose {@code LogListener.logged} method will be
- * called for each entry added to the log.
+ * called for each entry added to the log.</li>
  * <li>To retrieve past {@code LogEntry} objects, the {@code getLog} method can
  * be called which will return an {@code Enumeration} of all {@code LogEntry}
- * objects in the log.
+ * objects in the log.</li>
+ * </ul>
  * 
  * @ThreadSafe
- * @version $Id: 03cdab3f455fd81a35f2718a39f44eff5ff9163d $
+ * @author $Id: ecc3958bd6f6f2357c6b82d4383b28efbc8fa45b $
  * @see LogEntry
  * @see LogListener
  * @see LogListener#logged(LogEntry)

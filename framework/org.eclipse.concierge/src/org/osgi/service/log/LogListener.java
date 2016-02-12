@@ -1,5 +1,5 @@
 /*
- * Copyright (c) OSGi Alliance (2000, 2012). All Rights Reserved.
+ * Copyright (c) OSGi Alliance (2000, 2013). All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import java.util.EventListener;
  * method.
  * 
  * @ThreadSafe
- * @version $Id: 5df0d63b49c383056df91edb83602cee495d4897 $
+ * @author $Id: 4e27a9415d892fa96a214e28a9b8843df78284c6 $
  * @see LogReaderService
  * @see LogEntry
  * @see LogReaderService#addLogListener(LogListener)
