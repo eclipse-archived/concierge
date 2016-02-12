@@ -1,12 +1,12 @@
 import org.apache.tools.ant.filters.ReplaceTokens
 
-// we change the version "5.x.y.qualifier" by the current build version
+// we change the version "6.x.y.qualifier" by the current build version
 // note: if this will change also update the configuration here
 // See http://stackoverflow.com/questions/30038540/replace-token-in-file-before-building-but-keep-token-in-sources
 def buildVersionFile = 'src/org/eclipse/concierge/Concierge.java'
 def buildVersionFileName = 'Concierge.java'
 def buildVersionTempDir = 'build/tmp/sourcesCache'
-def buildVersionPattern = '5.1.0.qualifier'
+def buildVersionPattern = '6.0.0.qualifier'
 
 compileJava.doFirst {
     copy {
