@@ -3829,7 +3829,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 			map.seal();
 
 			// first call the event hooks
-			for (final ServiceReferenceImpl<org.osgi.framework.hooks.service.EventHook> eventHook : serviceEventHooks) {
+			final List<ServiceReferenceImpl<org.osgi.framework.hooks.service.EventHook>> serviceEventHooksCopy 
+				= new ArrayList<ServiceReferenceImpl<org.osgi.framework.hooks.service.EventHook>>(serviceEventHooks);
+			for (final ServiceReferenceImpl<org.osgi.framework.hooks.service.EventHook> eventHook : serviceEventHooksCopy) {
 				try {
 					final org.osgi.framework.hooks.service.EventHook hook = eventHook
 							.getService(this);
@@ -3843,7 +3845,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 			}
 
 			// then call the event listener hooks
-			for (final Iterator<ServiceReferenceImpl<EventListenerHook>> iter = serviceEventListenerHooks
+			final List<ServiceReferenceImpl<EventListenerHook>> serviceEventListenerHooksCopy 
+				= new ArrayList<ServiceReferenceImpl<EventListenerHook>>(serviceEventListenerHooks);
+			for (final Iterator<ServiceReferenceImpl<EventListenerHook>> iter = serviceEventListenerHooksCopy
 					.iterator(); iter.hasNext();) {
 				final ServiceReferenceImpl<EventListenerHook> hookRef = iter
 						.next();
@@ -3859,7 +3863,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 			}
 
 			final ArrayList<ServiceListenerEntry> list = new ArrayList<ServiceListenerEntry>();
-			for (final Iterator<ServiceListenerEntry> iter = serviceListeners
+			final ArrayList<ServiceListenerEntry> serviceListenersCopy 
+				= new ArrayList<ServiceListenerEntry>(serviceListeners);
+			for (final Iterator<ServiceListenerEntry> iter = serviceListenersCopy
 					.iterator(); iter.hasNext();) {
 				final ServiceListenerEntry entry = iter.next();
 				final Collection<ListenerInfo> listeners = map
