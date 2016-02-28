@@ -670,6 +670,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 			minor = parsed;
 		}
 
+		
+
+
 		if (System.getProperty("java.specification.name")
 				.equals("J2ME Foundation Specification")) {
 			switch (minor) {
@@ -683,6 +686,18 @@ public final class Concierge extends AbstractBundle implements Framework,
 			case 8:
 				myEEs.append("J2SE-1.8,");
 				myEEs.append("JavaSE-1.8,");
+				// also add the valid compact profiles
+				try {
+					// Figure out the profile by loading some classes from the profile
+					// Is there any other way to discover the profile of the JRE?
+					myEEs.append("JavaSE-1.8/compact1,");
+				 	this.getClass().getClassLoader().loadClass("org.w3c.dom.Document");
+				 	myEEs.append("JavaSE-1.8/compact2,");
+				 	this.getClass().getClassLoader().loadClass("javax.management.Descriptor");
+				 	myEEs.append("JavaSE-1.8/compact3,");
+					this.getClass().getClassLoader().loadClass("javax.imageio.ImageIO");
+				} catch(ClassNotFoundException e){
+				}
 				seVersionList.append("1.8,");
 			case 7:
 				myEEs.append("J2SE-1.7,");
