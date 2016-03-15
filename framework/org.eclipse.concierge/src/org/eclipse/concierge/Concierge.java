@@ -657,6 +657,10 @@ public final class Concierge extends AbstractBundle implements Framework,
 		final StringBuffer myEEs = new StringBuffer();
 
 		final StringBuffer seVersionList = new StringBuffer();
+		final StringBuffer compact1VersionList = new StringBuffer();
+		final StringBuffer compact2VersionList = new StringBuffer();
+		final StringBuffer compact3VersionList = new StringBuffer();
+
 		final StringBuffer minVersionList = new StringBuffer();
 
 		final int minor;
@@ -691,10 +695,13 @@ public final class Concierge extends AbstractBundle implements Framework,
 					// Figure out the profile by loading some classes from the profile
 					// Is there any other way to discover the profile of the JRE?
 					myEEs.append("JavaSE-1.8/compact1,");
+					compact1VersionList.append("1.8,");
 				 	this.getClass().getClassLoader().loadClass("org.w3c.dom.Document");
 				 	myEEs.append("JavaSE-1.8/compact2,");
+				 	compact2VersionList.append("1.8,");
 				 	this.getClass().getClassLoader().loadClass("javax.management.Descriptor");
 				 	myEEs.append("JavaSE-1.8/compact3,");
+				 	compact3VersionList.append("1.8,");
 					this.getClass().getClassLoader().loadClass("javax.imageio.ImageIO");
 				} catch(ClassNotFoundException e){
 				}
@@ -770,6 +777,27 @@ public final class Concierge extends AbstractBundle implements Framework,
 						"osgi.ee; osgi.ee=\"JavaSE\"; version:List<Version>=\""
 								+ seVersionList.toString() + "\"");
 				systemBundleCapabilities.add(eeCap);
+			}
+			if(compact1VersionList.length() > 0){
+				final BundleCapabilityImpl eeCap = new BundleCapabilityImpl(
+						this,
+						"osgi.ee; osgi.ee=\"JavaSE/compact1\"; version:List<Version>=\""
+								+ compact1VersionList.toString() + "\"");
+				systemBundleCapabilities.add(eeCap);				
+			}
+			if(compact2VersionList.length() > 0){
+				final BundleCapabilityImpl eeCap = new BundleCapabilityImpl(
+						this,
+						"osgi.ee; osgi.ee=\"JavaSE/compact2\"; version:List<Version>=\""
+								+ compact2VersionList.toString() + "\"");
+				systemBundleCapabilities.add(eeCap);				
+			}
+			if(compact3VersionList.length() > 0){
+				final BundleCapabilityImpl eeCap = new BundleCapabilityImpl(
+						this,
+						"osgi.ee; osgi.ee=\"JavaSE/compact3\"; version:List<Version>=\""
+								+ compact3VersionList.toString() + "\"");
+				systemBundleCapabilities.add(eeCap);				
 			}
 			if (minVersionList.length() > 0) {
 				final BundleCapabilityImpl eeCap = new BundleCapabilityImpl(
