@@ -14,26 +14,51 @@
 package org.eclipse.concierge;
 
 import java.io.File;
+import java.lang.reflect.Array;
 import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.Permission;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.concierge.BundleImpl.Revision;
 import org.eclipse.concierge.Concierge.BundleContextImpl;
 import org.eclipse.concierge.Concierge.ServiceListenerEntry;
+import org.osgi.dto.DTO;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.FrameworkListener;
 import org.osgi.framework.ServicePermission;
 import org.osgi.framework.ServiceReference;
+import org.osgi.framework.dto.BundleDTO;
+import org.osgi.framework.dto.ServiceReferenceDTO;
+import org.osgi.framework.startlevel.BundleStartLevel;
+import org.osgi.framework.startlevel.dto.BundleStartLevelDTO;
+import org.osgi.framework.wiring.BundleCapability;
 import org.osgi.framework.wiring.BundleRevision;
 import org.osgi.framework.wiring.BundleRevisions;
+import org.osgi.framework.wiring.BundleWire;
 import org.osgi.framework.wiring.BundleWiring;
+import org.osgi.framework.wiring.dto.BundleRevisionDTO;
+import org.osgi.framework.wiring.dto.BundleWireDTO;
+import org.osgi.framework.wiring.dto.BundleWiringDTO;
+import org.osgi.framework.wiring.dto.BundleWiringDTO.NodeDTO;
+import org.osgi.resource.Capability;
+import org.osgi.resource.Requirement;
+import org.osgi.resource.Resource;
+import org.osgi.resource.dto.CapabilityDTO;
+import org.osgi.resource.dto.CapabilityRefDTO;
+import org.osgi.resource.dto.RequirementDTO;
+import org.osgi.resource.dto.RequirementRefDTO;
+import org.osgi.resource.dto.ResourceDTO;
+import org.osgi.resource.dto.WireDTO;
 
 public abstract class AbstractBundle implements Bundle, BundleRevisions {
 
@@ -244,10 +269,328 @@ public abstract class AbstractBundle implements Bundle, BundleRevisions {
 			return currentRevision != null ? (A) currentRevision.getWiring()
 					: null;
 		}
+		
+		// BundleDTO
+		if(type == BundleDTO.class){
+			return (A) getBundleDTO();
+		}
+		
+		// ServiceReferenceDTO[]
+		if(type == ServiceReferenceDTO[].class){
+			if(state != ACTIVE)
+				return null;
+			
+			ServiceReferenceDTO[] dtos = new ServiceReferenceDTO[registeredServices==null ? 0 : registeredServices.size()];
+			for(int i=0;i<dtos.length;i++){
+				dtos[i] = getServiceReferenceDTO(registeredServices.get(i));
+			}
+			return (A) dtos;
+		}
+		
+		// BundleRevisionDTO
+		if(type == BundleRevisionDTO.class){
+			if(currentRevision == null){
+				return null;
+			} else {
+				return (A) getBundleRevisionDTO(currentRevision);
+			}
+		}
+		
+		// BundleRevisionDTO[]
+		if(type == BundleRevisionDTO[].class){
+			if(state == UNINSTALLED)
+				return null;
+			
+			BundleRevisionDTO[] dtos = new BundleRevisionDTO[revisions.size()];
+			for(int i=0;i<revisions.size();i++){
+				dtos[i] = getBundleRevisionDTO(revisions.get(i));
+			}
+			return (A) dtos;
+		}
+		
+		// BundleWiringDTO
+		if(type == BundleWiringDTO.class){
+			if(currentRevision == null){
+				return null;
+			} else {
+				return (A) getBundleWiringDTO(currentRevision);
+			}
+		}
+		
+		// BundleWiringDTO[]
+		if(type == BundleWiringDTO[].class){
+			if(state == UNINSTALLED)
+				return null;
+			
+			BundleWiringDTO[] dtos = new BundleWiringDTO[revisions.size()];
+			for(int i=0;i<revisions.size();i++){
+				dtos[i] = getBundleWiringDTO(revisions.get(i));
+			}
+			return (A) dtos;
+		}
+		
+		// BundleStartLevelDTO
+		if(type == BundleStartLevelDTO.class){
+			return (A) getBundleStartLevelDTO();
+		}	
+		
+		
+		// TODO FrameworkStartLevelDTO
+		
+		// TODO FrameworkDTO
 
 		return null;
 	}
+	
+	protected final BundleDTO getBundleDTO(){
+		BundleDTO dto = new BundleDTO();
+		dto.id = bundleId;
+		dto.lastModified = lastModified;
+		dto.state = state;
+		dto.symbolicName = getSymbolicName();
+		dto.version = getVersion().toString();
+		return dto;
+	}
+	
+	protected final BundleStartLevelDTO getBundleStartLevelDTO(){
+		BundleStartLevelDTO dto = new BundleStartLevelDTO();
+		dto.bundle = bundleId;
+		
+		BundleStartLevel bsl = adapt(BundleStartLevel.class);
+		dto.startLevel = bsl.getStartLevel();
+		dto.activationPolicyUsed = bsl.isActivationPolicyUsed();
+		dto.persistentlyStarted = bsl.isPersistentlyStarted();
+		return dto;
+	}
+	
+	protected final ServiceReferenceDTO getServiceReferenceDTO(ServiceReference ref){
+		ServiceReferenceDTO dto = new ServiceReferenceDTO();
+		dto.bundle = bundleId;
+		dto.id = (Long) ref.getProperty(Constants.SERVICE_ID);
+		dto.properties = new HashMap<String, Object>();
+		for(String key : ref.getPropertyKeys()){
+			Object val = ref.getProperty(key);
+			dto.properties.put(key, getDTOValue(val));
+		}
+		Bundle[] usingBundles = ref.getUsingBundles();
+		if(usingBundles == null){
+			dto.usingBundles = new long[0];
+		} else {
+			dto.usingBundles = new long[usingBundles.length];
+			for(int j=0;j<usingBundles.length;j++){
+				dto.usingBundles[j] = usingBundles[j].getBundleId();
+			}
+		}
+		return dto;
+	}
+	
+	protected final BundleRevisionDTO getBundleRevisionDTO(BundleRevision revision){
+		BundleRevisionDTO dto = new BundleRevisionDTO();
+		dto.bundle = revision.getBundle().getBundleId();
+		dto.id = revision.hashCode();
+		dto.symbolicName = revision.getSymbolicName();
+		dto.type = revision.getTypes();
+		dto.version = getVersion().toString();
+		
+		// add requirement/capabilities
+		List<Capability> caps = revision.getCapabilities(null);
+		dto.capabilities = new ArrayList<CapabilityDTO>(caps.size());
+		for(Capability c : caps){
+			CapabilityDTO capDTO = new CapabilityDTO();
+			capDTO.id = c.hashCode();
+			capDTO.namespace = c.getNamespace();
+			capDTO.resource = c.getResource().hashCode();
+			capDTO.attributes = getDTOMap(c.getAttributes());
+			capDTO.directives = new HashMap<String, String>(c.getDirectives());
+			dto.capabilities.add(capDTO);
+		}
+		
+		List<Requirement> reqs = revision.getRequirements(null);
+		dto.requirements = new ArrayList<RequirementDTO>(reqs.size());
+		for(Requirement r : reqs){
+			RequirementDTO reqDTO = new RequirementDTO();
+			reqDTO.id = r.hashCode();
+			reqDTO.namespace = r.getNamespace();
+			reqDTO.resource = r.getResource().hashCode();
+			reqDTO.attributes = getDTOMap(r.getAttributes());
+			reqDTO.directives = new HashMap<String, String>(r.getDirectives());
+			dto.requirements.add(reqDTO);
+		}
+		return dto;
+	}
+	
+	protected final BundleWiringDTO getBundleWiringDTO(BundleRevision revision){
+		BundleWiringDTO dto = new BundleWiringDTO();
+		dto.bundle = revision.getBundle().getBundleId();
+		
+		BundleWiring wiring = revision.getWiring();
+		// TODO what is root
+		dto.root = wiring.hashCode();
+		
+		dto.resources = new HashSet<BundleRevisionDTO>();
+		dto.resources.add(getBundleRevisionDTO(revision));
+		dto.nodes = new HashSet<BundleWiringDTO.NodeDTO>();
+		
+		addBundleWiringNodeDTO(wiring, dto.resources, dto.nodes);
+		
+		return dto;
+	}
+	
+	protected final BundleWiringDTO.NodeDTO addBundleWiringNodeDTO(
+			BundleWiring wiring, Set<BundleRevisionDTO> resources, Set<NodeDTO> nodes){
+		
+		NodeDTO node = new BundleWiringDTO.NodeDTO();
+		node.current = wiring.isCurrent();
+		node.inUse = wiring.isInUse();
+		node.id = wiring.hashCode();
+		node.resource = wiring.getResource().hashCode();
+		
+		nodes.add(node);
+		
+		if(node.inUse){
+			// these things are only not null if wiring is in use?
+			
+			node.capabilities = new ArrayList<CapabilityRefDTO>();
+			for(BundleCapability c : wiring.getCapabilities(null)){
+				CapabilityRefDTO caprDTO = new CapabilityRefDTO();
+				BundleRevision rev= c.getResource();
+				caprDTO.capability = c.hashCode();
+				caprDTO.resource = rev.hashCode();
+				
+				if(!containsResource(resources, caprDTO.resource)){
+					resources.add(getBundleRevisionDTO(rev));
+				}
+				
+				node.capabilities.add(caprDTO);
+			}
+			
+			node.requirements = new ArrayList<RequirementRefDTO>();
+			for(Requirement r : wiring.getRequirements(null)){
+				RequirementRefDTO reqrDTO = new RequirementRefDTO();
+				Resource res = r.getResource();
+				reqrDTO.requirement = r.hashCode();
+				reqrDTO.resource = res.hashCode();
+				
+				if(!containsResource(resources, reqrDTO.resource)){
+					if(res instanceof BundleRevision){
+						resources.add(getBundleRevisionDTO((BundleRevision)res));
+					}
+				}
+				
+				node.requirements.add(reqrDTO);
+			}
+			
+			node.providedWires = new ArrayList<WireDTO>();
+			for(BundleWire w : wiring.getProvidedWires(null)){
+				WireDTO wireDTO = getBundleWireDTO(w);
+				node.providedWires.add(wireDTO);
+				
+				// add requirer resource
+				BundleRevision requirer = w.getRequirer();
+				if(!containsResource(resources, requirer.hashCode())){
+					resources.add(getBundleRevisionDTO(requirer));
+				}
+				
+				// add requirer wiring
+				BundleWiring requirerWiring = w.getRequirerWiring();
+				if(!containsNode(nodes, requirerWiring.hashCode())){
+					addBundleWiringNodeDTO(requirerWiring, resources, nodes);
+				}
+			}
+			
+			node.requiredWires = new ArrayList<WireDTO>();
+			for(BundleWire w : wiring.getRequiredWires(null)){
+				WireDTO wireDTO = getBundleWireDTO(w);
+				node.requiredWires.add(wireDTO);
+				
+				// add provider resource
+				BundleRevision provider = w.getProvider();
+				if(!containsResource(resources, provider.hashCode())){
+					resources.add(getBundleRevisionDTO(provider));
+				}
+				
+				// add provider wiring
+				BundleWiring providerWiring = w.getProviderWiring();
+				if(!containsNode(nodes, providerWiring.hashCode())){
+					addBundleWiringNodeDTO(providerWiring, resources, nodes);
+				}
+				
+			}
+		}
+		
+		return node;
+	}
+	
+	protected final WireDTO getBundleWireDTO(BundleWire w){
+		BundleWireDTO dto = new BundleWireDTO();
+		dto.capability = new CapabilityRefDTO();
+		dto.capability.capability = w.getCapability().hashCode();
+		dto.capability.resource = w.getCapability().getResource().hashCode();
+		
+		dto.requirement = new RequirementRefDTO();
+		dto.requirement.requirement = w.getRequirement().hashCode();
+		dto.requirement.resource = w.getRequirement().getResource().hashCode();
+		
+		dto.provider = w.getProvider().hashCode();
+		dto.requirer = w.getRequirer().hashCode();
 
+		dto.providerWiring = w.getProviderWiring().hashCode();
+		dto.requirerWiring = w.getRequirerWiring().hashCode();
+		
+		return dto;
+	}
+	
+	protected final Map<String, Object> getDTOMap(Map<String, Object> map){
+		Map<String, Object> dtoMap = new HashMap<String, Object>();
+		for(String key : map.keySet()){
+			Object val = map.get(key);
+			dtoMap.put(key, getDTOValue(val));
+		}
+		return dtoMap;
+	}
+	
+	protected final Object getDTOValue(Object value){
+		Class c = value.getClass();
+		if(c.isArray()){
+			c = c.getComponentType();
+		}
+		if(Number.class.isAssignableFrom(c)
+			|| Boolean.class.isAssignableFrom(c)
+			|| String.class.isAssignableFrom(c)
+			|| DTO.class.isAssignableFrom(c)){
+			return value;
+		}
+		
+		if(value.getClass().isArray()){
+			int length = Array.getLength(value);
+			String[] converted = new String[length];
+			for(int i=0;i<length;i++){
+				converted[i] = String.valueOf(Array.get(value, i));
+			}
+			return converted;
+		}
+		
+		return String.valueOf(value);
+	}
+	
+	protected final boolean containsNode(Set<NodeDTO> nodes, int id){
+		for(NodeDTO node : nodes){
+			if(node.id == id){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	protected final boolean containsResource(Set<? extends ResourceDTO> resources, int id){
+		for(ResourceDTO resource : resources){
+			if(resource.id == id){
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	/**
 	 * @see java.lang.Comparable#compareTo(java.lang.Object)
 	 * @category Bundle

@@ -88,6 +88,9 @@ import org.osgi.framework.ServiceRegistration;
 import org.osgi.framework.SynchronousBundleListener;
 import org.osgi.framework.UnfilteredServiceListener;
 import org.osgi.framework.Version;
+import org.osgi.framework.dto.BundleDTO;
+import org.osgi.framework.dto.FrameworkDTO;
+import org.osgi.framework.dto.ServiceReferenceDTO;
 import org.osgi.framework.hooks.bundle.CollisionHook;
 import org.osgi.framework.hooks.bundle.EventHook;
 import org.osgi.framework.hooks.resolver.ResolverHook;
@@ -106,6 +109,7 @@ import org.osgi.framework.namespace.IdentityNamespace;
 import org.osgi.framework.namespace.PackageNamespace;
 import org.osgi.framework.startlevel.BundleStartLevel;
 import org.osgi.framework.startlevel.FrameworkStartLevel;
+import org.osgi.framework.startlevel.dto.FrameworkStartLevelDTO;
 import org.osgi.framework.wiring.BundleCapability;
 import org.osgi.framework.wiring.BundleRequirement;
 import org.osgi.framework.wiring.BundleRevision;
@@ -124,6 +128,8 @@ import org.osgi.service.resolver.HostedCapability;
 import org.osgi.service.resolver.ResolutionException;
 import org.osgi.service.resolver.ResolveContext;
 import org.osgi.service.resolver.Resolver;
+
+import com.sun.org.apache.xerces.internal.util.SynchronizedSymbolTable;
 
 /**
  * The core class of the Concierge OSGi framework. Implements the system bundle,
@@ -1745,11 +1751,32 @@ public final class Concierge extends AbstractBundle implements Framework,
 			return (A) wirings.get(this);
 		}
 
-		if (type.isInstance(this)) {
-			return (A) this;
+		if(type == FrameworkStartLevelDTO.class){
+			FrameworkStartLevelDTO fsl = new FrameworkStartLevelDTO();
+			fsl.initialBundleStartLevel = initStartlevel;
+			fsl.startLevel = startlevel;
+			return (A) fsl;
 		}
-
-		return null;
+		
+		if(type == FrameworkDTO.class){
+			FrameworkDTO dto = new FrameworkDTO();
+			dto.bundles = new ArrayList<BundleDTO>();
+			for(Bundle b : bundles){
+				dto.bundles.add(b.adapt(BundleDTO.class));
+			}
+			dto.services = new ArrayList<ServiceReferenceDTO>();
+			for(ServiceReference ref : serviceRegistry.getAllValues()){
+				dto.services.add(getServiceReferenceDTO(ref));
+			}
+			dto.properties = new HashMap<String, Object>();
+			for(Object k : properties.keySet()){
+				String key = (String) k;
+				dto.properties.put(key, getDTOValue(properties.getProperty(key)));
+			}
+			return (A) dto;
+		}
+		
+		return super.adapt(type);
 	}
 
 	// Bundle
