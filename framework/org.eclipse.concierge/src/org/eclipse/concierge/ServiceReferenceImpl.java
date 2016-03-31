@@ -22,6 +22,7 @@ import java.util.Map;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.Constants;
 import org.osgi.framework.FrameworkEvent;
+import org.osgi.framework.PrototypeServiceFactory;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceException;
 import org.osgi.framework.ServiceFactory;
@@ -79,8 +80,9 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 	 */
 	protected final static HashSet<String> forbidden;
 	static {
-		forbidden = new HashSet<String>(2);
+		forbidden = new HashSet<String>(3);
 		forbidden.add(Constants.SERVICE_ID.toLowerCase());
+		forbidden.add(Constants.SERVICE_BUNDLEID.toLowerCase());
 		forbidden.add(Constants.OBJECTCLASS.toLowerCase());
 	}
 
@@ -100,8 +102,13 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 	ServiceReferenceImpl(final Concierge framework, final Bundle bundle,
 			final S service, final Dictionary<String, ?> props,
 			final String[] clazzes) {
-		if (service instanceof ServiceFactory) {
+		String scope = "singleton";
+		if (service instanceof PrototypeServiceFactory) {
 			isServiceFactory = true;
+			scope = "prototype";
+		} else if(service instanceof ServiceFactory) {
+			isServiceFactory = true;
+			scope = "bundle";
 		} else {
 			isServiceFactory = false;
 			checkService(service, clazzes);
@@ -110,8 +117,8 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 		this.framework = framework;
 		this.bundle = bundle;
 		this.service = service;
-		this.properties = new HashMap<String, Object>(props == null ? 2
-				: props.size() + 2);
+		this.properties = new HashMap<String, Object>(props == null ? 5
+				: props.size() + 5);
 		if (props != null) {
 			for (final Enumeration<String> keys = props.keys(); keys
 					.hasMoreElements();) {
@@ -120,11 +127,13 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 			}
 		}
 		properties.put(Constants.OBJECTCLASS, clazzes);
+		properties.put(Constants.SERVICE_BUNDLEID, bundle.getBundleId());
 		properties.put(Constants.SERVICE_ID, new Long(++nextServiceID));
 		final Integer ranking = props == null ? null : (Integer) props
 				.get(Constants.SERVICE_RANKING);
 		properties.put(Constants.SERVICE_RANKING,
 				ranking == null ? new Integer(0) : ranking);
+		properties.put(Constants.SERVICE_SCOPE, scope);
 		this.registration = new ServiceRegistrationImpl();
 	}
 

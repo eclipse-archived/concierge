@@ -4942,11 +4942,13 @@ public final class Concierge extends AbstractBundle implements Framework,
 			return (ServiceRegistration<S>) registerService(clazz.getName(),
 					service, properties);
 		}
-		
+
+		// FIXME: should be the other way around...
+		@SuppressWarnings("unchecked")
 		public <S> ServiceRegistration<S> registerService(final Class<S> clazz,
 				final ServiceFactory<S> factory, final Dictionary<String, ?> properties) {
-			// TODO R6 method
-			return null;
+			return (ServiceRegistration<S>) registerService(clazz.getName(), 
+					factory, properties);
 		}
 
 		// FIXME: should be the other way around...
