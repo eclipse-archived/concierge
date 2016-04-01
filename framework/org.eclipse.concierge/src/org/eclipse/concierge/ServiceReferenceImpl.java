@@ -355,9 +355,9 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 						framework.notifyFrameworkListeners(
 								FrameworkEvent.ERROR, bundle, t);
 					}
-					useCounters.remove(theBundle);
 					cachedServices.remove(theBundle);
 				}
+				useCounters.remove(theBundle);
 				return true;
 			} else {
 				counter = new Integer(counter.intValue() - 1);
