@@ -1018,22 +1018,25 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					"Bundle " + toString() + "has been unregistered.");
 		}
 
-		if (registeredServices == null) {
-			return null;
-		}
-
 		final ArrayList<ServiceReference<?>> result = new ArrayList<ServiceReference<?>>();
-		final ServiceReference<?>[] srefs = registeredServices
-				.toArray(new ServiceReference[registeredServices.size()]);
 
-		for (int i = 0; i < srefs.length; i++) {
-			synchronized (((ServiceReferenceImpl<?>) srefs[i]).useCounters) {
-				if (((ServiceReferenceImpl<?>) srefs[i]).useCounters
-						.get(this) != null) {
-					result.add(srefs[i]);
+		try {
+			ServiceReference[] srefs = context.getAllServiceReferences(null, null);
+			if(srefs == null)
+				return null;
+			
+			for (int i = 0; i < srefs.length; i++) {
+				synchronized (((ServiceReferenceImpl<?>) srefs[i]).useCounters) {
+					if (((ServiceReferenceImpl<?>) srefs[i]).useCounters
+							.get(this) != null) {
+						result.add(srefs[i]);
+					}
 				}
 			}
-		}
+		} catch(InvalidSyntaxException e){}
+		
+		if(result.size() == 0)
+			return null;
 
 		if (framework.SECURITY_ENABLED) {
 			// permissions for the interfaces have to be checked
