@@ -18,6 +18,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.Constants;
@@ -26,6 +27,7 @@ import org.osgi.framework.PrototypeServiceFactory;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceException;
 import org.osgi.framework.ServiceFactory;
+import org.osgi.framework.ServiceObjects;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
 
@@ -61,8 +63,13 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 	/**
 	 * cached service objects if the registered service is a service factory.
 	 */
-	private HashMap<Bundle, S> cachedServices = null;
+	HashMap<Bundle, S> cachedServices = null;
 
+	/** 
+	 * service objects instance
+	 */
+	HashMap<Bundle, ServiceObjectsImpl> serviceObjects = null; 
+	
 	/**
 	 * the registration.
 	 */
@@ -73,7 +80,8 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 	 */
 	private static long nextServiceID = 0;
 
-	private final boolean isServiceFactory;
+	final boolean isServiceFactory;
+	final boolean isPrototype;
 
 	/**
 	 * these service properties must not be overwritten by property updates.
@@ -105,12 +113,15 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 		String scope = "singleton";
 		if (service instanceof PrototypeServiceFactory) {
 			isServiceFactory = true;
+			isPrototype = true;
 			scope = "prototype";
 		} else if(service instanceof ServiceFactory) {
 			isServiceFactory = true;
+			isPrototype = false;
 			scope = "bundle";
 		} else {
 			isServiceFactory = false;
+			isPrototype = false;
 			checkService(service, clazzes);
 		}
 
@@ -266,43 +277,50 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 					incrementCounter(theBundle);
 					return cachedService;
 				}
-				@SuppressWarnings("unchecked")
-				final ServiceFactory<S> factory = (ServiceFactory<S>) service;
-				final S factoredService;
-				try {
-					incrementCounter(theBundle);
-					marker = true;
-					factoredService = factory.getService(theBundle,
-							registration);
-					marker = false;
-					checkService(factoredService,
-							(String[]) properties.get(Constants.OBJECTCLASS));
-					// catch failed check and exceptions thrown in factory
-				} catch (final IllegalArgumentException iae) {
-					decrementCounter(theBundle);
-					framework.notifyFrameworkListeners(FrameworkEvent.ERROR,
-							bundle, new ServiceException(
-									"Invalid service object",
-									ServiceException.FACTORY_ERROR));
-					return null;
-				} catch (final Throwable t) {
-					decrementCounter(theBundle);
-					framework.notifyFrameworkListeners(FrameworkEvent.ERROR,
-							bundle, new ServiceException(
-									"Exception while factoring the service",
-									ServiceException.FACTORY_EXCEPTION, t));
-					return null;
-				}
-				cachedServices.put(theBundle, factoredService);
-
-				return factoredService;
-
+				S s = factorService(theBundle, true);
+				cachedServices.put(theBundle, s);
+				return s;
 			}
 
 			incrementCounter(theBundle);
 
 			return service;
 		}
+	}
+	
+	S factorService(final Bundle theBundle, boolean count){
+		@SuppressWarnings("unchecked")
+		final ServiceFactory<S> factory = (ServiceFactory<S>) service;
+		final S factoredService;
+		try {
+			if(count)
+				incrementCounter(theBundle);
+			marker = true;
+			factoredService = factory.getService(theBundle,
+					registration);
+			marker = false;
+			checkService(factoredService,
+					(String[]) properties.get(Constants.OBJECTCLASS));
+			// catch failed check and exceptions thrown in factory
+		} catch (final IllegalArgumentException iae) {
+			if(count)
+				decrementCounter(theBundle);
+			framework.notifyFrameworkListeners(FrameworkEvent.ERROR,
+					bundle, new ServiceException(
+							"Invalid service object",
+							ServiceException.FACTORY_ERROR));
+			return null;
+		} catch (final Throwable t) {
+			if(count)
+				decrementCounter(theBundle);
+			framework.notifyFrameworkListeners(FrameworkEvent.ERROR,
+					bundle, new ServiceException(
+							"Exception while factoring the service",
+							ServiceException.FACTORY_EXCEPTION, t));
+			return null;
+		}
+		
+		return factoredService;
 	}
 
 	private void incrementCounter(final Bundle theBundle) {
@@ -315,7 +333,7 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 		useCounters.put(theBundle, counter);
 	}
 
-	private void decrementCounter(final Bundle theBundle) {
+	void decrementCounter(final Bundle theBundle) {
 		Integer counter = useCounters.get(theBundle);
 		final int newValue = counter.intValue() - 1;
 		if (newValue == 0) {
@@ -356,9 +374,24 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 								FrameworkEvent.ERROR, bundle, t);
 					}
 					cachedServices.remove(theBundle);
-				}
+				} 
+				if(isPrototype){
+					// check if there is a serviceobjects that could also have used service instances
+					if(serviceObjects != null){
+						ServiceObjectsImpl so = serviceObjects.get(theBundle);
+						if(so != null){
+							if(so.services.size() != 0){
+								useCounters.put(theBundle, new Integer(0));
+								return true;
+							}
+						}
+					}
+				}			
 				useCounters.remove(theBundle);
 				return true;
+			} else if(counter.intValue()== 0){
+				// prototype services in use don't count here...
+				return false;
 			} else {
 				counter = new Integer(counter.intValue() - 1);
 				useCounters.put(theBundle, counter);
@@ -366,7 +399,33 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 			}
 		}
 	}
+	
+	void ungetAllServices(Bundle bundle){
+		ServiceObjectsImpl so = serviceObjects.get(bundle);
+		if(so!=null){
+			so.ungetAllServices();
+		}
+		ungetService(bundle);
+		
+	}
 
+	@SuppressWarnings("unchecked")
+	ServiceObjects<S> getServiceObjects(final Bundle bundle){
+		if(service == null)
+			return null;  // service already unregistered
+		
+		if(serviceObjects==null){
+			serviceObjects = new HashMap<Bundle, ServiceObjectsImpl>(1);
+		}
+		
+		ServiceObjectsImpl so = serviceObjects.get(bundle);
+		if(so == null){
+			so = new ServiceObjectsImpl(bundle);
+			serviceObjects.put(bundle, so);
+		}
+		return so;
+	}
+	
 	/**
 	 * get a string representation of the service reference implementation.
 	 * 
@@ -446,6 +505,84 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 		}
 	}
 
+	
+	/**
+	 * Class for ServiceObjects in case you want multiple instances for a prototype
+	 * scoped service
+	 *  
+	 * @author tverbele
+	 *
+	 */
+	private final class ServiceObjectsImpl implements 
+		ServiceObjects<S>{
+		
+		final Set<S> services = new HashSet<S>();
+		private final Bundle b;
+		
+		public ServiceObjectsImpl(final Bundle bundle){
+			this.b = bundle;
+		}
+		
+		public S getService() {
+			if(isPrototype){
+				S factoredService = null;
+				synchronized(useCounters){
+					factoredService = factorService(b, false);
+					services.add(factoredService);
+					if(!useCounters.containsKey(b)){
+						// mark 0 use count for prototype services
+						// this makes sure that the bundle is marked as usingBundle
+						useCounters.put(b, new Integer(0)); 
+					}
+				}
+				return factoredService;
+			}
+			
+			return (S) ServiceReferenceImpl.this.getService(b);
+		}
+
+		public void ungetService(S s) {
+			if(isPrototype){
+				if(services.remove(s)) {
+					try {
+						final ServiceFactory<S> factory = (ServiceFactory<S>) service;
+						factory.ungetService(b, (ServiceRegistration<S>) registration, s);
+					} catch (final Throwable t) {
+						framework.notifyFrameworkListeners(
+							FrameworkEvent.ERROR, b, t);
+					}
+					if(services.size() == 0){
+						if(useCounters.get(b) == 0){
+							useCounters.remove(b);
+						}
+					}
+				} else {
+					throw new IllegalArgumentException("Service object was not provided "
+						+ "by this ServiceObjects instance");
+				}
+			} else {
+				// in case of bundle scope, only unget if this is from the right bundle
+				if(isServiceFactory) { 
+					if(s != cachedServices.get(b)){
+						throw new IllegalArgumentException("Service object was not provided "
+								+ "by this ServiceObjects instance");
+					}
+				}
+				ServiceReferenceImpl.this.ungetService(b);
+			}
+		}
+
+		public void ungetAllServices(){
+			for(S s : new HashSet<S>(services)){
+				ungetService(s);
+			}
+		}
+		
+		public ServiceReference<S> getServiceReference() {
+			return (ServiceReference<S>) ServiceReferenceImpl.this;
+		}
+	}
+	
 	/**
 	 * The service registration. It is a private inner class since this entity
 	 * is just once returned to the registrar and never retrieved again. It is
@@ -545,6 +682,35 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 						"Service has already been uninstalled");
 			}
 
+			if(cachedServices != null){
+				for(Bundle b : cachedServices.keySet()){
+					try {
+						((ServiceFactory<S>) service).ungetService(b,
+							registration, cachedServices.get(b));
+						// catch exceptions thrown in factory
+					} catch (final Throwable t) {
+						framework.notifyFrameworkListeners(
+								FrameworkEvent.ERROR, bundle, t);
+					}
+				}
+			}
+			
+			if(isPrototype && serviceObjects != null){
+				for(Bundle b : serviceObjects.keySet()){
+					ServiceObjectsImpl so = serviceObjects.get(b);
+					for(S serviceInstance : so.services){
+						try {
+							((ServiceFactory<S>) service).ungetService(b,
+								registration, serviceInstance);
+							// catch exceptions thrown in factory
+						} catch (final Throwable t) {
+							framework.notifyFrameworkListeners(
+									FrameworkEvent.ERROR, bundle, t);
+						}
+					}
+				}
+			}
+			
 			framework.unregisterService(ServiceReferenceImpl.this);
 			service = null;
 		}

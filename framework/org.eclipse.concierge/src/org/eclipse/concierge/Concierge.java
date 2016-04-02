@@ -129,8 +129,6 @@ import org.osgi.service.resolver.ResolutionException;
 import org.osgi.service.resolver.ResolveContext;
 import org.osgi.service.resolver.Resolver;
 
-import com.sun.org.apache.xerces.internal.util.SynchronizedSymbolTable;
-
 /**
  * The core class of the Concierge OSGi framework. Implements the system bundle,
  * maintains the central bundle and service registry.
@@ -4048,7 +4046,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 		final ServiceReference<?>[] refs = bundle.getServicesInUse();
 		if (refs != null) {
 			for (int i = 0; i < refs.length; i++) {
-				((ServiceReferenceImpl<?>) refs[i]).ungetService(bundle);
+				ServiceReferenceImpl<?> ref = ((ServiceReferenceImpl<?>) refs[i]); 
+				ref.ungetAllServices(bundle);
 			}
 		}
 	}
@@ -4975,8 +4974,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 		
 		public <S> ServiceObjects<S> getServiceObjects(
 				final ServiceReference<S> reference) {
-			// TODO R6 method
-			return null;
+			checkValid();
+
+			return ((ServiceReferenceImpl) reference).getServiceObjects(bundle);
 		}
 
 		/**
