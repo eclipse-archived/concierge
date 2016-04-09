@@ -3717,10 +3717,12 @@ public final class Concierge extends AbstractBundle implements Framework,
 			}
 
 			for (final BundleContext removed : contexts.getRemoved()) {
-				for (final BundleListener listener : bundleListenerMap
+				if(removed != this.context){ // system bundle contexts listeners always gets events
+					for (final BundleListener listener : bundleListenerMap
 						.get(removed)) {
-					syncListeners.remove(listener);
-					asyncListeners.remove(listener);
+						syncListeners.remove(listener);
+						asyncListeners.remove(listener);
+					}
 				}
 			}
 
@@ -4134,6 +4136,11 @@ public final class Concierge extends AbstractBundle implements Framework,
 			sref.ungetService(Concierge.this);
 		}
 
+		if(context == this.context){
+			// if called from system bundle context, return original unfiltered bundles
+			return bundles.toArray(new Bundle[bundles.size()]);
+		}
+		
 		return list.toArray(new Bundle[list.size()]);
 	}
 
