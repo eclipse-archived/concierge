@@ -3940,10 +3940,15 @@ public final class Concierge extends AbstractBundle implements Framework,
 			for (final Iterator<ServiceListenerEntry> iter = serviceListenersCopy
 					.iterator(); iter.hasNext();) {
 				final ServiceListenerEntry entry = iter.next();
-				final Collection<ListenerInfo> listeners = map
-						.get(entry.bundle.context);
-				if (listeners != null && listeners.contains(entry)) {
+				// system bundle listeners are always called
+				if(entry.bundle.context == this.context){
 					list.add(entry);
+				} else {
+					final Collection<ListenerInfo> listeners = map
+							.get(entry.bundle.context);
+					if (listeners != null && listeners.contains(entry)) {
+						list.add(entry);
+					}
 				}
 			}
 			entries = list.toArray(new ServiceListenerEntry[list.size()]);
@@ -4576,9 +4581,11 @@ public final class Concierge extends AbstractBundle implements Framework,
 					ungetService(hookRef);
 				}
 
-				return c.size() == 0 ? null
+				if(this != Concierge.this.context) {
+					return c.size() == 0 ? null
 						: (ServiceReference[]) c
 								.toArray(new ServiceReference[c.size()]);
+				}
 			}
 
 			if (LOG_ENABLED && DEBUG_SERVICES) {
