@@ -587,6 +587,14 @@ public class Resources {
 				((ConciergeBundleWire) wire).requirerWiring = this;
 			}
 		}
+		
+		/**
+		 * Add requirements coming from Weaving Hook dynamic imports
+		 * These should not be returned by the revisions getDeclaredRequirements (spec 56.3)
+		 */
+		void addRequirement(final BundleRequirement requirement){
+			requirements.insert(requirement.getNamespace(), requirement);
+		}
 
 		HashMap<String, BundleWire> getPackageImportWires() {
 			final List<BundleWire> list = getRequiredWires(PackageNamespace.PACKAGE_NAMESPACE);

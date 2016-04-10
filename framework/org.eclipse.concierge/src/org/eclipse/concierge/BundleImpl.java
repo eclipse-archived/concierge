@@ -3040,22 +3040,28 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 								framework.callWeavingHooks(wovenClass);
 								bytes = wovenClass.getBytes();
 
-								requirements.insertAll(
-										PackageNamespace.PACKAGE_NAMESPACE,
-										wovenClass.dynamicImportRequirements);
-								dynamicImports.addAll(
-										wovenClass.dynamicImportRequirements);
-
-								// define package
-								definePackage(packageOf(classname));
-								final Class<?> ownClazz = defineClass(classname,
-										bytes, 0, bytes.length, domain);
-
-								wovenClass.setDefinedClass(ownClazz);
-								wovenClass.setProtectionDomain(
-										ownClazz.getProtectionDomain());
-
-								return ownClazz;
+								try {
+									for(int k=0; k<wovenClass.dynamicImportRequirements.size(); k++){
+										BundleRequirement req = wovenClass.dynamicImportRequirements.get(k);
+										wiring.addRequirement(req);
+									}
+									
+									dynamicImports.addAll(
+											wovenClass.dynamicImportRequirements);
+									
+									final Class<?> ownClazz = defineClass(classname,
+											bytes, 0, bytes.length, domain);
+									
+									wovenClass.setDefinedClass(ownClazz);
+									wovenClass.setProtectionDomain(
+											ownClazz.getProtectionDomain());
+									framework.notifyWovenClassListeners(wovenClass);
+									
+									return ownClazz;
+								} catch(ClassFormatError err){
+									wovenClass.setDefineFailed();
+									framework.notifyWovenClassListeners(wovenClass);
+								}
 							}
 
 							// define package
@@ -3362,6 +3368,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			protected List<BundleRequirement> dynamicImportRequirements;
 
 			private ProtectionDomain domain;
+			
+			private int state = WovenClass.TRANSFORMING;
 
 			WovenClassImpl(final String clazzName, final byte[] bytes,
 					final Revision revision, final ProtectionDomain domain) {
@@ -3442,8 +3450,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				if (newBytes == null) {
 					throw new NullPointerException("newBytes");
 				}
-				if (weavingComplete) {
-					throw new IllegalStateException("Weaving is complete");
+				if (state == WovenClass.TRANSFORMED || weavingComplete) {
+					throw new IllegalStateException("Woven class bytes cannot be changed anymore!");
 				}
 
 				bytes = newBytes;
@@ -3475,21 +3483,34 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 			void setDefinedClass(final Class<?> clazz) {
 				this.clazz = clazz;
+				this.state = WovenClass.DEFINED;
+				weavingComplete = true;
+			}
+			
+			void setDefineFailed(){
+				this.state = WovenClass.DEFINE_FAILED;
+				this.weavingComplete = true;
 			}
 
 			void setProtectionDomain(final ProtectionDomain protectionDomain) {
 				this.domain = protectionDomain;
 			}
 
-			void setComplete() {
-				weavingComplete = true;
+			void setTransformed() {
 				bytes = bytes.clone();
 				dynamicImports = Collections.unmodifiableList(dynamicImports);
+				state = WovenClass.TRANSFORMED;
+			}
+			
+			void setTransformingFailed(){
+				bytes = bytes.clone();
+				dynamicImports = Collections.unmodifiableList(dynamicImports);
+				state = WovenClass.TRANSFORMING_FAILED;
+				weavingComplete = true;
 			}
 
 			public int getState() {
-				// TODO R6 method
-				return 0;
+				return state;
 			}
 		}
 

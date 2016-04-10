@@ -101,6 +101,7 @@ import org.osgi.framework.hooks.service.ListenerHook;
 import org.osgi.framework.hooks.service.ListenerHook.ListenerInfo;
 import org.osgi.framework.hooks.weaving.WeavingException;
 import org.osgi.framework.hooks.weaving.WeavingHook;
+import org.osgi.framework.hooks.weaving.WovenClassListener;
 import org.osgi.framework.launch.Framework;
 import org.osgi.framework.namespace.AbstractWiringNamespace;
 import org.osgi.framework.namespace.BundleNamespace;
@@ -431,6 +432,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 	// weaving hooks
 	private final List<ServiceReferenceImpl<WeavingHook>> weavingHooks = new ArrayList<ServiceReferenceImpl<WeavingHook>>(0);
 
+	// woven class listeners
+	private final List<ServiceReferenceImpl<WovenClassListener>> wovenClassListeners = new ArrayList<ServiceReferenceImpl<WovenClassListener>>(0);
+	
 	// "hooks registry"
 	protected final HashMap<String, List<?>> hooks = new HashMap<String, List<?>>();
 	// @formatter:on
@@ -3650,6 +3654,10 @@ public final class Concierge extends AbstractBundle implements Framework,
 				isHook = true;
 				hookList.remove(sref);
 			}
+			
+			if(clazzes[i].equals(WovenClassListener.class.getName())){
+				wovenClassListeners.remove(sref);
+			}
 		}
 
 		final AbstractBundle bundle = (AbstractBundle) sref.getBundle();
@@ -4009,6 +4017,35 @@ public final class Concierge extends AbstractBundle implements Framework,
 			} else if (state == ServiceEvent.MODIFIED) {
 				if (entries[i].filter.matches(oldProperties)) {
 					entries[i].listener.serviceChanged(endmatchEvent);
+				}
+			}
+		}
+	}
+	
+	/**
+	 * notify WovenClassListeners
+	 */
+	void notifyWovenClassListeners(WovenClassImpl wovenClass){
+		if(wovenClassListeners.isEmpty())
+			return;
+		
+		final ArrayList<ServiceReferenceImpl<WovenClassListener>> listeners 
+				= new ArrayList<ServiceReferenceImpl<WovenClassListener>>(wovenClassListeners);
+		
+		for(int i=0;i<listeners.size();i++){
+			ServiceReferenceImpl<WovenClassListener> sref = listeners.get(i);
+			
+			WovenClassListener listener = sref.getService(this);
+			if(listener != null){
+				try {
+					listener.modified(wovenClass);
+				} catch(Exception e){
+					if (LOG_ENABLED && DEBUG_SERVICES) {
+						logger.log(LogService.LOG_ERROR,
+								"Error calling WovenClassListener", e);
+					}
+				} finally {
+					sref.ungetService(this);
 				}
 			}
 		}
@@ -4785,6 +4822,10 @@ public final class Concierge extends AbstractBundle implements Framework,
 				isHook = checkHook(clazz, sref, true);
 
 				serviceRegistry.insert(clazz, sref);
+				
+				if(clazz.equals(WovenClassListener.class.getName())){
+					wovenClassListeners.add((ServiceReferenceImpl<WovenClassListener>) sref);
+				}
 			}
 
 			if (LOG_ENABLED && DEBUG_SERVICES) {
@@ -5218,8 +5259,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 				notifyFrameworkListeners(FrameworkEvent.ERROR, sref.bundle, t);
 
 				// mark as complete
-				wovenClass.setComplete();
-
+				wovenClass.setTransformingFailed();
+				notifyWovenClassListeners(wovenClass);
+				
 				final ClassFormatError err = new ClassFormatError(
 						"Error while invoking weaving hook");
 				err.initCause(t);
@@ -5228,7 +5270,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 				sref.ungetService(this);
 			}
 		}
-		wovenClass.setComplete();
+		wovenClass.setTransformed();
+		notifyWovenClassListeners(wovenClass);
 	}
 
 	/**
