@@ -48,6 +48,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -88,6 +89,7 @@ import org.osgi.framework.hooks.weaving.WovenClass;
 import org.osgi.framework.namespace.BundleNamespace;
 import org.osgi.framework.namespace.HostNamespace;
 import org.osgi.framework.namespace.IdentityNamespace;
+import org.osgi.framework.namespace.NativeNamespace;
 import org.osgi.framework.namespace.PackageNamespace;
 import org.osgi.framework.startlevel.BundleStartLevel;
 import org.osgi.framework.wiring.BundleCapability;
@@ -1618,7 +1620,12 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			// get the native libraries
 			nativeCodeStrings = readProperties(attrs,
 					Constants.BUNDLE_NATIVECODE, null);
-
+			
+			// create require capability from native libraries
+			if(nativeCodeStrings != null)
+				addNativeCodeRequirement(nativeCodeStrings);
+			
+			
 			// get the activator
 			activatorClassName = attrs.getValue(Constants.BUNDLE_ACTIVATOR);
 
@@ -1754,6 +1761,9 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				final BundleCapabilityImpl cap = new BundleCapabilityImpl(this,
 						reqStrs[i]);
 				final String namespace = cap.getNamespace();
+				if(namespace.equals(NativeNamespace.NATIVE_NAMESPACE)){
+					throw new BundleException("Only the system bundle can provide a native capability", BundleException.MANIFEST_ERROR);
+				}
 				result.insert(namespace, cap);
 			}
 			return result;
@@ -2106,6 +2116,147 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			return hasMatch || hasOptional;
 		}
 
+		
+		/**
+		 * Add native code strings as requirements
+		 * 
+		 * @param nativeCodeStrings
+		 */
+		// TODO merge parts with processNativeLibraries?
+		void addNativeCodeRequirement(final String[] nativeCodeStrings) throws BundleException {
+			final StringBuilder nativeRequirementBuilder = new StringBuilder();
+			nativeRequirementBuilder.append("osgi.native;filter:=\"");
+			
+			int length = nativeCodeStrings.length;
+			boolean optional = false;
+			if(nativeCodeStrings[length-1].equals("*")){
+				optional = true;
+				length = length - 1;
+			}
+
+			if(length > 1){
+				nativeRequirementBuilder.append("(|(");
+			} else {
+				nativeRequirementBuilder.append("(");
+			}
+			
+			for(int i=0;i<length;i++){
+				final StringTokenizer tokenizer = new StringTokenizer(
+						nativeCodeStrings[i], ";");
+				
+				final Map<String, List<String>> filters = new HashMap<String, List<String>>(0);
+				
+				while (tokenizer.hasMoreTokens()) {
+					final String token = tokenizer.nextToken();
+					final int a = token.indexOf("=");
+					if (a > -1) {
+						final String criterium = token.substring(0, a)
+								.trim().intern();
+						final String value = token.substring(a + 1).trim();
+						if (criterium == Constants.BUNDLE_NATIVECODE_OSNAME
+								|| criterium == Constants.BUNDLE_NATIVECODE_OSVERSION
+								|| criterium == Constants.BUNDLE_NATIVECODE_LANGUAGE
+								|| criterium == Constants.BUNDLE_NATIVECODE_PROCESSOR
+								|| criterium == Constants.SELECTION_FILTER_ATTRIBUTE) {
+							List<String> f = filters.get(criterium);
+							if(f == null){
+								f = new ArrayList<String>();
+								filters.put(criterium, f);
+							}
+							f.add(value);
+						}
+					} 
+				}
+				
+				if(filters.size() > 1)
+					nativeRequirementBuilder.append("&(");
+				
+				Iterator<Entry<String, List<String>>> it = filters.entrySet().iterator();
+				while(it.hasNext()){
+					Entry<String, List<String>> e = it.next();
+					List<String> values = e.getValue();
+					if(values.size() > 1 )
+						nativeRequirementBuilder.append("|(");
+
+					for(int k=0; k < values.size(); k++){
+						if(e.getKey() == Constants.SELECTION_FILTER_ATTRIBUTE){
+							String filter = values.get(k);
+							nativeRequirementBuilder.append(filter.substring(2, filter.length()-1));
+						} else if(e.getKey() == Constants.BUNDLE_NATIVECODE_OSVERSION){
+							VersionRange v = new VersionRange(Utils.unQuote(values.get(k)));
+							if(v.getRight() != null)
+								nativeRequirementBuilder.append("&(");
+								
+							if(v.getLeftType() == VersionRange.LEFT_OPEN){
+								nativeRequirementBuilder.append("!(")
+									.append("osgi.native.").append(Constants.BUNDLE_NATIVECODE_OSVERSION)
+									.append("<=")
+									.append(v.getLeft().toString())
+									.append("))");
+							} else {
+								nativeRequirementBuilder.append("osgi.native.")
+								.append(Constants.BUNDLE_NATIVECODE_OSVERSION)
+								.append(">=")
+								.append(v.getLeft().toString())
+								.append(")");
+							}
+							
+							if(v.getRight() != null){
+								nativeRequirementBuilder.append("(");
+								
+								if(v.getRightType() == VersionRange.RIGHT_OPEN){
+									nativeRequirementBuilder.append("osgi.native.")
+										.append(Constants.BUNDLE_NATIVECODE_OSVERSION)
+										.append("<=")
+										.append(v.getRight().toString())
+										.append(")");
+								} else {
+									nativeRequirementBuilder.append("!(")
+										.append("osgi.native.").append(Constants.BUNDLE_NATIVECODE_OSVERSION)
+										.append(">=")
+										.append(v.getRight().toString())
+										.append("))");
+								}
+								
+								nativeRequirementBuilder.append(")");
+							}
+							
+						} else {
+							nativeRequirementBuilder.append("osgi.native.").append(e.getKey())
+								.append("~=").append(Utils.unQuote(values.get(k))).append(")");
+						}
+						
+						if(k != values.size()-1)
+							nativeRequirementBuilder.append("(");
+						
+					}
+					if(e.getValue().size() > 1 )
+						nativeRequirementBuilder.append(")");
+
+					if(it.hasNext())
+						nativeRequirementBuilder.append("(");
+					
+				}
+				
+				if(filters.size() > 1)
+					nativeRequirementBuilder.append(")");
+				
+				if(i != length - 1)
+					nativeRequirementBuilder.append("(");
+			}
+			
+			if(nativeCodeStrings.length > 1)
+				nativeRequirementBuilder.append(")");
+			
+			nativeRequirementBuilder.append("\"");
+			
+			if(optional)
+				nativeRequirementBuilder.append(";resolution:=optional");
+			
+			BundleRequirementImpl req = new BundleRequirementImpl(this, nativeRequirementBuilder.toString());
+			requirements.insert(req.getNamespace(), req);
+		}
+		
 		/**
 		 * @param uninstall
 		 *            if false, the bundle is only prepared for an update or
@@ -2262,8 +2413,10 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 			// native code
 			final String[] newNativeStrings;
+			final List<BundleRequirement> nativeRequirement;
 			if (fragment.nativeCodeStrings == null) {
 				newNativeStrings = nativeCodeStrings;
+				nativeRequirement = null;
 			} else {
 				final ArrayList<String> temp = new ArrayList<String>();
 				if (nativeCodeStrings != null) {
@@ -2271,11 +2424,17 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				}
 				temp.addAll(Arrays.asList(fragment.nativeCodeStrings));
 				newNativeStrings = temp.toArray(new String[temp.size()]);
+				nativeRequirement = fragment.requirements.get(NativeNamespace.NATIVE_NAMESPACE);
 			}
 
 			// commit the changes
 			final BundleImpl fragmentBundle = (BundleImpl) fragment.getBundle();
 
+			if(nativeRequirement != null){
+				requirements.insertAll(NativeNamespace.NATIVE_NAMESPACE,
+						nativeRequirement);
+			}
+			
 			if (newImports != null) {
 				requirements.insertAll(PackageNamespace.PACKAGE_NAMESPACE,
 						newImports);
@@ -2331,7 +2490,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			if (nativeCodeStrings != null) {
 				nativeLibraries = new HashMap<String, String>(
 						nativeCodeStrings.length);
-				processNativeLibraries(newNativeStrings);
+				processNativeLibraries(nativeCodeStrings);
 			}
 
 			return true;

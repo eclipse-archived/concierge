@@ -695,7 +695,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 				minor = parsed;
 			}
 		}
-		
+
 		// check for J2ME VMs. If not set (like in CEE-J) fallback to JavaSE
 		if (System.getProperty("java.specification.name", "")
 				.equals("J2ME Foundation Specification")) {
@@ -1266,6 +1266,31 @@ public final class Concierge extends AbstractBundle implements Framework,
 				}
 			}
 		}
+		
+		// native capability
+		StringBuilder nativeCapBuilder = new StringBuilder();
+		nativeCapBuilder.append("osgi.native;")
+						.append("osgi.native.osname:List<String>=\"")
+						// TODO list all equivalent OS names
+						.append(osname).append("\";")
+						.append("osgi.native.osversion:Version=\"")
+						.append(osversion.toString()).append("\";")
+						.append("osgi.native.processor:List<String>=\"")
+						// TODO list all equivalent processors
+						.append(processor).append("\";")
+						.append("osgi.native.language=\"")
+						.append(language).append("\";");
+		// also add all launcher properties (OSGi spec 8.7)?
+		final Enumeration<?> en = properties.propertyNames();
+		while(en.hasMoreElements()){
+			String key = en.nextElement().toString();
+			if(key.startsWith("osgi.native"))
+				continue;
+			nativeCapBuilder.append(key).append("=\"").append(properties.getProperty(key).toString()).append("\";");
+		}
+		final BundleCapabilityImpl nativeCap = new BundleCapabilityImpl(this, 
+				nativeCapBuilder.toString());
+		systemBundleCapabilities.add(nativeCap);
 
 		// system bundle symbolic name
 		final BundleCapabilityImpl sysbundleCap = new BundleCapabilityImpl(this,
