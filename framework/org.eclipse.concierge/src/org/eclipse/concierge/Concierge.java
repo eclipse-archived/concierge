@@ -5321,8 +5321,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 		}
 		final String[] result = new String[libraryExtensions.length + 1];
 		result[0] = System.mapLibraryName(libname);
+		final String base = result[0].substring(0, result[0].indexOf("."));
 		for (int i = 0; i < libraryExtensions.length; i++) {
-			result[i + 1] = libname + "." + libraryExtensions[i];
+			result[i + 1] = base + "." + libraryExtensions[i];
 		}
 		return result;
 	}
