@@ -1110,13 +1110,25 @@ public final class Concierge extends AbstractBundle implements Framework,
 	}
 
 	// Framework
-
 	/**
 	 * 
 	 * @see org.osgi.framework.launch.Framework#init()
 	 * @category Framework
 	 */
 	public void init() throws BundleException {
+		init(new FrameworkListener[0]);
+	}
+	
+	/**
+	 * 
+	 * @see org.osgi.framework.launch.Framework#init(FrameworkListener[])
+	 * @category Framework
+	 */
+	public void init(FrameworkListener... listeners) throws BundleException {
+		for(int i=0;i<listeners.length;i++){
+			frameworkListeners.add(listeners[i]);
+		}
+		
 		if (state == Bundle.ACTIVE || state == Bundle.STARTING
 				|| state == Bundle.STOPPING) {
 			return;
@@ -5363,11 +5375,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 		} catch (final Throwable t) {
 			t.printStackTrace();
 		}
-	}
-
-	public void init(FrameworkListener... listeners) throws BundleException {
-		// TODO R6 method
-		
 	}
 
 }
