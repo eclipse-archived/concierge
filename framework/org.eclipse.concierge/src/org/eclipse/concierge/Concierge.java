@@ -2157,6 +2157,21 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 	// FrameworkWiring
 	/**
+	 * @see org.osgi.framework.wiring.FrameworkWiring#findProviders(Requirement requirement)
+	 */
+	public Collection<BundleCapability> findProviders(Requirement requirement) {
+		final List<Capability> providers = resolver.findProviders(requirement);
+		final List<BundleCapability> result = new ArrayList<BundleCapability>(providers.size());
+		for(int i=0;i<providers.size();i++){
+			Capability cap = providers.get(i);
+			if(cap instanceof BundleCapability){
+				result.add((BundleCapability) cap);
+			}
+		}
+		return result;
+	}
+	
+	/**
 	 * @see org.osgi.framework.wiring.FrameworkWiring#refreshBundles(java.util.Collection,
 	 *      org.osgi.framework.FrameworkListener[])
 	 */
@@ -2602,23 +2617,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 				@Override
 				public List<Capability> findProviders(
 						final Requirement requirement) {
-					final String filterStr = requirement.getDirectives()
-							.get(Namespace.REQUIREMENT_FILTER_DIRECTIVE);
-
-					final List<Capability> providers;
-					if (filterStr == null) {
-						providers = capabilityRegistry
-								.getAll(requirement.getNamespace());
-					} else {
-						try {
-							providers = RFC1960Filter.filterWithIndex(
-									requirement, filterStr, capabilityRegistry);
-						} catch (final InvalidSyntaxException ise) {
-							// TODO: debug output
-							ise.printStackTrace();
-							return Collections.emptyList();
-						}
-					}
+					List<Capability> providers = resolver.findProviders(requirement);
 
 					sortProviders(providers, requirement.getNamespace());
 
@@ -2978,6 +2977,28 @@ public final class Concierge extends AbstractBundle implements Framework,
 			}
 		}
 
+		protected List<Capability> findProviders(Requirement requirement){
+			final String filterStr = requirement.getDirectives()
+					.get(Namespace.REQUIREMENT_FILTER_DIRECTIVE);
+
+			final List<Capability> providers;
+			if (filterStr == null) {
+				providers = capabilityRegistry
+						.getAll(requirement.getNamespace());
+			} else {
+				try {
+					providers = RFC1960Filter.filterWithIndex(
+							requirement, filterStr, capabilityRegistry);
+				} catch (final InvalidSyntaxException ise) {
+					// TODO: debug output
+					ise.printStackTrace();
+					return Collections.emptyList();
+				}
+			}
+			
+			return providers;
+		}
+		
 		private boolean checkSingleton(final BundleRevision resource) {
 			try {
 				final List<Capability> identities = resource
@@ -5342,11 +5363,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 		} catch (final Throwable t) {
 			t.printStackTrace();
 		}
-	}
-
-	public Collection<BundleCapability> findProviders(Requirement requirement) {
-		// TODO R6 method
-		return null;
 	}
 
 	public void init(FrameworkListener... listeners) throws BundleException {
