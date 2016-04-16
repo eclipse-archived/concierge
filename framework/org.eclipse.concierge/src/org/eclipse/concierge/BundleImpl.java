@@ -87,6 +87,7 @@ import org.osgi.framework.VersionRange;
 import org.osgi.framework.hooks.bundle.CollisionHook;
 import org.osgi.framework.hooks.weaving.WovenClass;
 import org.osgi.framework.namespace.BundleNamespace;
+import org.osgi.framework.namespace.ExecutionEnvironmentNamespace;
 import org.osgi.framework.namespace.HostNamespace;
 import org.osgi.framework.namespace.IdentityNamespace;
 import org.osgi.framework.namespace.NativeNamespace;
@@ -233,13 +234,13 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 		framework.checkForCollision(CollisionHook.INSTALLING,
 				installingContext.getBundle(), currentRevision);
 
-		this.state = INSTALLED;
-
-		// if we are not during startup or shutdown, update the metadata
-		if (framework.state != Bundle.STARTING
+		install();
+		
+		// if we are not during startup (in case of restart) or shutdown, update the metadata
+		if ((framework.state != Bundle.STARTING || !framework.restart)
 				&& framework.state != Bundle.STOPPING) {
 			updateMetadata();
-		}
+		} 
 	}
 
 	// framework restart case
@@ -294,18 +295,19 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 		this.version = currentRevision.getVersion();
 		this.revisions.add(0, currentRevision);
 		this.startlevel = in.readInt();
-		this.state = Bundle.INSTALLED;
 		this.autostart = in.readShort();
 		this.lazyActivation = in.readBoolean();
 		this.lastModified = in.readLong();
 		in.close();
 		this.context = framework.createBundleContext(this);
 
-		// System.err.println("RESTORED BUNDLE " + toString() + " WITH SL " + this.startlevel + " and autostart " + this.autostart);
-		
 		if (framework.SECURITY_ENABLED) {
 			domain = new ProtectionDomain(null, null);
 		}
+		
+		install();
+		
+		// System.err.println("RESTORED BUNDLE " + toString() + " WITH SL " + this.startlevel + " and autostart " + this.autostart);
 	}
 
 	/**
@@ -409,14 +411,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 		}
 	}
 
-	// FIXME: can't this be called from constructor???
-	void install() throws BundleException {
-		// we are just installing the bundle, if it is
-		// possible, resolve it, if not, wait until the
-		// exports are really needed (i.e., they become critical)
-		// if (!currentRevision.isFragment()) {
-		// currentRevision.resolve(false);
-		// }
+	private void install() throws BundleException {
 
 		// register bundle with framework:
 		synchronized (framework) {
@@ -427,10 +422,37 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			framework.location_bundles.put(location, this);
 		}
 
+		this.state = Bundle.INSTALLED;
+		
 		// resolve if it is a framework extension
-		if (currentRevision.isFrameworkExtension()) {
-			currentRevision.resolve(false);
+		if (currentRevision.isExtensionBundle()) {
+			if(currentRevision.resolve(false)){
+				// call start for extension activator before notifying framework of resolve
+				if(currentRevision.extActivatorClassName != null){
+					try {
+						@SuppressWarnings("unchecked")
+						final Class<BundleActivator> activatorClass = (Class<BundleActivator>) framework.systemBundleClassLoader.loadClass(currentRevision.extActivatorClassName);
+						if (activatorClass == null) {
+							throw new ClassNotFoundException(currentRevision.extActivatorClassName);
+						}
+						currentRevision.extActivatorInstance = activatorClass.newInstance();
+						currentRevision.extActivatorInstance.start(framework.context);
+					} catch(Throwable err){
+						currentRevision.extActivatorInstance = null;
+						framework.notifyFrameworkListeners(FrameworkEvent.ERROR, BundleImpl.this,
+								new BundleException("Error calling extension bundle start(): " + this.toString(),
+										BundleException.ACTIVATOR_ERROR, err));
+					}
+				}
+			}
 		}
+		
+		// we are just installing the bundle, if it is
+		// possible, resolve it, if not, wait until the
+		// exports are really needed (i.e., they become critical)
+		// if (!currentRevision.isFragment()) {
+		// currentRevision.resolve(false);
+		// }
 	}
 
 	/**
@@ -881,7 +903,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					// TODO: to log
 				}
 			}
-			if (framework.state != Bundle.STARTING
+			if ((framework.state != Bundle.STARTING || !framework.restart)
 					&& framework.state != Bundle.STOPPING) {
 				updateMetadata();
 			}
@@ -1493,8 +1515,10 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 		BundleClassLoader classloader;
 
 		protected final String activatorClassName;
+		final String extActivatorClassName;
 		private String[] nativeCodeStrings;
 		protected BundleActivator activatorInstance;
+		BundleActivator extActivatorInstance;
 		protected String[] classpath;
 		protected Map<String, String> nativeLibraries;
 		protected List<Revision> fragments;
@@ -1628,6 +1652,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			
 			// get the activator
 			activatorClassName = attrs.getValue(Constants.BUNDLE_ACTIVATOR);
+			extActivatorClassName = attrs.getValue(Constants.EXTENSION_BUNDLE_ACTIVATOR);
 
 			// get start_activation_policy, if any
 			final String activationPolicy = readProperty(attrs,
@@ -1720,6 +1745,25 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			} else {
 				framework.publishCapabilities(capabilities.getAllValues());
 			}
+			
+			if(isExtensionBundle()){
+				// according to spec 3.15.1
+				// extension bundle should have no Bundle-Activator
+				// or any requirements other than Fragment-Host and osgi.ee
+				if(activatorClassName != null){
+					throw new BundleException("Extension bundles cannot have a Bundle-Activator");
+				}
+				
+				for(Requirement r : requirements.getAllValues()){
+					String namespace = r.getNamespace();
+					if(!(ExecutionEnvironmentNamespace
+						  .EXECUTION_ENVIRONMENT_NAMESPACE.equals(namespace)
+						 || HostNamespace.HOST_NAMESPACE.equals(namespace))){
+						throw new BundleException("Extension bundles can only have "
+								+ "osgi.ee or osgi.wiring.host requirements, not: "+r);
+					}
+				}
+			}
 		}
 
 		protected void refresh() {
@@ -1790,6 +1834,9 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 		boolean isExtensionBundle() {
 			final String fragmentHostName = getFragmentHost();
+			if(fragmentHostName == null)
+				return false;
+			
 			return fragmentHostName.equals(Constants.SYSTEM_BUNDLE_SYMBOLICNAME)
 					|| fragmentHostName
 							.equals(Concierge.FRAMEWORK_SYMBOLIC_NAME);
@@ -1896,12 +1943,9 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					critical)) {
 				return false;
 			}
-
-			if (state == Bundle.INSTALLED) {
-				state = Bundle.RESOLVED;
-				framework.notifyBundleListeners(BundleEvent.RESOLVED,
-						BundleImpl.this);
-			}
+			
+			markResolved();
+			
 			return true;
 		}
 
@@ -1960,17 +2004,6 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 								+ currentRevision.getSymbolicName(),
 						BundleException.RESOLVE_ERROR, iae);
 			}
-		}
-
-		protected boolean isFrameworkExtension() {
-			final List<BundleRequirement> hostReqs = requirements
-					.get(HostNamespace.HOST_NAMESPACE);
-			if (hostReqs == null) {
-				return false;
-			}
-			return HostNamespace.EXTENSION_FRAMEWORK
-					.equals(hostReqs.get(0).getDirectives().get(
-							HostNamespace.REQUIREMENT_EXTENSION_DIRECTIVE));
 		}
 
 		/**
@@ -2285,9 +2318,12 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 		}
 
 		void markResolved() {
-			state = Bundle.RESOLVED;
-			framework.notifyBundleListeners(BundleEvent.RESOLVED,
-					BundleImpl.this);
+			if (state == Bundle.INSTALLED) {
+				state = Bundle.RESOLVED;
+				
+				framework.notifyBundleListeners(BundleEvent.RESOLVED,
+						BundleImpl.this);
+			}
 		}
 
 		void setWiring(final ConciergeBundleWiring wiring) {
