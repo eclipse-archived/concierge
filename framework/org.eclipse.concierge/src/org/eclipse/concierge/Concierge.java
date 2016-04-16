@@ -19,6 +19,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -3492,6 +3493,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 								public void connect() throws IOException {
 									inputStream = bundle.getURLResource(u, rev);
+									if(inputStream == null){
+										throw new FileNotFoundException("Could not find "+u.toString());
+									}
 									isConnected = true;
 								}
 
