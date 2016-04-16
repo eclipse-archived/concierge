@@ -1137,7 +1137,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 				restart = true;
 			}
 		}
-
+		
 		if (!storage.exists() && !storage.mkdirs()) {
 			throw new BundleException(
 					"Could not create storage directory " + storage);
@@ -1390,11 +1390,11 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 * @see org.osgi.framework.launch.Framework#waitForStop(long)
 	 * @category Framework
 	 */
-	public synchronized FrameworkEvent waitForStop(final long timeout)
+	public FrameworkEvent waitForStop(final long timeout)
 			throws InterruptedException {
 		if (state == Bundle.STARTING || state == Bundle.STOPPING
 				|| state == Bundle.ACTIVE) {
-			synchronized (this) {
+			synchronized (Concierge.this) {
 				wait(timeout);
 			}
 			if (state != Bundle.RESOLVED && state != Bundle.INSTALLED) {
@@ -1433,11 +1433,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 			System.out.println("-------------------"
 					+ "--------------------------------------");
 			final long time = System.currentTimeMillis();
-
-			// resolve all extension bundles
-			for (final BundleImpl ext : extensionBundles) {
-				ext.state = Bundle.RESOLVED;
-			}
 
 			// start System bundle
 			start(context);
@@ -1538,9 +1533,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 								logger.log(LogService.LOG_DEBUG,
 										"RESTORED BUNDLE " + bundle.location);
 							}
-							bundles.add(bundle);
-							bundleID_bundles.put(new Long(bundle.bundleId),
-									bundle);
 						} catch (final Exception e) {
 							// too early for logger
 							e.printStackTrace();
@@ -1602,6 +1594,21 @@ public final class Concierge extends AbstractBundle implements Framework,
 	protected void stop0(final boolean update) {
 		state = Bundle.STOPPING;
 
+		// call extension bundles with successfully called start activators
+		for(BundleImpl b : extensionBundles){
+			if(b.currentRevision.extActivatorInstance != null){
+				try {
+					b.currentRevision.extActivatorInstance.stop(context);
+				} catch(Throwable err){
+					notifyFrameworkListeners(FrameworkEvent.ERROR, b,
+							new BundleException("Error calling extension bundle start(): " + b.toString(),
+									BundleException.ACTIVATOR_ERROR, err));
+				} finally {
+					b.currentRevision.extActivatorInstance = null;
+				}
+			}
+		}
+		
 		if (!update) {
 			System.out.println("----------------------------"
 					+ "-----------------------------");
@@ -1628,6 +1635,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 			bundles.clear();
 			bundleID_bundles.clear();
+			location_bundles.clear();
+			symbolicName_bundles.clear();
+			extensionBundles.clear();
 			serviceRegistry.clear();
 
 			// restore micro-services
@@ -1640,14 +1650,13 @@ public final class Concierge extends AbstractBundle implements Framework,
 					? FrameworkEvent.STOPPED_UPDATE : FrameworkEvent.STOPPED,
 					this, null);
 
-			// notify waiting threads
-			synchronized (Concierge.this) {
-				Concierge.this.notify();
-			}
 		} catch (final Exception e) {
 			stopEvent = new FrameworkEvent(FrameworkEvent.ERROR, Concierge.this,
 					new BundleException("Exception during framework start", e));
-			Concierge.this.notify();
+		} finally {
+			synchronized(Concierge.this){
+				Concierge.this.notifyAll();
+			}
 		}
 	}
 
@@ -1945,7 +1954,12 @@ public final class Concierge extends AbstractBundle implements Framework,
 	public void setStartLevel(final int targetLevel,
 			final FrameworkListener... listeners) {
 		// TODO: check AdminPermission(this, STARTLEVEL);
-
+		
+		// cannot set the startlevel during init - required for extension bundle activators
+		if(state == STARTING){
+			throw new IllegalStateException("Cannot set the start level while starting");
+		}
+		
 		if (targetLevel <= 0) {
 			throw new IllegalArgumentException(
 					"Start level " + targetLevel + " is not a valid level");
@@ -4182,8 +4196,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 		final BundleImpl bundle = new BundleImpl(this, context, location,
 				nextBundleID++, in);
-
-		bundle.install();
 
 		// notify the listeners
 		notifyBundleListeners(BundleEvent.INSTALLED, bundle,
