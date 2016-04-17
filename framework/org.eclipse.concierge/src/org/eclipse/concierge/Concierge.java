@@ -1293,6 +1293,17 @@ public final class Concierge extends AbstractBundle implements Framework,
 				"osgi.wiring.host; osgi.wiring.host=org.eclipse.concierge");
 		systemBundleCapabilities.add(sysbundleHostCap);
 
+		// osgi.identity capabilityies
+		final BundleCapabilityImpl identityCap1 = new BundleCapabilityImpl(
+				this,
+				"osgi.identity; osgi.identity=org.eclipse.concierge");
+		systemBundleCapabilities.add(identityCap1);
+		
+		final BundleCapabilityImpl identityCap2 = new BundleCapabilityImpl(
+				this,
+				"osgi.identity; osgi.identity=system.bundle");
+		systemBundleCapabilities.add(identityCap2);
+		
 		publishCapabilities(systemBundleCapabilities);
 
 		// add to framework wiring
