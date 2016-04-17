@@ -854,6 +854,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				throw new IllegalStateException(
 						"Cannot update uninstalled bundle " + toString());
 			}
+			
+			final Revision updatedRevision = readAndProcessInputStream(stream);
 
 			boolean wasActive = false;
 			if (state == ACTIVE) {
@@ -875,8 +877,6 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					currentRevision.cleanup(false);
 				}
 			}
-
-			final Revision updatedRevision = readAndProcessInputStream(stream);
 
 			framework.checkForCollision(CollisionHook.UPDATING, this,
 					updatedRevision);
