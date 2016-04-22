@@ -1288,9 +1288,20 @@ public final class Concierge extends AbstractBundle implements Framework,
 						.append(osname).append("\";")
 						.append("osgi.native.osversion:Version=\"")
 						.append(osversion.toString()).append("\";")
-						.append("osgi.native.processor:List<String>=\"")
+						.append("osgi.native.processor:List<String>=\"");
 						// TODO list all equivalent processors
-						.append(processor).append("\";")
+						if(processor.equals("x86-64")){
+							nativeCapBuilder.append("x86_64").append(",")
+							.append("amd64").append(",")
+							.append("em64t").append(",");
+						} else if(processor.equals("x86")){
+							nativeCapBuilder.append("pentium").append(",")
+							.append("i386").append(",")
+							.append("i486").append(",")
+							.append("i586").append(",")
+							.append("i686").append(",");
+						}
+		nativeCapBuilder.append(processor).append("\";")
 						.append("osgi.native.language=\"")
 						.append(language).append("\";");
 		// also add all launcher properties (OSGi spec 8.7)?
