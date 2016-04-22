@@ -2462,6 +2462,17 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				newNativeStrings = temp.toArray(new String[temp.size()]);
 				nativeRequirement = fragment.requirements.get(NativeNamespace.NATIVE_NAMESPACE);
 			}
+			
+			if (newNativeStrings != null) {
+				nativeLibraries = new HashMap<String, String>(
+						newNativeStrings.length);
+				if(!processNativeLibraries(newNativeStrings)){
+					throw new BundleException("Could not load native library from fragment",
+							BundleException.NATIVECODE_ERROR);
+				}
+			}
+			nativeCodeStrings = newNativeStrings;
+
 
 			// commit the changes
 			final BundleImpl fragmentBundle = (BundleImpl) fragment.getBundle();
@@ -2519,14 +2530,6 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			if (newClasspaths.size() > 0) {
 				classpath = newClasspaths
 						.toArray(new String[newClasspaths.size()]);
-			}
-
-			// add native code
-			nativeCodeStrings = newNativeStrings;
-			if (nativeCodeStrings != null) {
-				nativeLibraries = new HashMap<String, String>(
-						nativeCodeStrings.length);
-				processNativeLibraries(nativeCodeStrings);
 			}
 
 			return true;
