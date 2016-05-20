@@ -19,7 +19,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -160,7 +160,7 @@ public class SyntheticBundleBuilder {
 				final String resPath = entry.getKey();
 				final String s = entry.getValue();
 				final InputStream stringInputStream = new ByteArrayInputStream(
-						s.getBytes(StandardCharsets.UTF_8));
+						s.getBytes(Charset.forName("UTF-8")));
 				final JarEntry je = new JarEntry(resPath);
 				jarStream.putNextEntry(je);
 				TestUtils.copyStream(stringInputStream, jarStream);

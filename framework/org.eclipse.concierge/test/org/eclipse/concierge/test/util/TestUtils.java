@@ -25,7 +25,7 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 
 /**
  * Test utilities to avoid dependencies to external libraries.
@@ -51,7 +51,7 @@ public class TestUtils {
 	public static InputStream createInputStreamFromString(final String content)
 			throws IOException {
 		final InputStream stream = new ByteArrayInputStream(
-				content.getBytes(StandardCharsets.UTF_8));
+				content.getBytes(Charset.forName("UTF-8")));
 		return stream;
 	}
 
@@ -69,7 +69,7 @@ public class TestUtils {
 			total += result;
 		}
 		in.close();
-		return new String(b, StandardCharsets.UTF_8);
+		return new String(b, Charset.forName("UTF-8"));
 	}
 
 	public static void copyFile(File srcFile, File destFile) throws IOException {

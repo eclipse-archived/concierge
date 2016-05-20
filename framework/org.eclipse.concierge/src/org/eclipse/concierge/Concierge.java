@@ -29,7 +29,7 @@ import java.net.URLClassLoader;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.net.URLStreamHandlerFactory;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.cert.X509Certificate;
@@ -614,7 +614,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 		} else {
 			// some arguments have been defined
 			InputStream inputStream = new ByteArrayInputStream(
-					argsBuf.toString().getBytes(StandardCharsets.UTF_8));
+					argsBuf.toString().getBytes(Charset.forName("UTF-8")));
 			// TODO support really props as command line args?
 			// we have to preserve the properties for later variable and
 			// wildcard replacement
@@ -623,7 +623,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 			// now process again for install/start options with given properties
 			inputStream = new ByteArrayInputStream(
-					argsBuf.toString().getBytes(StandardCharsets.UTF_8));
+					argsBuf.toString().getBytes(Charset.forName("UTF-8")));
 			fw = xargsLauncher.processXargsInputStream(passedProperties,
 					inputStream);
 		}
