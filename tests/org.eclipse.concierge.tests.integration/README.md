@@ -1,15 +1,12 @@
 # Eclipse Concierge Integration Tests
 
-This Java project contains integration tests with bundles from different projects to run on Concierge OSGi framework.
+This project will contain in future integration tests with bundles from different projects to run on Concierge OSGi framework.
 
-
-Actually there a lot of tests using a proprietary way to download and install bundle in Concierge. It is not yet integrated in regular build as it requires manual changes to get all these tests running against latest versions.
-
-We filed a bug to check if pax-exam is another option to write such kind of integration tests.
+There have been a lot of tests using a proprietary way to download and install bundle in Concierge. This will be replaced by a pax-exam based test suite. Meanwhile the old tests have been deleted up to have a clear repository.
 
 ## References
 
-* "Use pax-exam for Concierge integration tests? ": https://bugs.eclipse.org/bugs/show_bug.cgi?id=480566
+* "Use pax-exam for Concierge integration tests? ": https://github.com/eclipse/concierge/issues/14
 * Pax-exam documentation: https://ops4j1.jira.com/wiki/display/PAXEXAM4/Documentation
 * Maven repo with pax-exam: http://mvnrepository.com/artifact/org.ops4j.pax.exam
 * more information about pax-exam
