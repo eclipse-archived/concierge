@@ -196,11 +196,6 @@ project(':bundles:org.eclipse.concierge.shell') {
         compile project(':framework:org.eclipse.concierge')
     }
 }
-project(':tests:org.eclipse.concierge.tests.integration') {
-    dependencies {
-        compile project(':framework:org.eclipse.concierge')
-    }
-}
 
 // release management
 release {
