@@ -3,19 +3,19 @@ import org.apache.tools.ant.filters.*
 apply plugin: 'distribution'
 
 task markdownCopy(type: Copy) {
-  from 'src/markdown'
+  from '../docs'
   into 'build/gen-html'
-  include('docs/*.markdown')
-  rename { it - '.markdown' + '.html'}
+  include('*.md')
+  rename { it - '.md' + '.html'}
   filter(ConcatFilter, prepend: file('src/config/strapdown-pre.txt'))
   filter(ConcatFilter, append: file('src/config/strapdown-post-dirlevel1.txt'))
 }
 
 task markdownCopyContributor(type: Copy) {
-  from 'src/markdown'
+  from '../docs'
   into 'build/gen-html'
-  include('docs/contributor/*.markdown')
-  rename { it - '.markdown' + '.html'}
+  include('contributor/*.markdown')
+  rename { it - '.md' + '.html'}
   filter(ConcatFilter, prepend: file('src/config/strapdown-pre.txt'))
   filter(ConcatFilter, append: file('src/config/strapdown-post-dirlevel2.txt'))
 }
@@ -42,7 +42,7 @@ distributions {
                 from { project(':bundles:org.eclipse.concierge.shell').jar }
             }
 			into('docs') {
-                from ('build/gen-html/docs')
+                from ('build/gen-html')
 			}
 		}
 	}
