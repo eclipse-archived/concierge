@@ -37,30 +37,43 @@ Comments are preceded by a hash `#` sign.
 ### Sample .xargs files
 
 The Concierge distribution download comes with sample .xargs files. For example, the following
-.xargs file launches Concierge with some basic Apache Felix bundles providing declarative services,
-an event admin, configuration admin and metatype:
+.xargs file launches Concierge with some basic Apache Felix bundles providing declarative services, an event admin, configuration admin and metatype:
 
 ```
- # xargs sample file to load some Felix bundles
+# xargs sample file to load some Felix bundles
+# We will start the bundles in different start levels to show that capability
 
- # uncomment to clean storage first
- # -Dorg.osgi.framework.storage.clean=onFirstInit
+# uncomment to clean storage first
+# -Dorg.osgi.framework.storage.clean=onFirstInit
 
- # use our own profile
- -Dorg.eclipse.concierge.profile=felix
+# use a separate profile
+-Dorg.eclipse.concierge.profile=felix
 
- # repos to load bundles from
- -Drepo=http://www.us.apache.org/dist/felix
+# repos to load bundles from
+-Drepo=https://archive.apache.org/dist/felix
 
- # load bundles
- -istart bundles/org.eclipse.concierge.shell-0.9.0.*.jar
- -istart ${repo}/org.apache.felix.log-1.0.1.jar
- -istart ${repo}/org.apache.felix.scr-1.8.0.jar
- -istart ${repo}/org.apache.felix.eventadmin-1.4.2.jar
- -istart ${repo}/org.apache.felix.metatype-1.0.12.jar
- -istart ${repo}/org.apache.felix.configadmin-1.8.4.jar
+# load shell and logservice with start level 1
+-initlevel 1
+-istart bundles/org.eclipse.concierge.shell-5.0.0.*.jar
+-istart ${repo}/org.apache.felix.log-1.0.1.jar
+
+# start DS with start level 2
+-initlevel 2
+-istart ${repo}/org.apache.felix.scr-1.8.0.jar
+
+# start other services with level 3
+# First install (will use current start level 2), then start with level 3
+-install ${repo}/org.apache.felix.eventadmin-1.4.2.jar
+-install ${repo}/org.apache.felix.metatype-1.0.12.jar
+-install ${repo}/org.apache.felix.configadmin-1.8.4.jar
+
+-initlevel 3
+-start ${repo}/org.apache.felix.eventadmin-1.4.2.jar
+-start ${repo}/org.apache.felix.metatype-1.0.12.jar
+-start ${repo}/org.apache.felix.configadmin-1.8.4.jar
+
+# check different start levels in shell with command "startlevel <bundle-id>"
 ```
-
 First, some properties are set using the `-Dkey=value` syntax, and next the bundles to 
 start are declared.
 
@@ -72,11 +85,8 @@ time, you can set the `org.osgi.framework.storage.clean` property to `onFirstIni
 The `org.eclipse.concierge.profile` allows you to create a separate storage directory
 for each profile.
 
-The `repo` property is declared pointing to the Apache Felix repository, and is used later
-in the commands as `${repo}`.
+The `repo` property is declared pointing to the Apache Felix repository, and is used later in the commands as `${repo}`.
 
-Finally all bundles are installed and started with the `-istart` command. This can take 
-both a web URL or a file system URL.
+Finally all bundles are installed and started with the `-istart` command or using `-install` and `-start` command. This can take both a web URL or a file system URL.
 
-
-
+If you specify a `-initlevel <level>` all bundles installed or started later will start with the given start level.
