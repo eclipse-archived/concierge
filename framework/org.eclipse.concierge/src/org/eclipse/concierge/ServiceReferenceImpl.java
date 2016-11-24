@@ -483,36 +483,40 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 						"Service has already been uninstalled");
 			}
 
-			final Map<String, Object> oldProps = new HashMap<String, Object>(
-					properties);
-
-			final HashMap<String, String> cases = new HashMap<String, String>(
-					properties.size());
-			for (final String key : properties.keySet()) {
-				final String lower = key.toLowerCase();
-				if (cases.containsKey(lower)) {
-					throw new IllegalArgumentException(
-							"Properties contain the same key in different case variants");
-				}
-				cases.put(lower, key);
-			}
-			for (final Enumeration<String> keys = newProps.keys(); keys
-					.hasMoreElements();) {
-				final String key = keys.nextElement();
-				final Object value = newProps.get(key);
-				final String lower = key.toLowerCase();
-
-				if (!forbidden.contains(lower)) {
-					final Object existing = cases.get(lower);
-					if (existing != null) {
-						if (existing.equals(key)) {
-							properties.remove(existing);
-						} else {
-							throw new IllegalArgumentException(
-									"Properties already exists in a different case variant");
-						}
+			final Map<String, Object> oldProps;
+			// could be called from multiple threads
+			synchronized(properties){
+				oldProps = new HashMap<String, Object>(
+						properties);
+	
+				final HashMap<String, String> cases = new HashMap<String, String>(
+						properties.size());
+				for (final String key : properties.keySet()) {
+					final String lower = key.toLowerCase();
+					if (cases.containsKey(lower)) {
+						throw new IllegalArgumentException(
+								"Properties contain the same key in different case variants");
 					}
-					properties.put(key, value);
+					cases.put(lower, key);
+				}
+				for (final Enumeration<String> keys = newProps.keys(); keys
+						.hasMoreElements();) {
+					final String key = keys.nextElement();
+					final Object value = newProps.get(key);
+					final String lower = key.toLowerCase();
+	
+					if (!forbidden.contains(lower)) {
+						final Object existing = cases.get(lower);
+						if (existing != null) {
+							if (existing.equals(key)) {
+								properties.remove(existing);
+							} else {
+								throw new IllegalArgumentException(
+										"Properties already exists in a different case variant");
+							}
+						}
+						properties.put(key, value);
+					}
 				}
 			}
 
