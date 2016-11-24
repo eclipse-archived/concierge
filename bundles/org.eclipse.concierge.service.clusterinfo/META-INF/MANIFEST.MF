@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-SymbolicName: org.eclipse.concierge.service.clusterinfo
+Bundle-Name: Eclipse Concierge OSGi Cluster Information impl 
+Bundle-Version: 1.0.0.qualifier
+Bundle-Activator: org.eclipse.concierge.service.clusterinfo.Activator
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
+Bundle-Vendor: Eclipse.org/Concierge
+Bundle-License: http://www.eclipse.org/legal/epl-v10.html, http://www.eclipse.org/org/documents/edl-v10.php
+Import-Package: org.osgi.framework;version="1.8.0",org.osgi.framework.dto;version="1.8.0",org.osgi.framework.startlevel.dto;version="1.0.0",org.osgi.dto;version="1.0.0"
+Export-Package: org.osgi.service.clusterinfo;version="1.0.0",org.eclipse.concierge.service.clusterinfo.metrics;version="1.0.0"
