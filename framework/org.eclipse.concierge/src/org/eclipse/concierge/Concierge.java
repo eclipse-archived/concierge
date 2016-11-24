@@ -3857,7 +3857,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 			// prepare the data structures
 			final MultiMap<BundleContext, ListenerInfo> mmap = new MultiMap<BundleContext, ListenerInfo>();
 
-			for (final Iterator<ServiceListenerEntry> iter = serviceListeners
+			final List<ServiceListenerEntry> serviceListenersCopy = new ArrayList<Concierge.ServiceListenerEntry>(serviceListeners);
+			for (final Iterator<ServiceListenerEntry> iter = serviceListenersCopy
 					.iterator(); iter.hasNext();) {
 				final ServiceListenerEntry entry = iter.next();
 				mmap.insert(entry.bundle.context, entry);
@@ -3906,8 +3907,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 			}
 
 			final ArrayList<ServiceListenerEntry> list = new ArrayList<ServiceListenerEntry>();
-			final ArrayList<ServiceListenerEntry> serviceListenersCopy 
-				= new ArrayList<ServiceListenerEntry>(serviceListeners);
 			for (final Iterator<ServiceListenerEntry> iter = serviceListenersCopy
 					.iterator(); iter.hasNext();) {
 				final ServiceListenerEntry entry = iter.next();
