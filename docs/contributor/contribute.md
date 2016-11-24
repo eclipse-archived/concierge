@@ -8,7 +8,7 @@ A great way to stay up to date with Concierge activity is to subscribe to the Co
 
 ### Issue Tracker
 
-Issues and bugs related to Concierge are tracked with the Eclipse Bugzilla tracking system. Please enter any issues you find [there](https://bugs.eclipse.org/bugs/buglist.cgi?component=core&list_id=9301172&product=Concierge).
+Issues and bugs related to Concierge are tracked with github issue tracker. Please enter any issues you find [there](https://github.com/eclipse/concierge/issues).
 
 ### Contributing
 
