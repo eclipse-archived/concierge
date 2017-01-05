@@ -4658,7 +4658,11 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 			// TODO: check AdminPermission(new bundle, LIFECYCLE)
 
-			return installNewBundle(this, location, in);
+			if (in == null) {
+				return installNewBundle(this, location);	 
+			} else {
+				return installNewBundle(this, location, in);
+			}
 		}
 
 		/**
