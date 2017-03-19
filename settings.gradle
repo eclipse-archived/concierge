@@ -8,4 +8,5 @@ include	'framework:org.eclipse.concierge',
 		'bundles:org.eclipse.concierge.service.xmlparser',
 		'bundles:org.eclipse.concierge.service.eventadmin',
 		'bundles:org.eclipse.concierge.shell',
+		'bundles:org.eclipse.concierge.service.rest',
 		'distribution'

@@ -1,0 +1,13 @@
+# xargs sample file to launch Concierge with shell and rest service
+
+# clean storage first
+-Dorg.osgi.framework.storage.clean=onFirstInit
+
+# load shell bundle
+-istart bundles/org.eclipse.concierge.shell-5.0.0.*.jar
+
+# install profile fragment
+-install framework/org.eclipse.concierge.profile.javase7-5.1.0.*.jar
+
+# load rest service
+-istart bundles/org.eclipse.concierge.service.rest-1.0.0.*.jar

@@ -40,6 +40,7 @@ distributions {
                 from { project(':bundles:org.eclipse.concierge.service.startlevel').jar }
                 from { project(':bundles:org.eclipse.concierge.service.xmlparser').jar }
                 from { project(':bundles:org.eclipse.concierge.shell').jar }
+                from { project(':bundles:org.eclipse.concierge.service.rest').jar }
             }
 			into('docs') {
                 from ('build/gen-html')

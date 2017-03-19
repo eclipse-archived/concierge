@@ -5,3 +5,4 @@
 /tools/
 build/
 bin/
+/**/.DS_Store

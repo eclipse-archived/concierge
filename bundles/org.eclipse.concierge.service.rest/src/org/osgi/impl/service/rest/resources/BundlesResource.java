@@ -18,13 +18,12 @@ import java.util.UUID;
 import org.osgi.framework.Bundle;
 import org.osgi.impl.service.rest.PojoReflector;
 import org.osgi.impl.service.rest.pojos.BundlePojoList;
+import org.restlet.data.Form;
 import org.restlet.data.MediaType;
 import org.restlet.data.Status;
-import org.restlet.engine.header.Header;
 import org.restlet.representation.Representation;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.representation.Variant;
-import org.restlet.util.Series;
 
 /**
  * The bundles resource, a list of all bundle paths.
@@ -66,8 +65,7 @@ public class BundlesResource extends AbstractOSGiResource<BundlePojoList> {
 						+ bundle.getBundleId());
 			}
 
-			@SuppressWarnings("unchecked")
-			Series<Header> headers = (Series<Header>)
+			final Form headers = (Form)
 					getRequestAttributes().get("org.restlet.http.headers");
 			String location =
 					headers.getFirstValue("Content-Location");

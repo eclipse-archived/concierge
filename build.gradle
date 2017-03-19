@@ -186,6 +186,11 @@ project(':bundles:org.eclipse.concierge.shell') {
         compile project(':framework:org.eclipse.concierge')
     }
 }
+project(':bundles:org.eclipse.concierge.service.rest') {
+    dependencies {
+        compile project(':framework:org.eclipse.concierge')
+    }
+}
 
 // release management
 release {
