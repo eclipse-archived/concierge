@@ -20,7 +20,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,8 +30,9 @@ public interface ConciergeCollections {
 
 		protected final HashMap<K, List<V>> map;
 
-		protected final LinkedHashSet<V> allValues = new LinkedHashSet<V>();
-
+		protected final ArrayList<V> allValues = new ArrayList<V>();
+		private final List<V> roValues = Collections.unmodifiableList(allValues);
+		
 		private final Comparator<V> comp;
 
 		boolean dirty = false;
@@ -172,7 +172,8 @@ public interface ConciergeCollections {
 			if (dirty) {
 				redoAllValues();
 			}
-			return new ArrayList<V>(allValues);
+			//return new ArrayList<V>(allValues);
+			return roValues;
 		}
 
 		public void removeAll(final K[] keys, final V value) {

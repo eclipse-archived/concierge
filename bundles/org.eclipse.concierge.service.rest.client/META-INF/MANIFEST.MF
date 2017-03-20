@@ -6,6 +6,6 @@ Bundle-Version: 1.0.0.qualifier
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-Vendor: Eclipse.org/Concierge
 Bundle-License: http://www.eclipse.org/legal/epl-v10.html
-Import-Package: org.osgi.framework,
+Import-Package: org.osgi.dto;version="1.0.0",
+ org.osgi.framework,
  org.osgi.util.tracker;version="1.5.1"
-Export-Package: org.osgi.service.event;version="1.3"

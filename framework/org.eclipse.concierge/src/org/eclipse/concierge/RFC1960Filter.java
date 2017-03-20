@@ -140,6 +140,8 @@ public final class RFC1960Filter implements Filter {
 		this.operator = operator;
 	}
 
+	private static java.util.WeakHashMap<String, Filter> filterCache = new java.util.WeakHashMap<String, Filter>();
+	
 	/**
 	 * get a filter instance from filter string.
 	 * 
@@ -154,6 +156,11 @@ public final class RFC1960Filter implements Filter {
 		if (str == null) {
 			return NULL_FILTER;
 		}
+		final Filter cached = filterCache.get(str);
+		if (cached != null) {
+			return cached;
+		}
+		
 		final String filterString = str.trim();
 		if (filterString.length() == 1) {
 			throw new InvalidSyntaxException("Malformed filter", filterString);
@@ -231,6 +238,7 @@ public final class RFC1960Filter implements Filter {
 						final RFC1960Filter filter = (RFC1960Filter) stack
 								.pop();
 						if (stack.isEmpty()) {
+							filterCache.put(str, filter);
 							return filter;
 						}
 						final RFC1960Filter parent = (RFC1960Filter) stack
@@ -266,9 +274,11 @@ public final class RFC1960Filter implements Filter {
 									comparator = PRESENT;
 									value = null;
 								}
-
-								return new RFC1960SimpleFilter(id, comparator,
+								final Filter filter = 
+								 new RFC1960SimpleFilter(id, comparator,
 										value);
+								filterCache.put(str, filter);
+								return filter;
 							} else {
 								throw new InvalidSyntaxException(
 										"Unexpected literal: "
@@ -355,7 +365,9 @@ public final class RFC1960Filter implements Filter {
 				}
 			}
 
-			return stack.pop();
+			final Filter filter = stack.pop();
+			filterCache.put(str, filter);
+			return filter;
 		} catch (final EmptyStackException e) {
 			throw new InvalidSyntaxException(
 					"Filter expression not well-formed.", filterString);
@@ -885,25 +897,33 @@ public final class RFC1960Filter implements Filter {
 				}
 			} else if (attr instanceof Byte) {
 				final byte byteAttr = ((Byte) attr).byteValue();
-				final byte byteValue = Byte.parseByte(value);
+				// parse the byte manually since the default implementation does not cache
+				int intVal = Integer.parseInt(value);
+		        if (intVal < Byte.MIN_VALUE || intVal > Byte.MAX_VALUE)
+		            throw new NumberFormatException(
+		                "Value out of range. Value:\"" + value);
 				switch (comparator) {
 				case GREATER:
-					return byteAttr >= byteValue;
+					return byteAttr >= (byte) intVal;
 				case LESS:
-					return byteAttr <= byteValue;
+					return byteAttr <= (byte) intVal;
 				default:
-					return byteAttr == byteValue;
+					return byteAttr == (byte) intVal;
 				}
 			} else if (attr instanceof Short) {
 				final short shortAttr = ((Short) attr).shortValue();
-				final short shortValue = Short.parseShort(value);
+				// parse the short manually since the default implementation does not cache
+				int intVal = Integer.parseInt(value);
+		        if (intVal < Short.MIN_VALUE || intVal > Short.MAX_VALUE)
+		            throw new NumberFormatException(
+		                "Value out of range. Value:\"" + value);
 				switch (comparator) {
 				case GREATER:
-					return shortAttr >= shortValue;
+					return shortAttr >= (short) intVal;
 				case LESS:
-					return shortAttr <= shortValue;
+					return shortAttr <= (short) intVal;
 				default:
-					return shortAttr == shortValue;
+					return shortAttr == (short) intVal;
 				}
 			} else if (attr instanceof Double) {
 				final double doubleAttr = ((Double) attr).doubleValue();
