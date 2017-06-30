@@ -93,11 +93,11 @@ public class FrameworkNodeImpl implements FrameworkNodeStatus {
 
 	
 	public ServiceReferenceDTO getServiceReference(long id) {
-		ServiceReferenceDTO s = null;
-		try {
-			s = getServiceReferences("service.id="+id).iterator().next();
-		} catch(InvalidSyntaxException e){}
-		return s;
+		for(ServiceReferenceDTO r : getServiceReferences()){
+			if(r.id == id)
+				return r;
+		}
+		return null; // TODO should we throw exception here?
 	}
 
 	
@@ -180,7 +180,7 @@ public class FrameworkNodeImpl implements FrameworkNodeStatus {
 
 	
 	public BundleDTO uninstallBundle(long id) throws BundleException {
-		Bundle b  = context.getBundle();
+		Bundle b  = context.getBundle(id);
 		if(b == null)
 			return null;
 		
@@ -190,7 +190,7 @@ public class FrameworkNodeImpl implements FrameworkNodeStatus {
 
 	
 	public BundleDTO updateBundle(long id) throws BundleException {
-		Bundle b  = context.getBundle();
+		Bundle b  = context.getBundle(id);
 		if(b == null)
 			return null;
 		
@@ -200,7 +200,7 @@ public class FrameworkNodeImpl implements FrameworkNodeStatus {
 
 
 	public BundleDTO updateBundle(long id, String url) throws BundleException, MalformedURLException, IOException {
-		Bundle b  = context.getBundle();
+		Bundle b  = context.getBundle(id);
 		if(b == null)
 			return null;
 		

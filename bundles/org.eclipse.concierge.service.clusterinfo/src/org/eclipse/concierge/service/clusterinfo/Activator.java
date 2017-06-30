@@ -14,42 +14,51 @@
 package org.eclipse.concierge.service.clusterinfo;
 
 import java.util.Dictionary;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.Map;
+import java.util.Set;
 
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
+import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.clusterinfo.FrameworkManager;
 import org.osgi.service.clusterinfo.FrameworkNodeStatus;
 import org.osgi.service.clusterinfo.NodeStatus;
+import org.osgi.util.tracker.ServiceTracker;
+import org.osgi.util.tracker.ServiceTrackerCustomizer;
 
 public class Activator implements BundleActivator {
 
 	private ServiceRegistration<?> reg;
+	private ServiceTracker tracker;
+	private Map<ServiceReference, String[]> tagMap = new HashMap<>();
+	
+	private Dictionary<String, Object> properties = new Hashtable<String, Object>();
 	
 	public void start(BundleContext context) throws Exception {
 		FrameworkNodeImpl impl = new FrameworkNodeImpl(context);
-		
-		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		
 		// NodeStatus properties
 		// TODO where to fetch all required properties? - for now read from run properties...
 		
 		// these are mandatory
 		// for a FrameworkNodeStatus, the id should be the framework uuid
-		properties.put("id", context.getProperty(Constants.FRAMEWORK_UUID).toString());
+		properties.put("osgi.clusterinfo.id", context.getProperty(Constants.FRAMEWORK_UUID).toString());
 		
 		String s;
 		
 		s = context.getProperty("org.eclipse.concierge.clusterinfo.cluster");
 		properties.put("osgi.clusterinfo.cluster", s == null ? "Default Cluster" : s);
 		
-		s = context.getProperty("org.eclipse.concierge.clusterinfo.endpoints");
-		properties.put("osgi.clusterinfo.endpoints", s == null ? new String[]{} : s.split(","));
+		s = context.getProperty("org.eclipse.concierge.clusterinfo.endpoint");
+		properties.put("osgi.clusterinfo.endpoint", s == null ? new String[]{} : s.split(","));
 		
-		s = context.getProperty("org.eclipse.concierge.clusterinfo.privateEndpoints");
-		properties.put("osgi.clusterinfo.privateEndpoints", s == null ? new String[]{} : s.split(","));
+		s = context.getProperty("org.eclipse.concierge.clusterinfo.private.endpoint");
+		properties.put("osgi.clusterinfo.private.endpoint", s == null ? new String[]{} : s.split(","));
 		
 		s = context.getProperty("org.eclipse.concierge.clusterinfo.vendor");
 		properties.put("osgi.clusterinfo.vendor", s == null ? "Concierge" : s);
@@ -101,11 +110,52 @@ public class Activator implements BundleActivator {
 				FrameworkNodeStatus.class.getName()
 		}, impl, properties);
 		
+		if(properties.get("osgi.clusterinfo.tags") != null)
+			tagMap.put(reg.getReference(), (String[])properties.get("osgi.clusterinfo.tags"));
+		
+		// add additional properties anounced by any service
+		tracker = new ServiceTracker(context, context.createFilter("(org.osgi.service.clusterinfo.tags=*)"), new ServiceTrackerCustomizer() {
+
+			@Override
+			public Object addingService(ServiceReference reference) {
+				String[] tags = (String[])reference.getProperty("org.osgi.service.clusterinfo.tags");
+				tagMap.put(reference, tags);
+				updateTags();
+				return null;
+			}
+
+			@Override
+			public void modifiedService(ServiceReference reference, Object service) {
+				String[] tags = (String[])reference.getProperty("org.osgi.service.clusterinfo.tags");
+				tagMap.put(reference, tags);
+				updateTags();
+			}
+
+			@Override
+			public void removedService(ServiceReference reference, Object service) {
+				tagMap.remove(reference);
+				updateTags();
+			}
+		});
+		tracker.open();
+		
 	}
 
 	public void stop(BundleContext context) throws Exception {
 		if(reg != null)
 			reg.unregister();
+		
+		tracker.close();
 	}
 
+	public void updateTags(){
+		Set<String> tags = new HashSet<String>();
+		for(String[] t : tagMap.values()){
+			for(String tag : t){
+				tags.add(tag);
+			}
+		}
+		properties.put("osgi.clusterinfo.tags", tags.toArray(new String[tags.size()]));
+		reg.setProperties(properties);
+	}
 }
