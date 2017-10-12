@@ -133,11 +133,10 @@ public abstract class AbstractConciergeTestCase {
 					} catch (NumberFormatException ex) {
 						// ignore
 					}
-					if (timeout > 0) {
-						Thread.sleep(timeout);
-					}
 				}
-
+				if (timeout > 0) {
+					Thread.sleep(timeout);
+				}
 			}
 		}
 	}

@@ -21,11 +21,16 @@ import org.eclipse.concierge.test.util.AbstractConciergeTestCase;
 import org.eclipse.concierge.test.util.SyntheticBundleBuilder;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.osgi.framework.Bundle;
 
 /**
  * Tests the main option "-all" with dependencies.
+ * 
+ * TODO these tests failed due to timing issues when starting/stopping the framework.
+ * This needs more test cases to check why. Meanwhile waiting 1000 ms before starting
+ * the framework does lead to always running tests.
  */
 public class ConciergeMainOptionAllTest extends AbstractConciergeTestCase {
 
@@ -33,6 +38,11 @@ public class ConciergeMainOptionAllTest extends AbstractConciergeTestCase {
 	private File fileA;
 	private File fileB;
 	private File fileC;
+
+	@Before
+	public void setUp() throws Exception {
+		Thread.sleep(1000);
+	}
 
 	@After
 	public void tearDown() throws Exception {
