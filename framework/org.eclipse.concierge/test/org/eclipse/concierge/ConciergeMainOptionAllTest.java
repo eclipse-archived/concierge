@@ -130,7 +130,7 @@ public class ConciergeMainOptionAllTest extends AbstractConciergeTestCase {
 		framework = Concierge
 				.doMain(new String[] { "-Dorg.eclipse.concierge.debug=true",
 						"-Dorg.osgi.framework.storage.clean=onFirstInit",
-						"-Dorg.eclipse.concierge.profil=" + storageProfile,
+						"-Dorg.eclipse.concierge.profile=" + storageProfile,
 						"-all", dir });
 		Assert.assertNotNull(framework);
 		Bundle[] bundles = framework.getBundleContext().getBundles();
@@ -165,7 +165,7 @@ public class ConciergeMainOptionAllTest extends AbstractConciergeTestCase {
 		framework = Concierge
 				.doMain(new String[] { "-Dorg.eclipse.concierge.debug=true",
 						"-Dorg.osgi.framework.storage.clean=onFirstInit",
-						"-Dorg.eclipse.concierge.profil=" + storageProfile,
+						"-Dorg.eclipse.concierge.profile=" + storageProfile,
 						"-all", dir });
 		Assert.assertNotNull(framework);
 		Bundle[] bundles = framework.getBundleContext().getBundles();
