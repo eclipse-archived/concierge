@@ -106,7 +106,9 @@ public class ConciergeMainOptionAllTest extends AbstractConciergeTestCase {
 	/** Test is these bundles can be started at all. */
 	@Test
 	public void testSortedBundles() throws Exception {
+		String storageProfile = "testSortedBundles";
 		Map<String, String> launchArgs = new HashMap<String, String>();
+		launchArgs.put("org.eclipse.concierge.profile", storageProfile);
 		startFrameworkClean(launchArgs);
 		setupSortedBundles();
 		Bundle bundleA = installBundle(fileA.getPath());
@@ -123,10 +125,12 @@ public class ConciergeMainOptionAllTest extends AbstractConciergeTestCase {
 	/** Test now if they can be started with -all option. */
 	@Test
 	public void testAllWithSortedBundles() throws Exception {
+		String storageProfile = "testAllWithSortedBundles";
 		setupSortedBundles();
 		framework = Concierge
 				.doMain(new String[] { "-Dorg.eclipse.concierge.debug=true",
 						"-Dorg.osgi.framework.storage.clean=onFirstInit",
+						"-Dorg.eclipse.concierge.profil=" + storageProfile,
 						"-all", dir });
 		Assert.assertNotNull(framework);
 		Bundle[] bundles = framework.getBundleContext().getBundles();
@@ -137,7 +141,9 @@ public class ConciergeMainOptionAllTest extends AbstractConciergeTestCase {
 	/** Test is these bundles can be started at all. */
 	@Test
 	public void testUnsortedBundles() throws Exception {
+		String storageProfile = "testUnsortedBundles";
 		Map<String, String> launchArgs = new HashMap<String, String>();
+		launchArgs.put("org.eclipse.concierge.profile", storageProfile);
 		startFrameworkClean(launchArgs);
 		setupUnsortedBundles();
 		Bundle bundleA = installBundle(fileA.getPath());
@@ -154,10 +160,12 @@ public class ConciergeMainOptionAllTest extends AbstractConciergeTestCase {
 	/** Test now if they can be started with -all option. */
 	@Test
 	public void testAllWithUnortedBundles() throws Exception {
+		String storageProfile = "testAllWithUnortedBundles";
 		setupUnsortedBundles();
 		framework = Concierge
 				.doMain(new String[] { "-Dorg.eclipse.concierge.debug=true",
 						"-Dorg.osgi.framework.storage.clean=onFirstInit",
+						"-Dorg.eclipse.concierge.profil=" + storageProfile,
 						"-all", dir });
 		Assert.assertNotNull(framework);
 		Bundle[] bundles = framework.getBundleContext().getBundles();
