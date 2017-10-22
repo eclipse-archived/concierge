@@ -159,8 +159,8 @@ public class ConciergeMainOptionAllTest extends AbstractConciergeTestCase {
 
 	/** Test now if they can be started with -all option. */
 	@Test
-	public void testAllWithUnortedBundles() throws Exception {
-		String storageProfile = "testAllWithUnortedBundles";
+	public void testAllWithUnsortedBundles() throws Exception {
+		String storageProfile = "testAllWithUnsortedBundles";
 		setupUnsortedBundles();
 		framework = Concierge
 				.doMain(new String[] { "-Dorg.eclipse.concierge.debug=true",
