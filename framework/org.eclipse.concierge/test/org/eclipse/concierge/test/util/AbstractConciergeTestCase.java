@@ -126,6 +126,7 @@ public abstract class AbstractConciergeTestCase {
 				String propValue = System
 						.getProperty(PROPERTY_WAIT_AFTER_FRAMEWORK_SHUTDOWN);
 
+				// we use a default timeout of 100 ms now
 				int timeout = -1;
 				if ((propValue != null) && (propValue.length() > 0)) {
 					try {
@@ -133,11 +134,10 @@ public abstract class AbstractConciergeTestCase {
 					} catch (NumberFormatException ex) {
 						// ignore
 					}
-					if (timeout > 0) {
-						Thread.sleep(timeout);
-					}
 				}
-
+				if (timeout > 0) {
+					Thread.sleep(timeout);
+				}
 			}
 		}
 	}

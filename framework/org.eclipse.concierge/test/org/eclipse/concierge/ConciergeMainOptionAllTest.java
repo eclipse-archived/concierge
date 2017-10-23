@@ -21,11 +21,16 @@ import org.eclipse.concierge.test.util.AbstractConciergeTestCase;
 import org.eclipse.concierge.test.util.SyntheticBundleBuilder;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.osgi.framework.Bundle;
 
 /**
  * Tests the main option "-all" with dependencies.
+ * 
+ * TODO these tests failed due to timing issues when starting/stopping the framework.
+ * This needs more test cases to check why. Meanwhile waiting 1000 ms before starting
+ * the framework does lead to always running tests.
  */
 public class ConciergeMainOptionAllTest extends AbstractConciergeTestCase {
 
@@ -33,6 +38,11 @@ public class ConciergeMainOptionAllTest extends AbstractConciergeTestCase {
 	private File fileA;
 	private File fileB;
 	private File fileC;
+
+	@Before
+	public void setUp() throws Exception {
+		Thread.sleep(1000);
+	}
 
 	@After
 	public void tearDown() throws Exception {
@@ -96,7 +106,9 @@ public class ConciergeMainOptionAllTest extends AbstractConciergeTestCase {
 	/** Test is these bundles can be started at all. */
 	@Test
 	public void testSortedBundles() throws Exception {
+		String storageProfile = "testSortedBundles";
 		Map<String, String> launchArgs = new HashMap<String, String>();
+		launchArgs.put("org.eclipse.concierge.profile", storageProfile);
 		startFrameworkClean(launchArgs);
 		setupSortedBundles();
 		Bundle bundleA = installBundle(fileA.getPath());
@@ -113,10 +125,12 @@ public class ConciergeMainOptionAllTest extends AbstractConciergeTestCase {
 	/** Test now if they can be started with -all option. */
 	@Test
 	public void testAllWithSortedBundles() throws Exception {
+		String storageProfile = "testAllWithSortedBundles";
 		setupSortedBundles();
 		framework = Concierge
 				.doMain(new String[] { "-Dorg.eclipse.concierge.debug=true",
 						"-Dorg.osgi.framework.storage.clean=onFirstInit",
+						"-Dorg.eclipse.concierge.profile=" + storageProfile,
 						"-all", dir });
 		Assert.assertNotNull(framework);
 		Bundle[] bundles = framework.getBundleContext().getBundles();
@@ -127,7 +141,9 @@ public class ConciergeMainOptionAllTest extends AbstractConciergeTestCase {
 	/** Test is these bundles can be started at all. */
 	@Test
 	public void testUnsortedBundles() throws Exception {
+		String storageProfile = "testUnsortedBundles";
 		Map<String, String> launchArgs = new HashMap<String, String>();
+		launchArgs.put("org.eclipse.concierge.profile", storageProfile);
 		startFrameworkClean(launchArgs);
 		setupUnsortedBundles();
 		Bundle bundleA = installBundle(fileA.getPath());
@@ -143,11 +159,13 @@ public class ConciergeMainOptionAllTest extends AbstractConciergeTestCase {
 
 	/** Test now if they can be started with -all option. */
 	@Test
-	public void testAllWithUnortedBundles() throws Exception {
+	public void testAllWithUnsortedBundles() throws Exception {
+		String storageProfile = "testAllWithUnsortedBundles";
 		setupUnsortedBundles();
 		framework = Concierge
 				.doMain(new String[] { "-Dorg.eclipse.concierge.debug=true",
 						"-Dorg.osgi.framework.storage.clean=onFirstInit",
+						"-Dorg.eclipse.concierge.profile=" + storageProfile,
 						"-all", dir });
 		Assert.assertNotNull(framework);
 		Bundle[] bundles = framework.getBundleContext().getBundles();

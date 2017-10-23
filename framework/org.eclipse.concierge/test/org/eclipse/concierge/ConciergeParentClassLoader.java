@@ -107,7 +107,8 @@ public class ConciergeParentClassLoader extends AbstractConciergeTestCase {
 	@Test
 	public void testLoadClassFromLibExtWithBootParentClassLoader()
 			throws Exception {
-		loadClassFailedFromLibExtWithParentClassLoader(Constants.FRAMEWORK_BUNDLE_PARENT_BOOT);
+		loadClassFailedFromLibExtWithParentClassLoader(Constants.FRAMEWORK_BUNDLE_PARENT_BOOT,
+				"testLoadClassFromLibExtWithBootParentClassLoader");
 	}
 
 	/**
@@ -118,7 +119,8 @@ public class ConciergeParentClassLoader extends AbstractConciergeTestCase {
 	@Test
 	public void testLoadClassFromLibExtWithAppParentClassLoader()
 			throws Exception {
-		loadClassSuccessfulFromLibExtWithParentClassLoader(Constants.FRAMEWORK_BUNDLE_PARENT_APP);
+		loadClassSuccessfulFromLibExtWithParentClassLoader(Constants.FRAMEWORK_BUNDLE_PARENT_APP,
+				"testLoadClassFromLibExtWithAppParentClassLoader");
 	}
 
 	/**
@@ -129,7 +131,8 @@ public class ConciergeParentClassLoader extends AbstractConciergeTestCase {
 	@Test
 	public void testLoadClassFromLibExtWithFrameworkParentClassLoader()
 			throws Exception {
-		loadClassSuccessfulFromLibExtWithParentClassLoader(Constants.FRAMEWORK_BUNDLE_PARENT_FRAMEWORK);
+		loadClassSuccessfulFromLibExtWithParentClassLoader(Constants.FRAMEWORK_BUNDLE_PARENT_FRAMEWORK,
+				"testLoadClassFromLibExtWithFrameworkParentClassLoader");
 	}
 
 	/**
@@ -139,17 +142,19 @@ public class ConciergeParentClassLoader extends AbstractConciergeTestCase {
 	@Test
 	public void testLoadClassFromLibExtWithExtParentClassLoader()
 			throws Exception {
-		loadClassSuccessfulFromLibExtWithParentClassLoader(Constants.FRAMEWORK_BUNDLE_PARENT_EXT);
+		loadClassSuccessfulFromLibExtWithParentClassLoader(Constants.FRAMEWORK_BUNDLE_PARENT_EXT,
+				"testLoadClassFromLibExtWithExtParentClassLoader");
 	}
 
 	// helper methods
 
 	public void loadClassFailedFromLibExtWithParentClassLoader(
-			String parentClassLoader) throws Exception {
+			String parentClassLoader, String storageProfile) throws Exception {
 		HashMap<String, String> launchArgs = new HashMap<String, String>();
 		launchArgs.put(Constants.FRAMEWORK_BUNDLE_PARENT, parentClassLoader);
 		launchArgs.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA,
 				"com.sun.crypto.provider");
+		launchArgs.put("org.eclipse.concierge.profile", storageProfile);
 		startFrameworkClean(launchArgs);
 		setupSunJceBundle();
 
@@ -163,11 +168,12 @@ public class ConciergeParentClassLoader extends AbstractConciergeTestCase {
 	}
 
 	private void loadClassSuccessfulFromLibExtWithParentClassLoader(
-			String parentClassLoader) throws Exception {
+			String parentClassLoader, String storageProfile) throws Exception {
 		HashMap<String, String> launchArgs = new HashMap<String, String>();
 		launchArgs.put(Constants.FRAMEWORK_BUNDLE_PARENT, parentClassLoader);
 		launchArgs.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA,
 				"com.sun.crypto.provider");
+		launchArgs.put("org.eclipse.concierge.profile", storageProfile);
 		startFrameworkClean(launchArgs);
 		setupSunJceBundle();
 
