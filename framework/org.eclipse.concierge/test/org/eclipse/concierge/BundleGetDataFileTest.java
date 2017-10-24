@@ -55,6 +55,17 @@ public class BundleGetDataFileTest extends AbstractConciergeTestCase {
 		builder.addManifestHeader("Fragment-Host", "bundle");
 		fragmentUnderTest = installBundle(builder);
 	}
+	private static String joinPath(String... args){
+		StringBuilder sb = new StringBuilder();
+		int i = 0;
+		for( ; i < args.length -1; i++){
+			sb.append(args[i]);
+			sb.append(File.separator);
+		}
+		sb.append(args[i]);
+
+		return sb.toString();
+	}
 
 	@Test
 	public void testInstallAndStartDefaultBundles() throws Exception {
@@ -72,8 +83,8 @@ public class BundleGetDataFileTest extends AbstractConciergeTestCase {
 
 		File f1 = bundleUnderTest.getDataFile("");
 		Assert.assertNotNull(f1);
-		Assert.assertTrue(f1.getAbsolutePath().endsWith(
-				"storage/default/1/data"));
+		String expected = BundleGetDataFileTest.joinPath("storage", "default", "1", "data");
+		Assert.assertTrue(f1.getAbsolutePath().endsWith(expected));
 		Assert.assertTrue(f1.exists());
 		Assert.assertTrue(f1.isDirectory());
 
@@ -89,8 +100,8 @@ public class BundleGetDataFileTest extends AbstractConciergeTestCase {
 
 		File f1 = bundleUnderTest.getBundleContext().getDataFile("");
 		Assert.assertNotNull(f1);
-		Assert.assertTrue(f1.getAbsolutePath().endsWith(
-				"storage/default/1/data"));
+		String expected = BundleGetDataFileTest.joinPath("storage", "default", "1", "data");
+		Assert.assertTrue(f1.getAbsolutePath().endsWith(expected));
 		Assert.assertTrue(f1.exists());
 		Assert.assertTrue(f1.isDirectory());
 
@@ -106,8 +117,8 @@ public class BundleGetDataFileTest extends AbstractConciergeTestCase {
 
 		File f1 = bundleUnderTest.getDataFile("file.txt");
 		Assert.assertNotNull(f1);
-		Assert.assertTrue(f1.getAbsolutePath().endsWith(
-				"storage/default/1/data/file.txt"));
+		String expected = BundleGetDataFileTest.joinPath("storage", "default", "1", "data", "file.txt");
+		Assert.assertTrue(f1.getAbsolutePath().endsWith(expected));
 		Assert.assertTrue(f1.getParentFile().exists());
 		Assert.assertTrue(f1.getParentFile().isDirectory());
 		TestUtils.copyStringToFile("# some text", f1);
@@ -121,8 +132,8 @@ public class BundleGetDataFileTest extends AbstractConciergeTestCase {
 
 		File f1 = bundleUnderTest.getDataFile("a/b/file.txt");
 		Assert.assertNotNull(f1);
-		Assert.assertTrue(f1.getAbsolutePath().endsWith(
-				"storage/default/1/data/a/b/file.txt"));
+		String expected = BundleGetDataFileTest.joinPath("storage", "default", "1", "data", "a", "b", "file.txt");
+		Assert.assertTrue(f1.getAbsolutePath().endsWith(expected));
 		Assert.assertTrue(f1.getParentFile().exists());
 		Assert.assertTrue(f1.getParentFile().isDirectory());
 		TestUtils.copyStringToFile("# some text", f1);

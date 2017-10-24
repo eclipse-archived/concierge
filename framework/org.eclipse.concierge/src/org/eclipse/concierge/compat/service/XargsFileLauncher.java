@@ -401,6 +401,6 @@ public class XargsFileLauncher {
 	}
 
 	private void printErr(String msg) {
-		streamErr.println("[XargsFileLauncher] " + msg);
+		streamErr.println("[XargsFileLauncher] " + msg);
 	}
 }
