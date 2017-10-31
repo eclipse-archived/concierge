@@ -25,6 +25,7 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
+import org.osgi.service.clusterinfo.ClusterTagPermission;
 import org.osgi.service.clusterinfo.FrameworkManager;
 import org.osgi.service.clusterinfo.FrameworkNodeStatus;
 import org.osgi.service.clusterinfo.NodeStatus;
@@ -34,19 +35,20 @@ import org.osgi.util.tracker.ServiceTrackerCustomizer;
 public class Activator implements BundleActivator {
 
 	private ServiceRegistration<?> reg;
-	private ServiceTracker tracker;
-	private Map<ServiceReference, String[]> tagMap = new HashMap<>();
+	private ServiceTracker<?,?> tracker;
+	private Map<ServiceReference<?>, String[]> tagMap = new HashMap<>();
 	
 	private Dictionary<String, Object> properties = new Hashtable<String, Object>();
 	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public void start(BundleContext context) throws Exception {
 		FrameworkNodeImpl impl = new FrameworkNodeImpl(context);
 		
 		// NodeStatus properties
 		// TODO where to fetch all required properties? - for now read from run properties...
 		
-		// these are mandatory
-		// for a FrameworkNodeStatus, the id should be the framework uuid
+		// these are mandatory for a FrameworkNodeStatus, 
+		// the id should be the framework uuid
 		properties.put("osgi.clusterinfo.id", context.getProperty(Constants.FRAMEWORK_UUID).toString());
 		
 		String s;
@@ -64,7 +66,7 @@ public class Activator implements BundleActivator {
 		properties.put("osgi.clusterinfo.vendor", s == null ? "Concierge" : s);
 		
 		s = context.getProperty("org.eclipse.concierge.clusterinfo.version");
-		properties.put("osgi.clusterinfo.version", s == null ? "0.0.0" : s);
+		properties.put("osgi.clusterinfo.version", s == null ? "1.0.0" : s);
 		
 		// these are optional
 		s = context.getProperty("org.eclipse.concierge.clusterinfo.country");
@@ -119,6 +121,14 @@ public class Activator implements BundleActivator {
 			@Override
 			public Object addingService(ServiceReference reference) {
 				String[] tags = (String[])reference.getProperty("org.osgi.service.clusterinfo.tags");
+				
+				SecurityManager sm = System.getSecurityManager();
+				if (sm != null) {
+					for(String t : tags) {
+						sm.checkPermission(new ClusterTagPermission(t, "ADD"));
+					}
+				}
+				
 				tagMap.put(reference, tags);
 				updateTags();
 				return null;
@@ -127,6 +137,14 @@ public class Activator implements BundleActivator {
 			@Override
 			public void modifiedService(ServiceReference reference, Object service) {
 				String[] tags = (String[])reference.getProperty("org.osgi.service.clusterinfo.tags");
+				
+				SecurityManager sm = System.getSecurityManager();
+				if (sm != null) {
+					for(String t : tags) {
+						sm.checkPermission(new ClusterTagPermission(t, "ADD"));
+					}
+				}
+				
 				tagMap.put(reference, tags);
 				updateTags();
 			}
@@ -148,7 +166,7 @@ public class Activator implements BundleActivator {
 		tracker.close();
 	}
 
-	public void updateTags(){
+	private void updateTags(){
 		Set<String> tags = new HashSet<String>();
 		for(String[] t : tagMap.values()){
 			for(String tag : t){
