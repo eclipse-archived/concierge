@@ -36,7 +36,7 @@ public class Activator implements BundleActivator {
 
 	private ServiceRegistration<?> reg;
 	private ServiceTracker<?,?> tracker;
-	private Map<ServiceReference<?>, String[]> tagMap = new HashMap<>();
+	private Map<ServiceReference<?>, String[]> tagMap = new HashMap<ServiceReference<?>, String[]>();
 	
 	private Dictionary<String, Object> properties = new Hashtable<String, Object>();
 	
