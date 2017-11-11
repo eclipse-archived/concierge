@@ -676,8 +676,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 		
 
-
-		if (System.getProperty("java.specification.name")
+		// check for J2ME VMs. If not set (like in CEE-J) fallback to JavaSE
+		if (System.getProperty("java.specification.name", "")
 				.equals("J2ME Foundation Specification")) {
 			switch (minor) {
 			case 1:
