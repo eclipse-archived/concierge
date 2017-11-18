@@ -4799,10 +4799,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 		public void removeBundleListener(final BundleListener listener) {
 			checkValid();
 
-			if (bundle == Concierge.this) {
-				return;
-			}
-
 			(listener instanceof SynchronousBundleListener ? syncBundleListeners
 					: bundleListeners).remove(listener);
 			bundleListenerMap.remove(this, listener);

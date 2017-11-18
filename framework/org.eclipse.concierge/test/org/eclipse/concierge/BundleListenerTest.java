@@ -19,12 +19,15 @@ import java.util.Queue;
 import org.eclipse.concierge.test.util.AbstractConciergeTestCase;
 import org.eclipse.concierge.test.util.SyntheticBundleBuilder;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleEvent;
 import org.osgi.framework.BundleListener;
 
+/**
+ * This class tests if add/removeBundleListener does work: for normal bundles
+ * and for the framework.
+ */
 public class BundleListenerTest extends AbstractConciergeTestCase {
 
 	private Bundle bundleUnderTest;
@@ -62,53 +65,45 @@ public class BundleListenerTest extends AbstractConciergeTestCase {
 		bundleUnderTest.getBundleContext().removeBundleListener(listener2);
 		Assert.assertEquals(2, listener2.events.size());
 		tearDown();
-		// check for more events happening which should NOT happen
+		// check that no more events will be registered
 		Assert.assertEquals(0, listener1.events.size());
 		Assert.assertEquals(2, listener2.events.size());
 	}
 
 	@Test
-	@Ignore("See https://github.com/eclipse/concierge/issues/9")
 	public void testBundleListenerOnFrameworkDuringFrameworkStop()
 			throws Exception {
 		setUp();
-		MyBundleListener listener1 = new MyBundleListener();
-		framework.getBundleContext().addBundleListener(listener1);
-		framework.getBundleContext().removeBundleListener(listener1);
-		Assert.assertEquals(0, listener1.events.size());
+		MyBundleListener listener = new MyBundleListener();
+		framework.getBundleContext().addBundleListener(listener);
+		framework.getBundleContext().removeBundleListener(listener);
+		Assert.assertEquals(0, listener.events.size());
 		tearDown();
-		// check for more events
-		// TODO the test here has 3 events happened. Why ?
-		// see https://github.com/eclipse/concierge/issues/9, listener will NOT
-		// be removed
-		Assert.assertEquals(0, listener1.events.size());
+		// check that no more events will be registered
+		Assert.assertEquals(0, listener.events.size());
 	}
 
 	@Test
-	@Ignore("See https://github.com/eclipse/concierge/issues/9")
 	public void testBundleListenerOnFrameworkDuringBundleStopStart()
 			throws Exception {
 		setUp();
-		MyBundleListener listener1 = new MyBundleListener();
-		framework.getBundleContext().addBundleListener(listener1);
+		MyBundleListener listener = new MyBundleListener();
+		framework.getBundleContext().addBundleListener(listener);
 		bundleUnderTest.stop();
 		bundleUnderTest.start();
-		framework.getBundleContext().removeBundleListener(listener1);
-		Assert.assertEquals(2, listener1.events.size());
+		framework.getBundleContext().removeBundleListener(listener);
+		Assert.assertEquals(2, listener.events.size());
 		tearDown();
-		// check for more events
-		// TODO the test here has 5 events happened. Why ?
-		// see https://github.com/eclipse/concierge/issues/9, listener will NOT
-		// be removed
-		Assert.assertEquals(2, listener1.events.size());
+		// check that no more events will be registered
+		Assert.assertEquals(2, listener.events.size());
 	}
 
 	public static class MyBundleListener implements BundleListener {
 		public Queue<BundleEvent> events = new LinkedList<BundleEvent>();
 
 		public void bundleChanged(BundleEvent event) {
-			// nothing to do
-			System.out.println("XXX: " + event);
+			// enable to trace events
+			// System.out.println("[MyBundleListener] " + event);
 			events.add(event);
 		}
 	}
