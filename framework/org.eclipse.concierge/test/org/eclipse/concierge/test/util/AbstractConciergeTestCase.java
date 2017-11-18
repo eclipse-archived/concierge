@@ -419,7 +419,7 @@ public abstract class AbstractConciergeTestCase {
 		 * Get a class references based on bundle classloader.
 		 */
 		public Class<?> getClass(final String className) throws Exception {
-			final Class<?> clazz = this.classLoader.loadClass(className);
+			final Class<?> clazz = this.bundle.loadClass(className);
 			return clazz;
 		}
 
