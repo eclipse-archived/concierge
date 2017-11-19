@@ -24,7 +24,6 @@ import org.eclipse.concierge.test.util.TestUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.startlevel.BundleStartLevel;
@@ -91,7 +90,7 @@ public class XargsFileLauncherXargsTest extends AbstractConciergeTestCase {
 
 	/** Test if start level will be applied correct. */
 	@Test
-	public void testStartLevelIStart123() throws Exception {
+	public void testStartLevelIStart_1_2_3() throws Exception {
 		File f = TestUtils.createFileFromString(
 				"-Dorg.osgi.framework.storage.clean=onFirstInit             \n"
 						+ "-initlevel 1                   # Comment to align\n"
@@ -112,7 +111,7 @@ public class XargsFileLauncherXargsTest extends AbstractConciergeTestCase {
 
 	/** Test if start level will be applied correct. */
 	@Test
-	public void testStartLevelIStart321() throws Exception {
+	public void testStartLevelIStart_3_2_1() throws Exception {
 		File f = TestUtils.createFileFromString(
 				"-Dorg.osgi.framework.storage.clean=onFirstInit             \n"
 						+ "-initlevel 3                   # Comment to align\n"
@@ -131,12 +130,17 @@ public class XargsFileLauncherXargsTest extends AbstractConciergeTestCase {
 		Assert.assertThat(asBSL(bundles[3]).getStartLevel(), is(1));
 	}
 
-	/** Test if start level of 4 will be applied correct. */
+	/**
+	 * Test if start level of 4 will be applied correct.
+	 * 
+	 * We have to set the beginning level of framework to a level higher than 4
+	 * otherwise the bundles will not be started.
+	 */
 	@Test
-	@Ignore("TODO does not work: bundles with startlevel > 3 will NOT be started")
-	public void testStartLevelIStart4() throws Exception {
+	public void testStartLevelIStart_4() throws Exception {
 		File f = TestUtils.createFileFromString(
 				"-Dorg.osgi.framework.storage.clean=onFirstInit             \n"
+						+ "-Dorg.osgi.framework.startlevel.beginning=100    \n"
 						+ "-initlevel 4                   # Comment to align\n"
 						+ "-istart " + fileA.getPath() + "# Comment to align\n",
 				"xargs");
@@ -150,12 +154,15 @@ public class XargsFileLauncherXargsTest extends AbstractConciergeTestCase {
 	/**
 	 * Test if start level will be applied correct, when start levels are bigger
 	 * than 3.
+	 * 
+	 * We have to set the beginning level of framework to a level higher than 30
+	 * otherwise the bundles will not be started.
 	 */
 	@Test
-	@Ignore("TODO does not work: bundles with startlevel > 3 will NOT be started")
-	public void testStartLevelIStart102030() throws Exception {
+	public void testStartLevelIStart_10_20_30() throws Exception {
 		File f = TestUtils.createFileFromString(
 				"-Dorg.osgi.framework.storage.clean=onFirstInit             \n"
+						+ "-Dorg.osgi.framework.startlevel.beginning=100    \n"
 						+ "-initlevel 10                  # Comment to align\n"
 						+ "-istart " + fileA.getPath() + "# Comment to align\n"
 						+ "-initlevel 20                  # Comment to align\n"
@@ -177,7 +184,7 @@ public class XargsFileLauncherXargsTest extends AbstractConciergeTestCase {
 	 * separately.
 	 */
 	@Test
-	public void testStartLevelInstallStart123() throws Exception {
+	public void testStartLevelInstallStart_1_2_3() throws Exception {
 		File f = TestUtils.createFileFromString(
 				"-Dorg.osgi.framework.storage.clean=onFirstInit             \n"
 						+ "-initlevel 1                   # Comment to align\n"
