@@ -1,7 +1,7 @@
 #!/bin/bash
 
 usage() {
-	echo "run_tck_r5.sh [--help] [--clean] [--prepare] [--run]"
+	echo "run_tck_r6.sh [--help] [--clean] [--prepare] [--run]"
 	echo "  --help       this help"
 	echo "  --clean      Clean the generated directories, incl. $OSGI_INSTALL_DIR"
 	echo "  --prepare    Prepare the TCK tests, incl. clone OSGi repo, build osgi.ct"
@@ -9,7 +9,7 @@ usage() {
 	echo " "
 	echo "Your have to set these environment variables, e.g.:"
 	echo "  export OSGI_REPO=.../build.git"
-	echo "  export OSGI_INSTALL_DIR=~/osgi-r5"
+	echo "  export OSGI_INSTALL_DIR=~/osgi-r6"
 }
 
 if [ "$1" == "--help" ] ; then
@@ -76,8 +76,8 @@ if [ "$1" == "--prepare" ] ; then
 			tar xzf build-ori.tar.gz
 		elif [ ! -d ./build ] ; then
 			echo "Cloning TCK from $OSGI_REPO/build.git ..."
-			# check out the tag of TCK for R5
-			git clone -b r5-core-ri-ct-final $OSGI_REPO/build.git
+			# check out the tag of TCK for R6
+			git clone -b r6-core-ri-ct-final $OSGI_REPO/build.git
 			echo "Compressing TCK from $OSGI_REPO/build.git for later usage ..."
 			tar czf build-ori.tar.gz ./build
 		else
@@ -87,17 +87,6 @@ if [ "$1" == "--prepare" ] ; then
 		echo "Now patching TCK to get it running ..."
 		cd ./build
 		
-		# replace osgi.core-4.3.0.jar against osgi.core-4.3.1.jar
-		# as pointed out with Peter the 4.3.0 does not support generics
-		if [ ! -f ./cnf/repo/osgi.core/osgi.core-4.3.1.jar ] ; then
-			wget -o osgi.core-4.3.1.jar \
-				https://search.maven.org/remotecontent?filepath=org/osgi/osgi.core/4.3.1/osgi.core-4.3.1.jar
-			mv osgi.core-4.3.1.jar ./cnf/repo/osgi.core/osgi.core-4.3.1.jar
-		fi
-		if [ -f ./cnf/repo/osgi.core/osgi.core-4.3.0.jar ] ; then
-			rm ./cnf/repo/osgi.core/osgi.core-4.3.0.jar
-		fi
-
 		# special changes, as org.osgi.service.event is missing on buildpath
 		if [ ! -f org.osgi.test.cases.blueprint.java5/bnd.bnd.ORI ] ; then
 			cp org.osgi.test.cases.blueprint.java5/bnd.bnd org.osgi.test.cases.blueprint.java5/bnd.bnd.ORI
@@ -110,9 +99,15 @@ if [ "$1" == "--prepare" ] ; then
 		cat org.osgi.test.cases.blueprint.secure/bnd.bnd.ORI | \
 			sed -e 's/4\.1/4\.1, org\.osgi\.service\.event\; version\=latest /g' >org.osgi.test.cases.blueprint.secure/bnd.bnd
 
+		# fix problem with JavaDoc. See https://bugs.openjdk.java.net/browse/JDK-8041628
+		if [ ! -f osgi.build/build.xml.ORI ] ; then
+			cp osgi.build/build.xml osgi.build/build.xml.ORI
+		fi
+		# remove generating javadoc from build
+		cat osgi.build/build.xml.ORI | \
+			sed -e 's|master.deploy,javadoc,japitools|master.deploy,japitools|g' >osgi.build/build.xml
 
 		# show patched files
-		find . -name "osgi.core-4.3.1.jar"
 		find . -name "*.ORI"
 
 		# show java version
@@ -138,7 +133,7 @@ if [ "$1" == "--run" ] ; then
 		jar xf ../osgi.ri.core.jar
 		if [ ! -d ./concierge ] ; then mkdir ./concierge ; fi
 		cd ../..
-		cp ./_under-test/org.eclipse.concierge-5.1.0*.jar $DEST_DIR/run/concierge/org.eclipse.concierge-5.1.0.jar
+		cp ./_under-test/org.eclipse.concierge-6.0.0*.jar $DEST_DIR/run/concierge/org.eclipse.concierge-6.0.0.jar
 		cp ./_under-test/org.eclipse.concierge.service.permission-5.1.0*.jar $DEST_DIR/run/concierge/org.eclipse.concierge.service.permission-5.1.0.jar
 	
 		cd $DEST_DIR/run
@@ -149,8 +144,7 @@ if [ "$1" == "--run" ] ; then
 			org.osgi.test.cases.framework.launch.secure.bnd \
 			org.osgi.test.cases.framework.secure.bnd \
 			org.osgi.test.cases.permissionadmin.bnd \
-			shared.inc \
-			runtests ; do
+			shared.inc ; do
 			mv $f $f.ORI
 		done
 		cat org.osgi.test.cases.condpermadmin.bnd.ORI | \
@@ -165,8 +159,7 @@ if [ "$1" == "--run" ] ; then
 		cat org.osgi.test.cases.permissionadmin.bnd.ORI | \
 			sed -e 's|runbundles = |runbundles = concierge/org.eclipse.concierge.service.permission-5.1.0.jar;version=file,|g' \
 			>org.osgi.test.cases.permissionadmin.bnd
-		cat shared.inc.ORI | sed -e 's|jar/org.eclipse.osgi-3.8.0.jar|concierge/org.eclipse.concierge-5.1.0.jar|g' >shared.inc
-		cat runtests.ORI | sed -e 's|-title|--title|' >runtests
+		cat shared.inc.ORI | sed -e 's|jar/org.eclipse.osgi-3.8.0.jar|concierge/org.eclipse.concierge-6.0.0.jar|g' >shared.inc
 		
 		# show diff
 		for f_ori in *.ORI ; do
