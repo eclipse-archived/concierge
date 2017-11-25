@@ -2010,7 +2010,9 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 						if (a > -1) {
 							final String criterium = token.substring(0, a)
 									.trim().intern();
-							final String value = token.substring(a + 1).trim();
+							// trim and remove all double quotes,
+							// like in osname "mac os x" where quotes are part of string
+							final String value = token.substring(a + 1).trim().replace("\"", "");;
 							if (criterium == Constants.BUNDLE_NATIVECODE_OSNAME) {
 								if (framework.osname.startsWith("Windows")) {
 									n |= value.toLowerCase().startsWith("win");
