@@ -675,7 +675,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 		}
 
 		
-
 		// check for J2ME VMs. If not set (like in CEE-J) fallback to JavaSE
 		if (System.getProperty("java.specification.name", "")
 				.equals("J2ME Foundation Specification")) {
@@ -693,16 +692,23 @@ public final class Concierge extends AbstractBundle implements Framework,
 				// also add the valid compact profiles
 				try {
 					// Figure out the profile by loading some classes from the profile
-					// Is there any other way to discover the profile of the JRE?
+					// we do NOT use the $JAVA_HOME/release file like this is done by Equinox
+					// this would NOT be portable across different JVMs
 					myEEs.append("JavaSE-1.8/compact1,");
 					compact1VersionList.append("1.8,");
-				 	this.getClass().getClassLoader().loadClass("org.w3c.dom.Document");
+					
+					// we try to load the class from our own class loader without initializing the class
+					// be careful to not use this.getClass().getClassLoader().loadClass("...")
+					// as some JVM, e.g. CEE-J will return null as class loader when
+					// the framework has been loaded by the bootstrap class loader
+					// Class.forName("name", false, classLoader) can handle the case when class loader is null
+					Class.forName("org.w3c.dom.Document", false, this.getClass().getClassLoader());
 				 	myEEs.append("JavaSE-1.8/compact2,");
 				 	compact2VersionList.append("1.8,");
-				 	this.getClass().getClassLoader().loadClass("javax.management.Descriptor");
+				 	Class.forName("javax.management.Descriptor", false, this.getClass().getClassLoader());
 				 	myEEs.append("JavaSE-1.8/compact3,");
 				 	compact3VersionList.append("1.8,");
-					this.getClass().getClassLoader().loadClass("javax.imageio.ImageIO");
+				 	Class.forName("javax.imageio.ImageIO", false, this.getClass().getClassLoader());
 				} catch(ClassNotFoundException e){
 				}
 				seVersionList.append("1.8,");
@@ -1173,8 +1179,14 @@ public final class Concierge extends AbstractBundle implements Framework,
 		}
 
 		// get the library extensions if set
-		final String libExtStr = properties
+		String libExtStr = properties
 				.getProperty(Constants.FRAMEWORK_LIBRARY_EXTENSIONS);
+		// set some platform defaults it not set
+		if (libExtStr == null) {
+			if (osname.startsWith("MacOS")) {
+				libExtStr = "dylib,jnilib";
+			}
+		}
 		if (libExtStr != null) {
 			libraryExtensions = Utils.splitString(libExtStr, ',');
 		}
@@ -5168,7 +5180,10 @@ public final class Concierge extends AbstractBundle implements Framework,
 		final String[] result = new String[libraryExtensions.length + 1];
 		result[0] = System.mapLibraryName(libname);
 		for (int i = 0; i < libraryExtensions.length; i++) {
-			result[i + 1] = libname + "." + libraryExtensions[i];
+			// we will use the default name and replace the extension of that
+			// e.g. on Mac the lib name for "XYZ" is "libXYZ.dylib" which will be 
+			// added here to "libXYZ.jnilib"
+			result[i + 1] = result[0].substring(0, result[0].lastIndexOf(".") + 1)+ libraryExtensions[i];
 		}
 		return result;
 	}

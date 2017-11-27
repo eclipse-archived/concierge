@@ -398,10 +398,17 @@ public abstract class AbstractConciergeTestCase {
 	public static class RunInClassLoader {
 
 		private final Bundle bundle;
+		private final ClassLoader classLoader;
 		private boolean debug = false;
 
 		public RunInClassLoader(Bundle b) {
 			this.bundle = b;
+			this.classLoader = b.getClass().getClassLoader();
+		}
+
+		public RunInClassLoader(ClassLoader cl) {
+			this.bundle = null;
+			this.classLoader = cl;
 		}
 
 		public void debug(boolean debug) {
@@ -426,7 +433,7 @@ public abstract class AbstractConciergeTestCase {
 
 		public Object getClassField(final String className,
 				final String classFieldName) throws Exception {
-			final Class<?> clazz = this.bundle.loadClass(className);
+			final Class<?> clazz = this.classLoader.loadClass(className);
 			final Field field = clazz.getField(classFieldName);
 			if (!Modifier.isStatic(field.getModifiers())) {
 				throw new RuntimeException(
@@ -443,8 +450,8 @@ public abstract class AbstractConciergeTestCase {
 		 */
 		public Object callClassMethod(final String className,
 				final String classMethodName, final Object[] args)
-						throws Exception {
-			final Class<?> clazz = this.bundle.loadClass(className);
+				throws Exception {
+			final Class<?> clazz = this.classLoader.loadClass(className);
 			// get parameter types from args
 			final Class<?>[] parameterTypes = new Class[args.length];
 			for (int i = 0; i < args.length; i++) {
@@ -463,7 +470,7 @@ public abstract class AbstractConciergeTestCase {
 
 		public Object createInstance(String className, final Object[] args)
 				throws Exception {
-			final Class<?> clazz = this.bundle.loadClass(className);
+			final Class<?> clazz = this.classLoader.loadClass(className);
 			dumpDeclaredConstructors(clazz);
 			// get parameter types from args
 			final Class<?>[] parameterTypes = new Class[args.length];
@@ -483,20 +490,31 @@ public abstract class AbstractConciergeTestCase {
 
 		public Object createInstance(String className,
 				final String[] parameterTypeNames, final Object[] args)
-						throws Exception {
-			final Class<?> clazz = this.bundle.loadClass(className);
+				throws Exception {
+			final Class<?> clazz = this.classLoader.loadClass(className);
 			dumpDeclaredConstructors(clazz);
 			// get parameter types from args
 			final Class<?>[] parameterTypes = new Class[args.length];
 			for (int i = 0; i < parameterTypeNames.length; i++) {
-				parameterTypes[i] = bundle.getClass().getClassLoader()
+				parameterTypes[i] = this.classLoader.getClass().getClassLoader()
 						.loadClass(parameterTypeNames[i]);
 			}
 			final Constructor<?> constructor = clazz
 					.getDeclaredConstructor(parameterTypes);
-			// TODO jhi Maybe set accessible if private?
+			if (!constructor.isAccessible()) {
+				constructor.setAccessible(true);
+			}
 			final Object result = constructor.newInstance(args);
 			return result;
+		}
+
+		/**
+		 * Call an instance method of a method without arguments for given
+		 * object.
+		 */
+		public Object callMethodNoArgs(final Object obj,
+				final String methodName) throws Exception {
+			return callMethod(obj, methodName, new Object[] {});
 		}
 
 		/**
@@ -521,6 +539,9 @@ public abstract class AbstractConciergeTestCase {
 				throw new RuntimeException(
 						"Oops, method " + method.toString() + " is static");
 			}
+			if (!method.isAccessible()) {
+				method.setAccessible(true);
+			}
 			final Object result = method.invoke(obj, args);
 			return result;
 		}
@@ -533,7 +554,7 @@ public abstract class AbstractConciergeTestCase {
 		 */
 		public Object callMethod(final Object obj, final String methodName,
 				final Class<?>[] parameterTypes, final Object[] args)
-						throws Exception {
+				throws Exception {
 			final Class<?> clazz = obj.getClass();
 			dumpMethods(clazz);
 			dumpDeclaredMethods(clazz);
