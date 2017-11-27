@@ -676,7 +676,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 		
 
-
 		if (System.getProperty("java.specification.name")
 				.equals("J2ME Foundation Specification")) {
 			switch (minor) {
@@ -693,16 +692,23 @@ public final class Concierge extends AbstractBundle implements Framework,
 				// also add the valid compact profiles
 				try {
 					// Figure out the profile by loading some classes from the profile
-					// Is there any other way to discover the profile of the JRE?
+					// we do NOT use the $JAVA_HOME/release file like this is done by Equinox
+					// this would NOT be portable across different JVMs
 					myEEs.append("JavaSE-1.8/compact1,");
 					compact1VersionList.append("1.8,");
-				 	this.getClass().getClassLoader().loadClass("org.w3c.dom.Document");
+					
+					// we try to load the class from our own class loader without initializing the class
+					// be careful to not use this.getClass().getClassLoader().loadClass("...")
+					// as some JVM, e.g. CEE-J will return null as class loader when
+					// the framework has been loaded by the bootstrap class loader
+					// Class.forName("name", false, classLoader) can handle the case when class loader is null
+					Class.forName("org.w3c.dom.Document", false, this.getClass().getClassLoader());
 				 	myEEs.append("JavaSE-1.8/compact2,");
 				 	compact2VersionList.append("1.8,");
-				 	this.getClass().getClassLoader().loadClass("javax.management.Descriptor");
+				 	Class.forName("javax.management.Descriptor", false, this.getClass().getClassLoader());
 				 	myEEs.append("JavaSE-1.8/compact3,");
 				 	compact3VersionList.append("1.8,");
-					this.getClass().getClassLoader().loadClass("javax.imageio.ImageIO");
+				 	Class.forName("javax.imageio.ImageIO", false, this.getClass().getClassLoader());
 				} catch(ClassNotFoundException e){
 				}
 				seVersionList.append("1.8,");
