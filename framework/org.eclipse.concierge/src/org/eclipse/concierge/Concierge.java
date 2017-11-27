@@ -1173,8 +1173,14 @@ public final class Concierge extends AbstractBundle implements Framework,
 		}
 
 		// get the library extensions if set
-		final String libExtStr = properties
+		String libExtStr = properties
 				.getProperty(Constants.FRAMEWORK_LIBRARY_EXTENSIONS);
+		// set some platform defaults it not set
+		if (libExtStr == null) {
+			if (osname.startsWith("MacOS")) {
+				libExtStr = "dylib,jnilib";
+			}
+		}
 		if (libExtStr != null) {
 			libraryExtensions = Utils.splitString(libExtStr, ',');
 		}
@@ -5168,7 +5174,10 @@ public final class Concierge extends AbstractBundle implements Framework,
 		final String[] result = new String[libraryExtensions.length + 1];
 		result[0] = System.mapLibraryName(libname);
 		for (int i = 0; i < libraryExtensions.length; i++) {
-			result[i + 1] = libname + "." + libraryExtensions[i];
+			// we will use the default name and replace the extension of that
+			// e.g. on Mac the lib name for "XYZ" is "libXYZ.dylib" which will be 
+			// added here to "libXYZ.jnilib"
+			result[i + 1] = result[0].substring(0, result[0].lastIndexOf(".") + 1)+ libraryExtensions[i];
 		}
 		return result;
 	}
