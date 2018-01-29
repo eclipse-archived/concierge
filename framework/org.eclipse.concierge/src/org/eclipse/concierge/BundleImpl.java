@@ -3044,6 +3044,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 								dynamicImports.addAll(
 										wovenClass.dynamicImportRequirements);
 
+								// define package
+								definePackage(packageOf(classname));
 								final Class<?> ownClazz = defineClass(classname,
 										bytes, 0, bytes.length, domain);
 
@@ -3095,6 +3097,9 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 										out.write(chunk, 0, len);
 									}
 
+									// fixes https://github.com/eclipse/concierge/issues/48
+									// define package
+									definePackage(packageOf(classname));
 									return defineClass(classname,
 											out.toByteArray(), 0, out.size(),
 											((AbstractBundle) fragment
