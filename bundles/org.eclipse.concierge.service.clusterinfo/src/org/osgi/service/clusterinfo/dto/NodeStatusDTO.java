@@ -1,5 +1,5 @@
 /*
- * Copyright (c) OSGi Alliance (2010, 2013). All Rights Reserved.
+ * Copyright (c) OSGi Alliance (2010, 2018). All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,17 @@
 package org.osgi.service.clusterinfo.dto;
 
 import org.osgi.dto.DTO;
+import org.osgi.service.clusterinfo.NodeStatus;
 
 /**
  * Data Transfer Object for a NodeStatus Service.
  */
 public class NodeStatusDTO extends DTO {
+	/**
+	 * This DTO can be used to provide type safe access to properties of the
+	 * {@link NodeStatus} service.
+	 */
+	public NodeStatusDTO() {}
 	
 	/**
 	 * Prefix used for the converter

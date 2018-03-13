@@ -1,5 +1,5 @@
 /*
- * Copyright (c) OSGi Alliance (2010, 2013). All Rights Reserved.
+ * Copyright (c) OSGi Alliance (2010, 2018). All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,8 +74,8 @@ public interface FrameworkManager {
 	 * Get the state for a given bundle Id.
 	 * 
 	 * @param id Addresses the bundle by its identifier.
-	 * @return Returns the current bundle state as defined in (@link
-	 *         org.osgi.framework.Bundle}.
+	 * @return Returns the current bundle state as defined in
+	 *         {@link org.osgi.framework.Bundle}.
 	 * @throws Exception An exception representing a failure in the underlying
 	 *             remote call.
 	 */
