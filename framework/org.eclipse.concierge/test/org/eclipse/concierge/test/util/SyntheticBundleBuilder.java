@@ -21,12 +21,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
+import java.util.zip.ZipEntry;
 
 import org.osgi.framework.Constants;
 
@@ -135,15 +139,26 @@ public class SyntheticBundleBuilder {
 			manifest.getMainAttributes().put(entry.getKey(), entry.getValue());
 		}
 
+		Set<String> writtenPaths = new HashSet<String>();
+		
 		JarOutputStream jarStream = null;
 		try {
-			jarStream = new JarOutputStream(out, manifest);
+			jarStream = new JarOutputStream(out);
+			
+			writeFolders(jarStream, writtenPaths, "META-INF");
+			ZipEntry e = new ZipEntry(JarFile.MANIFEST_NAME);
+			jarStream.putNextEntry(e);
+			manifest.write(jarStream);
+			jarStream.closeEntry();
 
 			// copy files into JAR
 			for (Iterator<Map.Entry<String, File>> iter = this.files.entrySet()
 					.iterator(); iter.hasNext();) {
 				final Map.Entry<String, File> entry = iter.next();
 				final String resPath = entry.getKey();
+				if (resPath.contains("/")) {
+					writeFolders(jarStream, writtenPaths, resPath.substring(0, resPath.lastIndexOf("/")));
+				}
 				final File f = entry.getValue();
 				final FileInputStream fis = new FileInputStream(f);
 				final JarEntry je = new JarEntry(resPath);
@@ -158,6 +173,9 @@ public class SyntheticBundleBuilder {
 					.entrySet().iterator(); iter.hasNext();) {
 				final Map.Entry<String, String> entry = iter.next();
 				final String resPath = entry.getKey();
+				if (resPath.contains("/")) {
+					writeFolders(jarStream, writtenPaths, resPath.substring(0, resPath.lastIndexOf("/")));
+				}
 				final String s = entry.getValue();
 				final InputStream stringInputStream = new ByteArrayInputStream(
 						s.getBytes(Charset.forName("UTF-8")));
@@ -185,9 +203,23 @@ public class SyntheticBundleBuilder {
 		}
 	}
 
+	private void writeFolders(JarOutputStream jarStream, Set<String> writtenPaths, 
+			final String resPath) throws IOException {
+		if (resPath.contains("/")) {
+			writeFolders(jarStream, writtenPaths, resPath.substring(0, resPath.lastIndexOf("/")));
+		}
+		String folderName = resPath + "/";
+		if (!writtenPaths.contains(folderName)) {
+			writtenPaths.add(folderName);
+			jarStream.putNextEntry(new ZipEntry(folderName));
+			jarStream.closeEntry();
+		}
+	}
+
 	public File asFile() {
 		File destFile = new File("concierge-" + this.getBundleSymbolicName()
 				+ "-" + getBundleVersion() + ".jar");
+		destFile.deleteOnExit();
 		String destFileName = destFile.getAbsolutePath();
 		File createdDestFile = asFile(destFileName);
 		return createdDestFile;
@@ -205,5 +237,9 @@ public class SyntheticBundleBuilder {
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	public void clearManifestHeaders() {
+		manifestHeaders.clear();
 	}
 }
