@@ -39,13 +39,16 @@ public class Activator implements BundleActivator {
 	private Map<ServiceReference<?>, String[]> tagMap = new HashMap<ServiceReference<?>, String[]>();
 	
 	private Dictionary<String, Object> properties = new Hashtable<String, Object>();
+
+	private ClusterCommands commands;
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public void start(BundleContext context) throws Exception {
 		FrameworkNodeImpl impl = new FrameworkNodeImpl(context);
 		
 		// NodeStatus properties
-		// TODO where to fetch all required properties? - for now read from run properties...
+		// for now read from run properties...
+		// TODO also allow to configure via ConfigAdmin?
 		
 		// these are mandatory for a FrameworkNodeStatus, 
 		// the id should be the framework uuid
@@ -54,7 +57,7 @@ public class Activator implements BundleActivator {
 		String s;
 		
 		s = context.getProperty("org.eclipse.concierge.clusterinfo.cluster");
-		properties.put("osgi.clusterinfo.cluster", s == null ? "Default Cluster" : s);
+		properties.put("osgi.clusterinfo.cluster", s == null ? "default" : s);
 		
 		s = context.getProperty("org.eclipse.concierge.clusterinfo.endpoint");
 		properties.put("osgi.clusterinfo.endpoint", s == null ? new String[]{} : s.split(","));
@@ -115,7 +118,7 @@ public class Activator implements BundleActivator {
 		if(properties.get("osgi.clusterinfo.tags") != null)
 			tagMap.put(reg.getReference(), (String[])properties.get("osgi.clusterinfo.tags"));
 		
-		// add additional properties anounced by any service
+		// add additional properties announced by any service
 		tracker = new ServiceTracker(context, context.createFilter("(org.osgi.service.clusterinfo.tags=*)"), new ServiceTrackerCustomizer() {
 
 			@Override
@@ -157,9 +160,15 @@ public class Activator implements BundleActivator {
 		});
 		tracker.open();
 		
+		// register cluster commands for GoGo shell
+		commands = new ClusterCommands();
+		commands.register(context);
 	}
 
 	public void stop(BundleContext context) throws Exception {
+		if(commands != null)
+			commands.unregister();
+
 		if(reg != null)
 			reg.unregister();
 		
