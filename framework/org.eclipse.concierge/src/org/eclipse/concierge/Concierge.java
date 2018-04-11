@@ -5093,7 +5093,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 				final String value) {
 			final MultiMap<String, Capability> attributeIndex = defaultAttributeIndex
 					.get(namespace);
-			final List<Capability> result = attributeIndex.get(value);
+			final List<Capability> result = attributeIndex == null ? null : attributeIndex.get(value);
 			return result == null ? Collections.<Capability> emptyList()
 					: new ArrayList<Capability>(result);
 		}
