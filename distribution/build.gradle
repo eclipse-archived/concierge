@@ -39,7 +39,8 @@ distributions {
                 from { project(':bundles:org.eclipse.concierge.service.eventadmin').jar }
                 from { project(':bundles:org.eclipse.concierge.service.startlevel').jar }
                 from { project(':bundles:org.eclipse.concierge.service.xmlparser').jar }
-                from { project(':bundles:org.eclipse.concierge.service.clusterinfo').jar }
+// for now exclude clusterinfo from the distribution, since we are not R6 yet                
+//                from { project(':bundles:org.eclipse.concierge.service.clusterinfo').jar }
                 from { project(':bundles:org.eclipse.concierge.shell').jar }
                 from { project(':bundles:org.eclipse.concierge.service.rest').jar }
             }
