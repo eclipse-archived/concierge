@@ -1,3 +1,9 @@
+// this dependency is required until Concierge is R6
+// then we can just reference Concierge Framework directly...
+dependencies {
+   compile 'org.osgi:osgi.core:6.0.0'
+}
+
 publishing {
     publications {
    	    mavenJava(MavenPublication) {
