@@ -13,6 +13,7 @@
  *******************************************************************************/
 package org.eclipse.concierge.service.clusterinfo;
 
+import java.security.AccessControlException;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -125,31 +126,43 @@ public class Activator implements BundleActivator {
 			public Object addingService(ServiceReference reference) {
 				String[] tags = (String[])reference.getProperty("org.osgi.service.clusterinfo.tags");
 				
-				SecurityManager sm = System.getSecurityManager();
-				if (sm != null) {
-					for(String t : tags) {
-						sm.checkPermission(new ClusterTagPermission(t, "ADD"));
+				try {
+					SecurityManager sm = System.getSecurityManager();
+					if (sm != null) {
+						for(String t : tags) {
+							sm.checkPermission(new ClusterTagPermission(t, "ADD"));
+						}
 					}
-				}
+					
+					tagMap.put(reference, tags);
+					updateTags();
 				
-				tagMap.put(reference, tags);
-				updateTags();
+				} catch(AccessControlException e) {
+					// don't add tags when bundle as no permission
+					e.printStackTrace();
+				}
 				return null;
 			}
 
 			@Override
 			public void modifiedService(ServiceReference reference, Object service) {
 				String[] tags = (String[])reference.getProperty("org.osgi.service.clusterinfo.tags");
-				
-				SecurityManager sm = System.getSecurityManager();
-				if (sm != null) {
-					for(String t : tags) {
-						sm.checkPermission(new ClusterTagPermission(t, "ADD"));
+			
+				try {
+					SecurityManager sm = System.getSecurityManager();
+					if (sm != null) {
+						for(String t : tags) {
+							sm.checkPermission(new ClusterTagPermission(t, "ADD"));
+						}
 					}
+					
+					tagMap.put(reference, tags);
+					updateTags();
+					
+				} catch(AccessControlException e) {
+					// don't add tags when bundle as no permission
+					e.printStackTrace();
 				}
-				
-				tagMap.put(reference, tags);
-				updateTags();
 			}
 
 			@Override
