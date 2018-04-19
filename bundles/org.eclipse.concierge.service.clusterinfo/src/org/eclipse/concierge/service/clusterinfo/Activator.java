@@ -14,10 +14,13 @@
 package org.eclipse.concierge.service.clusterinfo;
 
 import java.security.AccessControlException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,7 +40,7 @@ public class Activator implements BundleActivator {
 
 	private ServiceRegistration<?> reg;
 	private ServiceTracker<?,?> tracker;
-	private Map<ServiceReference<?>, String[]> tagMap = new HashMap<ServiceReference<?>, String[]>();
+	private Map<ServiceReference<?>, List<String>> tagMap = new HashMap<ServiceReference<?>, List<String>>();
 	
 	private Dictionary<String, Object> properties = new Hashtable<String, Object>();
 
@@ -116,60 +119,35 @@ public class Activator implements BundleActivator {
 				FrameworkNodeStatus.class.getName()
 		}, impl, properties);
 		
-		if(properties.get("osgi.clusterinfo.tags") != null)
-			tagMap.put(reg.getReference(), (String[])properties.get("osgi.clusterinfo.tags"));
+		if(properties.get("osgi.clusterinfo.tags") != null) {
+			List<String> l = new ArrayList<String>();
+			for(String t : (String[])properties.get("osgi.clusterinfo.tags")) {
+				l.add(t);
+			}
+			tagMap.put(reg.getReference(), l);
+		}
 		
 		// add additional properties announced by any service
-		tracker = new ServiceTracker(context, context.createFilter("(org.osgi.service.clusterinfo.tags=*)"), new ServiceTrackerCustomizer() {
+		tracker = new ServiceTracker(context, context.createFilter("(org.osgi.service.clusterinfo.tags=*)"), 
+				new ServiceTrackerCustomizer() {
 
-			@Override
 			public Object addingService(ServiceReference reference) {
-				String[] tags = (String[])reference.getProperty("org.osgi.service.clusterinfo.tags");
-				
-				try {
-					SecurityManager sm = System.getSecurityManager();
-					if (sm != null) {
-						for(String t : tags) {
-							sm.checkPermission(new ClusterTagPermission(t, "ADD"));
-						}
-					}
-					
-					tagMap.put(reference, tags);
-					updateTags();
-				
-				} catch(AccessControlException e) {
-					// don't add tags when bundle as no permission
-					e.printStackTrace();
-				}
+				addTags(reference);
+				updateTags();
 				return null;
 			}
 
-			@Override
 			public void modifiedService(ServiceReference reference, Object service) {
-				String[] tags = (String[])reference.getProperty("org.osgi.service.clusterinfo.tags");
-			
-				try {
-					SecurityManager sm = System.getSecurityManager();
-					if (sm != null) {
-						for(String t : tags) {
-							sm.checkPermission(new ClusterTagPermission(t, "ADD"));
-						}
-					}
-					
-					tagMap.put(reference, tags);
-					updateTags();
-					
-				} catch(AccessControlException e) {
-					// don't add tags when bundle as no permission
-					e.printStackTrace();
-				}
+				addTags(reference);
+				updateTags();
+
 			}
 
-			@Override
 			public void removedService(ServiceReference reference, Object service) {
 				tagMap.remove(reference);
 				updateTags();
 			}
+
 		});
 		tracker.open();
 		
@@ -188,14 +166,30 @@ public class Activator implements BundleActivator {
 		tracker.close();
 	}
 
+	private void addTags(ServiceReference reference) {
+		try {
+		String[] tags = (String[])reference.getProperty("org.osgi.service.clusterinfo.tags");
+		List<String> l = new ArrayList<String>();
+		SecurityManager sm = System.getSecurityManager();
+		for(String t : tags) {
+			if(sm == null || reference.getBundle().hasPermission(new ClusterTagPermission(t, "ADD"))) {
+				l.add(t);
+			}
+		}
+		tagMap.put(reference, l);
+		} catch(Throwable t) {t.printStackTrace();}
+	}
+	
 	private void updateTags(){
+		try {
 		Set<String> tags = new HashSet<String>();
-		for(String[] t : tagMap.values()){
+		for(List<String> t : tagMap.values()){
 			for(String tag : t){
 				tags.add(tag);
 			}
 		}
 		properties.put("osgi.clusterinfo.tags", tags.toArray(new String[tags.size()]));
 		reg.setProperties(properties);
+		} catch(Throwable t) {t.printStackTrace();}
 	}
 }
