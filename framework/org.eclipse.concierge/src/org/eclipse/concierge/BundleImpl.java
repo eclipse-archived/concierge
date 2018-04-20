@@ -1998,7 +1998,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 								(pos = nativeStrings[i].lastIndexOf("/")) > -1
 										? nativeStrings[i].substring(pos + 1)
 										: nativeStrings[i],
-								stripTrailing(nativeStrings[i]));
+								stripLeadingSlash(nativeStrings[i]));
 					}
 				} else {
 					final StringTokenizer tokenizer = new StringTokenizer(
@@ -2090,7 +2090,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 									(pos = libraries[c].lastIndexOf("/")) > -1
 											? libraries[c].substring(pos + 1)
 											: libraries[c],
-									stripTrailing(libraries[c]));
+									stripLeadingSlash(libraries[c]));
 						}
 						hasMatch = true;
 					}
@@ -2538,7 +2538,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			 * 
 			 */
 			protected URL findResource(final String name) {
-				final String strippedName = stripTrailing(name);
+				final String strippedName = stripLeadingSlash(name);
 				try {
 					return (URL) findResource0(
 							packageOf(pseudoClassname(strippedName)),
@@ -2568,7 +2568,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			}
 
 			protected Enumeration<URL> findResources0(final String name) {
-				final String strippedName = stripTrailing(name);
+				final String strippedName = stripLeadingSlash(name);
 				try {
 					@SuppressWarnings("unchecked")
 					final Vector<URL> results = (Vector<URL>) findResource0(
@@ -2746,7 +2746,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 						return checkActivationChain(clazz);
 					}
 				} else {
-					final Object result = findOwnResources(stripTrailing(name),
+					final Object result = findOwnResources(stripLeadingSlash(name),
 							true, multiple, resources);
 					if (!multiple && result != null) {
 						return result;
@@ -2853,7 +2853,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					final String filePattern, final int options,
 					final HashSet<String> visited) {
 				final String pkg = pseudoClassname(
-						stripTrailing(path.endsWith("/")
+						stripLeadingSlash(path.endsWith("/")
 								? path.substring(0, path.length() - 1) : path));
 
 				final HashSet<String> result = new HashSet<String>();
@@ -3693,6 +3693,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				final String path, final String filePattern,
 				final boolean recurse) {
 			final Vector<URL> results = new Vector<URL>();
+			
 			String pathString = path.length() > 0 && path.charAt(0) == '/'
 					? path.substring(1) : path;
 			pathString = path.length() == 0
@@ -3869,25 +3870,117 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 		}
 
-		// TODO: fix and use classpath...
+		/**
+		 * Search for files on an exploded jar file. Which means:
+		 * <ul>
+		 * <li>search for every classpath component: this method will be called
+		 * for every classpath component</li>
+		 * <li>if classpath is null, search in exploded bundle in root</li>
+		 * <li>if classpath refers to a JAR file, search within jar file</li>
+		 * <li>if classpath is a local path, search in exploded bundle directory
+		 * + classpath</li>
+		 * </ul>
+		 */
 		public Vector<URL> searchFiles(final String classpath,
 				final String path, final String filePattern,
 				final boolean recurse) {
-			final Vector<URL> result = new Vector<URL>();
+			final Vector<URL> results = new Vector<URL>();
 
-			String pathString = path;
-			if (pathString.length() > 0) {
-				if (pathString.charAt(0) == '/') {
-					pathString = pathString.substring(0);
-				}
-				if (pathString.charAt(pathString.length() - 1) != '/') {
-					pathString = pathString + '/';
-				}
+			if (framework.DEBUG_CLASSLOADING) {
+				framework.logger.log(LogService.LOG_DEBUG,
+						"search files on exploded jar: storageLocation="
+								+ storageLocation + ", classpath=" + classpath
+								+ ", path=" + path + ", filePattern="
+								+ filePattern + ", recurse=" + recurse);
 			}
 
-			testFiles(new File(storageLocation, pathString), result, recurse,
-					filePattern);
-			return result;
+			String pathString = stripLeadingSlash(path);
+
+			// now search in exploded jar file, which is in storage location
+			if (classpath == null) {
+				// no classpath, search in exploded storage location
+				pathString = stripTrailingSlash(pathString); // File will add slash in between
+				testFiles(new File(storageLocation, pathString), results,
+						recurse, filePattern);
+			} else if (classpath.endsWith(".jar")) {
+				// if classpath refers to an inner jar file, search in jar file
+				// which is exploded in storage location
+				String jarFileName = classpath;
+				JarFile jarFile = null;
+				try {
+					jarFile = new JarFile(
+							new File(storageLocation, jarFileName));
+					final Enumeration<JarEntry> enums = jarFile.entries();
+					while (enums.hasMoreElements()) {
+						final String jarEntryName = enums.nextElement()
+								.getName();
+
+						if (jarEntryName.startsWith(pathString)) {
+							final String remaining = jarEntryName.substring(
+									pathString.length(), jarEntryName.length());
+
+							if (remaining.length() > 0) {
+								final File file = new File(remaining);
+
+								// TODO do we need that? Needs test cases
+								if (file.getParent() != null & !recurse) {
+									continue;
+								}
+
+								if (filePattern == null
+										|| RFC1960Filter.stringCompare(
+												filePattern.toCharArray(), 0,
+												file.getName().toCharArray(),
+												0) == 0) {
+									try {
+										results.add(createURL(
+												stripLeadingSlash(jarEntryName),
+												null));
+									} catch (final IOException ex) {
+										// do nothing, URL will not be added to
+										// results
+									}
+								}
+							}
+						}
+					}
+				} catch (IOException e) {
+					framework.logger.log(LogService.LOG_ERROR,
+							"search files on exploded jar: could not open inner jar file"
+									+ jarFileName + " from storage "
+									+ storageLocation,
+							e);
+				} finally {
+					if (jarFile != null) {
+						try {
+							jarFile.close();
+						} catch (IOException e) {
+							// silently ignore
+						}
+					}
+ 				}
+			} else {
+				// classpath is set use it within storage location
+				String fullPathString = classpath.endsWith("/")
+						? classpath + pathString
+						: classpath + "/" + pathString;
+				testFiles(new File(storageLocation, fullPathString), results,
+						recurse, filePattern);
+ 			}
+ 
+			if (framework.DEBUG_CLASSLOADING) {
+				if (results.size() == 0) {
+					framework.logger.log(LogService.LOG_DEBUG,
+							"search files on exploded jar: NO RESULTS");
+				} else {
+					for (int i = 0; i < results.size(); i++) {
+						framework.logger.log(LogService.LOG_DEBUG,
+								"search files on exploded jar: result[" + i
+										+ "]=" + results.get(i).toString());
+					}
+				}
+			}
+			return results;
 		}
 
 		private void testFiles(final File directory, final Vector<URL> results,
@@ -3967,10 +4060,21 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 		return filename.replace('.', '-').replace('/', '.').replace('\\', '.');
 	}
 
-	protected static String stripTrailing(final String filename) {
+	protected static String stripLeadingSlash(final String filename) {
 		return filename.startsWith("/") || filename.startsWith("\\")
 				? filename.substring(1) : filename;
 	}
+	
+	protected static String stripTrailingSlash(final String filename) {
+		return filename.endsWith("/") || filename.endsWith("\\")
+				? filename.substring(0, filename.length() - 1)
+				: filename;
+	}
+	
+	protected static String appendTrailingSlash(final String filename) {
+		return !filename.endsWith("/") ? filename.concat("/") : filename;
+	}
+
 
 	/**
 	 * get a file from a class name.
