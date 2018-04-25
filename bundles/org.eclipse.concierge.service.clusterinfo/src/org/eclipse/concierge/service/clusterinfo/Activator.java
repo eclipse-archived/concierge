@@ -167,17 +167,25 @@ public class Activator implements BundleActivator {
 	}
 
 	private void addTags(ServiceReference reference) {
-		try {
-		String[] tags = (String[])reference.getProperty("org.osgi.service.clusterinfo.tags");
 		List<String> l = new ArrayList<String>();
-		SecurityManager sm = System.getSecurityManager();
-		for(String t : tags) {
-			if(sm == null || reference.getBundle().hasPermission(new ClusterTagPermission(t, "ADD"))) {
-				l.add(t);
+		
+		Object o = reference.getProperty("org.osgi.service.clusterinfo.tags");
+		if(o instanceof String) {
+			String tag = (String) o;
+			SecurityManager sm = System.getSecurityManager();
+			if(sm == null || reference.getBundle().hasPermission(new ClusterTagPermission(tag, "ADD"))) {
+				l.add(tag);
+			}
+		} else if(o instanceof String[]) {
+			String[] tags = (String[]) o;
+			SecurityManager sm = System.getSecurityManager();
+			for(String tag : tags) {
+				if(sm == null || reference.getBundle().hasPermission(new ClusterTagPermission(tag, "ADD"))) {
+					l.add(tag);
+				}
 			}
 		}
 		tagMap.put(reference, l);
-		} catch(Throwable t) {t.printStackTrace();}
 	}
 	
 	private void updateTags(){
