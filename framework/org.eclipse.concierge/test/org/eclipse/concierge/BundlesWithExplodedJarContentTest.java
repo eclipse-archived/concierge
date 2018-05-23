@@ -13,9 +13,15 @@
  *******************************************************************************/
 package org.eclipse.concierge;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import java.io.File;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 
@@ -27,6 +33,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.osgi.framework.Bundle;
+import org.osgi.framework.wiring.BundleWiring;
 
 /**
  * Tests which install bundles which refers to native code.
@@ -177,6 +184,59 @@ public class BundlesWithExplodedJarContentTest extends
 		Assert.assertEquals(1, urlsMetaInfAsList.size());
 		Assert.assertTrue(urlsMetaInfAsList.contains("META-INF/MANIFEST.MF"));
 	}
+	
+	/**
+	 * This test creates a bundle with an inner jar file which is on bundle
+	 * classpath. The inner jar file contains some resources which should be
+	 * visible via getResources() on a folder and should also be retrieved.
+	 * 
+	 * @author Simon Kaufmann
+	 */
+	@Test
+	public void testBundleWithExplodedJarContentListResources()
+			throws Exception {
+		SyntheticBundleBuilder innerJar = SyntheticBundleBuilder.newBuilder();
+		File someFile = TestUtils.createFileFromString("some content");
+		innerJar.addFile("res/somefile.txt", someFile);
+		File someJar = innerJar.asFile();
+
+		SyntheticBundleBuilder builder = SyntheticBundleBuilder.newBuilder();
+		builder.bundleSymbolicName("testBundleWithEmbeddedJar")
+				.bundleVersion("1.0.0");
+		builder.addManifestHeader("Bundle-Classpath", "lib/some.jar,.");
+		builder.addFile("lib/some.jar", someJar);
+		bundleUnderTest = installBundle(builder);
+		bundleUnderTest.start();
+		assertBundleActive(bundleUnderTest);
+
+		ClassLoader classLoader = bundleUnderTest.adapt(BundleWiring.class)
+				.getClassLoader();
+		Enumeration<URL> resources = classLoader.getResources("res");
+		ArrayList<URL> urls = Collections.list(resources);
+		assertNotNull(urls);
+		assertEquals(1, urls.size());
+
+		URI uri = urls.get(0).toURI();
+		assertEquals("bundle", uri.getScheme());
+		assertEquals("/lib/some.jar", uri.getPath());
+		assertEquals("res", uri.getFragment());
+
+		Collection<String> resourceList = bundleUnderTest
+				.adapt(BundleWiring.class)
+				.listResources("/" + uri.getFragment() + "/", "*.txt", BundleWiring.LISTRESOURCES_LOCAL);
+		assertNotNull(resourceList);
+		assertEquals(1, resourceList.size());
+		String resourceName = resourceList.iterator().next();
+		assertEquals("res/somefile.txt", resourceName);
+		
+		// now check if resource can be read
+		URL contentUrl = classLoader.getResource(resourceName);
+		assertNotNull (contentUrl);
+		String content = TestUtils.getContentFromUrl(contentUrl);
+		Assert.assertEquals("some content", content);
+	}
+
+
 
 	private void checkEntryPaths(Enumeration<String> urls) {
 		Assert.assertNotNull(urls);
