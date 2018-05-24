@@ -204,7 +204,7 @@ release {
 
 // task to create a gradle wrapper with used gradle version
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.8'
+    gradleVersion = '4.7'
     jarFile = '.gradle-wrapper/gradle-wrapper.jar'
 }
 
