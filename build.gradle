@@ -156,6 +156,11 @@ project(':framework:org.eclipse.concierge.profile.javase7') {
         compile project(':framework:org.eclipse.concierge')
     }
 }
+project(':bundles:org.eclipse.concierge.service.clusterinfo') {
+    dependencies {
+        compile project(':framework:org.eclipse.concierge')
+    }
+}
 project(':bundles:org.eclipse.concierge.service.permission') {
     dependencies {
         compile project(':framework:org.eclipse.concierge')
