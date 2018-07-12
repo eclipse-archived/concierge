@@ -401,9 +401,11 @@ final class ServiceReferenceImpl<S> implements ServiceReference<S> {
 	}
 	
 	void ungetAllServices(Bundle bundle){
-		ServiceObjectsImpl so = serviceObjects.get(bundle);
-		if(so!=null){
-			so.ungetAllServices();
+		if(serviceObjects != null) {
+			ServiceObjectsImpl so = serviceObjects.get(bundle);
+			if(so!=null){
+				so.ungetAllServices();
+			}
 		}
 		ungetService(bundle);
 		
