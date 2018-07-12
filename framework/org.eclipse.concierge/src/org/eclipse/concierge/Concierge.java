@@ -5392,7 +5392,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 		}
 		final String[] result = new String[libraryExtensions.length + 1];
 		result[0] = System.mapLibraryName(libname);
-		final String base = result[0].substring(0, result[0].indexOf("."));
 		for (int i = 0; i < libraryExtensions.length; i++) {
 			// we will use the default name and replace the extension of that
 			// e.g. on Mac the lib name for "XYZ" is "libXYZ.dylib" which will be 
