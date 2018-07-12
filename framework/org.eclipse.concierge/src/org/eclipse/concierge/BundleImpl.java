@@ -2758,9 +2758,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					return null;
 				}
 
-				// Step 8: check dynamic imports
-				if (!dynamicImports.isEmpty()) {
-
+				// Step 8: check dynamic imports in case of classes
+				if (isClass && !dynamicImports.isEmpty()) {
 					for (final Iterator<BundleRequirement> iter = dynamicImports
 							.iterator(); iter.hasNext();) {
 						final BundleRequirement dynImport = iter.next();
