@@ -371,7 +371,7 @@ final class PackageAdminImpl implements PackageAdmin {
 	}
 
 	private boolean isFragment(final BundleRevision rev) {
-		return !rev.getRequirements(HostNamespace.HOST_NAMESPACE).isEmpty();
+		return rev != null && !rev.getRequirements(HostNamespace.HOST_NAMESPACE).isEmpty();
 	}
 
 	@SuppressWarnings("unchecked")
