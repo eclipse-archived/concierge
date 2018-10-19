@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="test"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.5"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
+	<classpathentry kind="lib" path="libs/org.json_1.0.0.v201011060100.jar"/>
+	<classpathentry kind="lib" path="libs/org.restlet_2.0.5.v201605172130.jar"/>
+	<classpathentry kind="lib" path="libs/org.restlet.ext.json.jar"/>
+	<classpathentry kind="lib" path="libs/org.restlet.ext.xml.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

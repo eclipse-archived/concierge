@@ -43,6 +43,7 @@ distributions {
 //                from { project(':bundles:org.eclipse.concierge.service.clusterinfo').jar }
                 from { project(':bundles:org.eclipse.concierge.shell').jar }
                 from { project(':bundles:org.eclipse.concierge.service.rest').jar }
+                from { project(':bundles:org.eclipse.concierge.service.rest.client').jar }
             }
 			into('docs') {
                 from ('build/gen-html')

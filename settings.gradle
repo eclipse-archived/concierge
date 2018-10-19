@@ -10,4 +10,5 @@ include	'framework:org.eclipse.concierge',
 		'bundles:org.eclipse.concierge.service.eventadmin',
 		'bundles:org.eclipse.concierge.shell',
 		'bundles:org.eclipse.concierge.service.rest',
+                'bundles:org.eclipse.concierge.service.rest.client',
 		'distribution'

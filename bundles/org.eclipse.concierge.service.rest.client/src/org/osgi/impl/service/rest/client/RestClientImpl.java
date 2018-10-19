@@ -18,21 +18,21 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Map;
+
 import org.json.JSONObject;
 import org.osgi.framework.dto.BundleDTO;
 import org.osgi.framework.dto.ServiceReferenceDTO;
 import org.osgi.framework.startlevel.dto.BundleStartLevelDTO;
 import org.osgi.framework.startlevel.dto.FrameworkStartLevelDTO;
 import org.osgi.service.rest.client.RestClient;
+import org.restlet.data.Form;
 import org.restlet.data.MediaType;
 import org.restlet.data.Method;
 import org.restlet.data.Status;
-import org.restlet.engine.header.Header;
 import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.representation.Representation;
 import org.restlet.resource.ClientResource;
 import org.restlet.resource.ResourceException;
-import org.restlet.util.Series;
 
 /**
  * Implementation of the (Java) REST client
@@ -132,8 +132,6 @@ public class RestClientImpl implements RestClient {
 		final ClientResource res = new ClientResource(Method.GET,
 				baseUri.resolve("framework/bundles"));
 		final Representation repr = res.get(BUNDLES);
-
-		System.err.println("HAVING MEDIA TYPE " + repr.getMediaType());
 
 		return DTOReflector.getStrings(repr);
 	}
@@ -345,14 +343,14 @@ public class RestClientImpl implements RestClient {
 			throws Exception {
 		final ClientResource res = new ClientResource(Method.POST,
 				baseUri.resolve("framework/bundles"));
-		@SuppressWarnings("unchecked")
-		Series<Header> headers = (Series<Header>) res.getRequestAttributes().get("org.restlet.http.headers");
-		if (headers == null) {
-			headers = new Series<Header>(Header.class);
-			res.getRequestAttributes().put("org.restlet.http.headers", headers);
+		
+		Form responseHeaders = (Form) res.getRequestAttributes().get("org.restlet.http.headers");
+		if (responseHeaders == null) {
+		    responseHeaders = new Form();
+		    res.getRequestAttributes().put("org.restlet.http.headers", responseHeaders);
 		}
-		headers.add("Content-Location", location);
-
+		responseHeaders.add("Content-Location", location); 
+		
 		/*
 		 * does not work in the current RESTLET version:
 		 * res.getRequest().getAttributes() .put("message.entity.locationRef",
@@ -369,7 +367,7 @@ public class RestClientImpl implements RestClient {
 	public BundleDTO updateBundle(final long id) throws Exception {
 		new ClientResource(Method.PUT, baseUri.resolve("framework/bundle/"
 				+ id)).put("", MediaType.TEXT_PLAIN);
-		return null; // TODO return a BundleDTO
+		return getBundle(id);
 	}
 
 	/**
@@ -378,7 +376,7 @@ public class RestClientImpl implements RestClient {
 	public BundleDTO updateBundle(final long id, final String url) throws Exception {
 		new ClientResource(Method.PUT, baseUri.resolve("framework/bundle/"
 				+ id)).put(url, MediaType.TEXT_PLAIN);
-		return null; // TODO return a BundleDTO
+		return getBundle(id);
 	}
 
 	/**
@@ -389,7 +387,7 @@ public class RestClientImpl implements RestClient {
 			throws Exception {
 		new ClientResource(Method.PUT, baseUri.resolve("framework/bundle/"
 				+ id)).put(in);
-		return null; // TODO return a BundleDTO
+		return getBundle(id);
 	}
 
 	/**
@@ -403,10 +401,13 @@ public class RestClientImpl implements RestClient {
 	 * @see org.osgi.rest.client.RestClient#uninstallBundle(java.lang.String)
 	 */
 	public BundleDTO uninstallBundle(final String bundlePath) throws Exception {
+		final BundleDTO bundle = getBundle(bundlePath);
+		
 		final ClientResource res = new ClientResource(Method.DELETE,
 				baseUri.resolve(bundlePath));
+		
 		res.delete();
-		return null; // TODO return a BundleDTO
+		return bundle;
 	}
 
 	/**
@@ -424,7 +425,7 @@ public class RestClientImpl implements RestClient {
 				baseUri.resolve("framework/services"));
 
 		if (filter != null) {
-			res.addQueryParameter("filter", filter);
+			res.getQuery().add("filter", filter);
 		}
 
 		final Representation repr = res.get(SERVICES);
@@ -449,7 +450,7 @@ public class RestClientImpl implements RestClient {
 		final ClientResource res = new ClientResource(Method.GET,
 				baseUri.resolve("framework/services/representations"));
 		if (filter != null) {
-			res.addQueryParameter("filter", filter);
+			res.getQuery().add("filter", filter);
 		}
 		final Representation repr = res.get(SERVICES_REPRESENTATIONS);
 
