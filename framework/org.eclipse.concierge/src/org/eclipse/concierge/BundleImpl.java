@@ -2770,7 +2770,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 						// TODO: first check if dynImport could apply to the
 						// requested package!!!
-						if (RFC1960Filter.stringCompare(
+						if (pkg.length() > 0 && RFC1960Filter.stringCompare(
 								dynImportPackage.toCharArray(), 0,
 								pkg.toCharArray(), 0) != 0) {
 							continue;
