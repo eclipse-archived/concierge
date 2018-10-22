@@ -22,6 +22,8 @@ import java.util.Map.Entry;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
+import org.osgi.framework.dto.BundleDTO;
+import org.osgi.service.clusterinfo.FrameworkNodeStatus;
 import org.osgi.service.clusterinfo.NodeStatus;
 import org.osgi.util.tracker.ServiceTracker;
 
@@ -36,7 +38,7 @@ public class ClusterCommands  {
 		
 		Dictionary properties = new Hashtable();
 		properties.put("osgi.command.scope", "cluster");
-		properties.put("osgi.command.function", new String[] {"list","info","metrics"});
+		properties.put("osgi.command.function", new String[] {"list","info","metrics","bundles"});
 		reg  = context.registerService(ClusterCommands.class.getName(), this, properties);
 		
 	}
@@ -54,48 +56,143 @@ public class ClusterCommands  {
 		if(refs == null)
 			return;
 		
-		System.out.println("id\tcluster\ttags");
+		int i = 0;
+		System.out.println("\tid\t\t\t\t\tcluster\t\ttags");
 		for(ServiceReference ref : refs) {
-			System.out.printf("%s\t%s\t%s\n", 
+			System.out.printf("[%d]\t%s\t%s\t%s\n",
+					i,
 					(String)ref.getProperty("osgi.clusterinfo.id"),
 					(String)ref.getProperty("osgi.clusterinfo.cluster"),
-					Arrays.toString((String[])ref.getProperty("osgi.clusterinfo.tags")));
+					ref.getProperty("osgi.clusterinfo.tags") == null 
+						? "N/A" : Arrays.toString((String[])ref.getProperty("osgi.clusterinfo.tags")));
+			i++;
 		}
+	}
+	
+	public void info(int i) {
+		ServiceReference[] refs = tracker.getServiceReferences();
+		if(i < 0 || refs == null || refs.length <= i) {
+			System.out.println("Invalid index");
+			return;
+		}
+	
+		printNodeInfo(refs[i]);
 	}
 	
 	public void info(String id) {
 		ServiceReference ref = getNodeById(id);
-		if(ref == null) 
+		if(ref == null) {
 			System.out.println("No node found with id "+id);
+			return;
+		}
 			
-		System.out.println("id : "+ref.getProperty("osgi.clusterinfo.id"));
-		System.out.println("cluster : "+ref.getProperty("osgi.clusterinfo.cluster"));
-		System.out.println("parent : "+ref.getProperty("osgi.clusterinfo.parentid"));
-		System.out.println("vendor : "+ref.getProperty("osgi.clusterinfo.vendor"));
-		System.out.println("version : "+ref.getProperty("osgi.clusterinfo.version"));
-		System.out.println("country : "+ref.getProperty("osgi.clusterinfo.country"));
-		System.out.println("location : "+ref.getProperty("osgi.clusterinfo.location"));
-		System.out.println("region : "+ref.getProperty("osgi.clusterinfo.region"));
-		System.out.println("country : "+ref.getProperty("osgi.clusterinfo.country"));
-		System.out.println("zone : "+ref.getProperty("osgi.clusterinfo.zone"));
-		System.out.println("endpoints : "+Arrays.toString((String[])ref.getProperty("osgi.clusterinfo.endpoints")));
-		System.out.println("private endpoints : "+Arrays.toString((String[])ref.getProperty("osgi.clusterinfo.privateEndpoints")));
-		System.out.println("tags : "+Arrays.toString((String[])ref.getProperty("osgi.clusterinfo.tags")));
-
+		printNodeInfo(ref);
 	}
 	
-	public void metrics(String id, String... names) {
-		ServiceReference ref = getNodeById(id);
-		if(ref == null) 
-			System.out.println("No node found with id "+id);
+	private void printNodeInfo(ServiceReference ref) {
+		System.out.println("id : "+ref.getProperty("osgi.clusterinfo.id"));
+		System.out.println("cluster : "+ref.getProperty("osgi.clusterinfo.cluster"));
 		
-		NodeStatus node = (NodeStatus)tracker.getService(ref);
-		if(node == null)
+		if(ref.getProperty("osgi.clusterinfo.parentid") != null)
+			System.out.println("parent : "+ref.getProperty("osgi.clusterinfo.parentid"));
+		
+		if(ref.getProperty("osgi.clusterinfo.vendor") != null)
+			System.out.println("vendor : "+ref.getProperty("osgi.clusterinfo.vendor"));
+		
+		if(ref.getProperty("osgi.clusterinfo.version") != null)
+			System.out.println("version : "+ref.getProperty("osgi.clusterinfo.version"));
+		
+		if(ref.getProperty("osgi.clusterinfo.country") != null)
+			System.out.println("country : "+ref.getProperty("osgi.clusterinfo.country"));
+		
+		if(ref.getProperty("osgi.clusterinfo.location") != null)
+			System.out.println("location : "+ref.getProperty("osgi.clusterinfo.location"));
+		
+		if(ref.getProperty("osgi.clusterinfo.region") != null)
+			System.out.println("region : "+ref.getProperty("osgi.clusterinfo.region"));
+		
+		if(ref.getProperty("osgi.clusterinfo.country") != null)
+			System.out.println("country : "+ref.getProperty("osgi.clusterinfo.country"));
+		
+		if(ref.getProperty("osgi.clusterinfo.zone") != null)
+			System.out.println("zone : "+ref.getProperty("osgi.clusterinfo.zone"));
+		
+		if(ref.getProperty("osgi.clusterinfo.endpoints") != null)
+			System.out.println("endpoints : "+Arrays.toString((String[])ref.getProperty("osgi.clusterinfo.endpoints")));
+		
+		if(ref.getProperty("osgi.clusterinfo.privateEndpoints") != null)
+			System.out.println("private endpoints : "+Arrays.toString((String[])ref.getProperty("osgi.clusterinfo.privateEndpoints")));
+		
+		if(ref.getProperty("osgi.clusterinfo.tags") != null)
+			System.out.println("tags : "+Arrays.toString((String[])ref.getProperty("osgi.clusterinfo.tags")));
+	}
+	
+	public void metrics(int i) {
+		ServiceReference[] refs = tracker.getServiceReferences();
+		if(i < 0 || refs == null || refs.length <= i) {
+			System.out.println("Invalid index");
+			return;
+		}
+	
+		printMetrics(refs[i]);
+	}
+	
+	public void metrics(String id) {
+		ServiceReference ref = getNodeById(id);
+		if(ref == null) { 
 			System.out.println("No node found with id "+id);
+			return;
+		}
+		
+		printMetrics(ref);
+	}
+	
+	private void printMetrics(ServiceReference ref) {
+		NodeStatus node = (NodeStatus)tracker.getService(ref);
+		if(node == null) {
+			System.out.println("Invalid node reference");
+			return;
+		}
 
-		Map<String, Object> metrics = node.getMetrics(names);
+		Map<String, Object> metrics = node.getMetrics();
 		for(Entry<String, Object> e : metrics.entrySet()) {
 			System.out.println(e.getKey()+" : "+e.getValue());
+		}
+	}
+	
+	public void bundles(int i) {
+		ServiceReference[] refs = tracker.getServiceReferences();
+		if(i < 0 || refs == null || refs.length <= i) {
+			System.out.println("Invalid index");
+			return;
+		}
+	
+		printBundles(refs[i]);
+	}
+	
+	public void bundles(String id) {
+		ServiceReference ref = getNodeById(id);
+		if(ref == null) { 
+			System.out.println("No node found with id "+id);
+			return;
+		}
+		
+		printBundles(ref);
+	}
+	
+	private void printBundles(ServiceReference ref) {
+		FrameworkNodeStatus node = (FrameworkNodeStatus)tracker.getService(ref);
+		if(node == null) {
+			System.out.println("Invalid node reference");
+			return;
+		}
+
+		try {
+			for(BundleDTO b : node.getBundles()) {
+				System.out.println(String.format("[%d] %s", b.id, b.symbolicName));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 	
