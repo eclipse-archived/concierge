@@ -42,8 +42,6 @@ public class Activator implements BundleActivator {
 	
 	private Dictionary<String, Object> properties = new Hashtable<String, Object>();
 
-	private ClusterCommands commands;
-	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public void start(BundleContext context) throws Exception {
 		FrameworkNodeImpl impl = new FrameworkNodeImpl(context);
@@ -149,15 +147,9 @@ public class Activator implements BundleActivator {
 		});
 		tracker.open();
 		
-		// register cluster commands for GoGo shell
-		commands = new ClusterCommands();
-		commands.register(context);
 	}
 
 	public void stop(BundleContext context) throws Exception {
-		if(commands != null)
-			commands.unregister();
-
 		if(reg != null)
 			reg.unregister();
 		
