@@ -13,9 +13,7 @@
  *******************************************************************************/
 package org.eclipse.concierge.service.clusterinfo;
 
-import java.security.AccessControlException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -127,8 +125,8 @@ public class Activator implements BundleActivator {
 			tagMap.put(reg.getReference(), l);
 		}
 		
-		// add additional properties announced by any service
-		tracker = new ServiceTracker(context, context.createFilter("(org.osgi.service.clusterinfo.tags=*)"), 
+		// add additional properties announced by any service running on this framework instance (not imported)
+		tracker = new ServiceTracker(context, context.createFilter("(&(!(service.imported=*))(org.osgi.service.clusterinfo.tags=*))"), 
 				new ServiceTrackerCustomizer() {
 
 			public Object addingService(ServiceReference reference) {
@@ -189,7 +187,6 @@ public class Activator implements BundleActivator {
 	}
 	
 	private void updateTags(){
-		try {
 		Set<String> tags = new HashSet<String>();
 		for(List<String> t : tagMap.values()){
 			for(String tag : t){
@@ -198,6 +195,5 @@ public class Activator implements BundleActivator {
 		}
 		properties.put("osgi.clusterinfo.tags", tags.toArray(new String[tags.size()]));
 		reg.setProperties(properties);
-		} catch(Throwable t) {t.printStackTrace();}
 	}
 }
