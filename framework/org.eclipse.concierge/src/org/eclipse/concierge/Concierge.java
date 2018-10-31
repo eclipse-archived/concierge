@@ -665,15 +665,26 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 		final int minor;
 		int parsed = 0;
-		try {
-			parsed = Integer.parseInt(System
-					.getProperty("java.specification.version").substring(2));
-		} catch (final NumberFormatException nfe) {
-			nfe.printStackTrace();
-		} finally {
-			minor = parsed;
+		
+		final String specVersion = System
+				.getProperty("java.specification.version");
+		if (specVersion.indexOf('.') == -1) {
+			try {
+				parsed = Integer.parseInt(specVersion);
+			} catch (final NumberFormatException nfe) {
+				nfe.printStackTrace();
+			} finally {
+				minor = parsed;
+			}
+		} else {
+			try {
+				parsed = Integer.parseInt(specVersion.substring(2));
+			} catch (final NumberFormatException nfe) {
+				nfe.printStackTrace();
+			} finally {
+				minor = parsed;
+			}
 		}
-
 		
 		// check for J2ME VMs. If not set (like in CEE-J) fallback to JavaSE
 		if (System.getProperty("java.specification.name", "")
@@ -686,6 +697,10 @@ public final class Concierge extends AbstractBundle implements Framework,
 			}
 		} else {
 			switch (minor) {
+			case 11:
+				myEEs.append("JavaSE-11");
+			case 9:
+				myEEs.append("JavaSE-9");
 			case 8:
 				myEEs.append("J2SE-1.8,");
 				myEEs.append("JavaSE-1.8,");
