@@ -11,9 +11,6 @@
 // Publish to Maven Central:              ./gradlew publishMavenJavaPublicationToMavenCentralRepository
 
 
-
-./gradlew clean signMavenJavaPublication test assembleDist installDist publishMavenJavaPublicationToMavenCentralRepository
-
 buildscript {
 	repositories {
     	maven { url 'http://oss.jfrog.org/artifactory/oss-snapshot-local' }
