@@ -240,8 +240,7 @@ configure(subprojects.findAll {! (it.name in ['distribution', 'bundles', 'framew
     	}
 		
 		signing {
-			// on CI do NOT use gpg, internal Java base PGP impl instead
-			// useGpgCmd()
+			useGpgCmd()
 			sign configurations.archives
 			sign publishing.publications.mavenJava
 		}
