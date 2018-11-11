@@ -5,6 +5,14 @@
 // Build and run tests:                   ./gradlew test
 // Make complete fresh build:             ./gradlew clean build publish assembleDist installDist
 // Build and publish to local Maven repo: ./gradlew clean build publishToMavenLocal
+// Build and publish to local Maven repo: ./gradlew clean build test assembleDist installDist publishMavenJavaPublicationToMavenLocal
+// Build and sign artifacts:              ./gradlew clean signMavenJavaPublication test assembleDist installDist
+// Publish to Eclipse Repo:               ./gradlew publishMavenJavaPublicationToEclipseRepoRepository
+// Publish to Maven Central:              ./gradlew publishMavenJavaPublicationToMavenCentralRepository
+
+
+
+./gradlew clean signMavenJavaPublication test assembleDist installDist publishMavenJavaPublicationToMavenCentralRepository
 
 buildscript {
 	repositories {
@@ -42,13 +50,20 @@ allprojects {
     	compression = Compression.GZIP
     	extension = 'tar.gz'
 	}
+	
+	// disable javadoc errors
+	tasks.withType(Javadoc) {
+		options.addStringOption('Xdoclint:none', '-quiet')
+	}
 }
 
 // configure all java projects
 // ignore distribution and intermediate projects
 configure(subprojects.findAll {! (it.name in ['distribution', 'bundles', 'framework', 'tests']) }) {
 	apply plugin: 'java'
+//	apply plugin: 'maven'
 	apply plugin: 'maven-publish'
+	apply plugin: 'signing'
 
 	clean {
     	delete "bin"
@@ -96,7 +111,13 @@ configure(subprojects.findAll {! (it.name in ['distribution', 'bundles', 'framew
 	}
 
 	task sourceJar(type: Jar) {
- 	   from sourceSets.main.allJava
+		classifier = 'sources'
+		from sourceSets.main.allJava
+	}
+	
+	task javadocJar(type: Jar, dependsOn: javadoc) {
+		classifier = 'javadoc'
+		from javadoc.destinationDir
 	}
 
 	jar {
@@ -104,7 +125,7 @@ configure(subprojects.findAll {! (it.name in ['distribution', 'bundles', 'framew
 			from('META-INF/MANIFEST.MF') {
 				eachEntry { details ->
 					if (details.key == 'Bundle-Version') {
-                    	details.value = details.value.replace ("qualifier", rootProject.buildQualifier)
+                    	details.value = details.value.replace (".qualifier", rootProject.buildQualifier)
                     	// for debugging
 						// println details.key + "=" + details.value
     	            }
@@ -118,32 +139,119 @@ configure(subprojects.findAll {! (it.name in ['distribution', 'bundles', 'framew
 	// we maintain the bundle version manually (or using bndtools)
 	// for debugging
 	// println ("configure: jar=" + jar)
+	
 	jar.archiveName = jar.manifest.getEffectiveManifest().getAttributes().get("Bundle-SymbolicName") \
 						+ "-" + jar.manifest.getEffectiveManifest().getAttributes().get("Bundle-Version") \
 						+ ".jar"
-
+						
+	project.version = jar.manifest.getEffectiveManifest().getAttributes().get("Bundle-Version")
+	println ("build project " + project.name + "-" + project.version)
+	
+	javadoc {
+		source = sourceSets.main.allJava
+		classpath = configurations.compileClasspath
+	  
+		options
+		{
+		  setMemberLevel JavadocMemberLevel.PUBLIC
+		  setAuthor true
+	  
+		  links "https://docs.oracle.com/javase/5/docs/api/"
+		}
+	}
+						
 	repositories {
 		mavenCentral()
    	}
 
 	publishing {
+		publications {
+			mavenJava(MavenPublication) {
+				from components.java
+				artifact sourceJar 
+				artifact javadocJar
+
+				pom {
+					// TODO packaging = 'bundle' ?
+					packaging = 'jar'
+					description = 'Eclipse Concierge is a small-footprint implementation of the OSGi Core Specification R5 standard optimized for mobile and embedded devices.'
+					url = 'https://www.eclipse.org/concierge/'
+					licenses {
+						license {
+							name = 'Eclipse Public License 1.0'
+							url = 'http://www.eclipse.org/legal/epl-v10.html'
+						}
+					}
+					developers {
+						developer {
+							name = 'Jan Rellermeyer'
+						}
+						developer {
+							name = 'Tim Verbelen'
+						}
+						developer {
+							name = 'Jochen Hiller'
+						}
+					}
+					scm {
+						connection = 'scm:git:https://github.com/eclipse/concierge.git'
+						developerConnection = 'scm:git:https://github.com/eclipse/concierge.git'
+						url = 'https://github.com/eclipse/concierge'
+					}
+				}
+			}
+		}
+
 		repositories {
 	        maven {
+				name = "EclipseRepo"
+				def releasesRepoUrl = "https://repo.eclipse.org/content/repositories/concierge-releases/"
+				def snapshotsRepoUrl = "https://repo.eclipse.org/content/repositories/concierge-snapshots/"
+				url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+
+				credentials {
+					username eclipseRepoUsername
+					password eclipseRepoPassword
+				}
+				authentication {
+					basic(BasicAuthentication)
+				}
+				
 	        // TODO remove completely
 	        	// see https://bugs.eclipse.org/bugs/show_bug.cgi?id=467163
 	        	// https://repo.eclipse.org/content/repositories/concierge-snapshots/
 	        	// https://repo.eclipse.org/content/repositories/concierge-releases/
 	        	// println ("project.version=" + project.version)
-	        	if(project.version.contains('SNAPSHOT')) {
-	        	    url "../../distribution/build/repo/maven/snapshots"
- 		        } else {
-	        	    url "../../distribution/build/repo/maven/releases"
-          		}
+//	        	if(project.version.contains('SNAPSHOT')) {
+//	        	    url "../../distribution/build/repo/maven/snapshots"
+// 		        } else {
+//	        	    url "../../distribution/build/repo/maven/releases"
+//          		}
 	        	// println ("url=" + url)
         	}
+			maven {
+				name = "MavenCentral"
+				def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+				def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots"
+				url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+				
+				credentials {
+					username mavenCentralUsername
+					password mavenCentralPassword
+				}
+			}
     	}
+		
+		signing {
+			useGpgCmd()
+			sign configurations.archives
+			sign publishing.publications.mavenJava
+		}
 	}
+
 }
+
+
 
 
 project(':framework:org.eclipse.concierge.extension.permission') {
@@ -219,7 +327,7 @@ release {
 
 // task to create a gradle wrapper with used gradle version
 task wrapper(type: Wrapper) {
-    gradleVersion = '4.7'
+    gradleVersion = '4.10.2'
     jarFile = '.gradle-wrapper/gradle-wrapper.jar'
 }
 
@@ -228,24 +336,26 @@ task wrapper(type: Wrapper) {
 // qualifier can be used to replace in Bundle-Version
 // for release versions (RCn, Mn) this is the qualifier
 // otherwise use the build time for the final build
+// we return "." + qualifier, or empty for a release version
 def getBuildQualifier() {
     String ver = project.version
     String q
     String now = buildTime()
 	if(ver.endsWith('.SNAPSHOT')) {
-	    q = ver.substring(ver.indexOf("SNAPSHOT"),ver.length()) + "-" + now
+	    q = "." + ver.substring(ver.indexOf("SNAPSHOT"),ver.length()) + "-" + now
 	} else if(ver.substring(0, ver.length()-1).endsWith('.RC')) {
 	    // for RC versions: use RCn as qualifier for bundle versions
-	    q = ver.substring(ver.indexOf("RC"),ver.length()) + "-" + now
+	    q = "." + ver.substring(ver.indexOf("RC"),ver.length()) + "-" + now
 	} else if(ver.substring(0, ver.length()-1).endsWith('.M')) {
 	    // for Milestone versions: use Mn as qualifier for bundle versions
-	    q = ver.substring(ver.indexOf("M"),ver.length()) + "-" + now
+	    q = "." + ver.substring(ver.indexOf("M"),ver.length()) + "-" + now
 	} else {
 	    // final build
-		q = now
+		// q = now
+		q = ''
 	}
 	// for debugging
-	// println ("getBuildQualifier: " + q)
+	// println ("getBuildQualifier: '" + q + "'")
 	return q
 }
 

@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-SymbolicName: org.eclipse.concierge.service.packageadmin
 Bundle-Name: Eclipse Concierge PackageAdmin Service (Incubation)
-Bundle-Version: 5.1.0.qualifier
+Bundle-Version: 5.0.1.qualifier
 Bundle-Activator: org.eclipse.concierge.compat.packageadmin.Activator
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-Vendor: Eclipse.org/Concierge
