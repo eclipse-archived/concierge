@@ -1,8 +1,10 @@
 language: java
 jdk:
   - oraclejdk8
+install:
+  - ./gradlew --version
 script:
-  - ./gradlew --info clean build
+  - ./gradlew --info clean build -x signArchives test assembleDist installDist
 
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
