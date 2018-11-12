@@ -108,16 +108,29 @@ References:
 
 * Create an account at Sonatype and ask to publish to group "org.eclipse.concierge"
   * see https://issues.sonatype.org/browse/OSSRH-43650
-* Use ths credentials to upload to Maven central into a staging repository
+* Use the credentials to upload to Maven central into a staging repository
+
+The publishing to Maven central can be done that way:
+* make sure there is no stageing repository yet open/closed. If so drop the staging repo first
+* Then publish to staging repository
+
+```
+# Proxy needed to connect to Internet
+./gradlew \
+ -Dhttp.proxyHost=proxy.eclipse.org \
+ -Dhttp.proxyPort=9898 \
+ -Dhttp.nonProxyHosts=*.eclipse.org \
+ -Dhttps.proxyHost=proxy.eclipse.org \
+ -Dhttps.proxyPort=9898 \
+ -Dhttps.nonProxyHosts=*.eclipse.org \
+ publishMavenJavaPublicationToMavenCentralRepository
+```
+
+After upload to staging repository:
 * Go to staging repository at https://oss.sonatype.org/#stagingRepositories (login first)
 * If staging repository upload is complete, first "Close" it
 * If staging repository verifiation is fine, you can "Release" it
 
-The publishing to Maven central can be done that way:
-
-```
-./gradlew publishMavenJavaPublicationToMavenCentralRepository
-```
 
 References
 * Artifacts during staging: https://oss.sonatype.org/content/groups/staging/org/eclipse/concierge/
