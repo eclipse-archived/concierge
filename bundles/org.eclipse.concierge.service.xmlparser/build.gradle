@@ -4,10 +4,10 @@ publishing {
 	   	    groupId 'org.eclipse.concierge'
             artifactId 'org.eclipse.concierge.service.xmlparser'
             version version
-       	    from components.java
-	       	artifact sourceJar {
-                classifier "sources"
-            }
+			pom {
+				name = 'Eclipse Concierge'
+				description = 'XmlParser Service'
+			}
        	}
    	}
 }

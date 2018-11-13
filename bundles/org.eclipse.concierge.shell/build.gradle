@@ -2,12 +2,12 @@ publishing {
     publications {
    	    mavenJava(MavenPublication) {
 	   	    groupId 'org.eclipse.concierge'
-            artifactId 'org.eclipse.concierge.service.shell'
+            artifactId 'org.eclipse.concierge.shell'
             version version
-       	    from components.java
-	       	artifact sourceJar {
-                classifier "sources"
-            }
+			pom {
+				name = 'Eclipse Concierge'
+				description = 'Shell - Simple OSGi Console'
+			}
        	}
    	}
 }

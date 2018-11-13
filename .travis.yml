@@ -1,8 +1,10 @@
 language: java
 jdk:
   - oraclejdk8
+install:
+  - ./gradlew --version
 script:
-  - ./gradlew --info clean build
+  - ./gradlew -Dorg.eclipse.concierge.tests.waitAfterFrameworkShutdown=1000 clean build test assembleDist installDist -x signArchives
 
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
