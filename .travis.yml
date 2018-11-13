@@ -4,7 +4,8 @@ jdk:
 install:
   - ./gradlew --version
 script:
-  - ./gradlew clean build -x signArchives test assembleDist installDist
+  - ./gradlew -Dorg.eclipse.concierge.tests.waitAfterFrameworkShutdown=1000 \
+   clean build -x signArchives test assembleDist installDist
 
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
