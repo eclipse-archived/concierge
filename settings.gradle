@@ -1,3 +1,7 @@
+// prepare later migration to Gradle 5.0
+// see https://docs.gradle.org/4.10.2/userguide/publishing_maven.html#publishing_maven:deferred_configuration
+enableFeaturePreview('STABLE_PUBLISHING')
+
 // all projects to include in build
 include	'framework:org.eclipse.concierge',
 		'framework:org.eclipse.concierge.extension.permission',
