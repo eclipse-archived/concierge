@@ -19,9 +19,9 @@ Logger logger = LoggerFactory.getLogger('concierge-logger')
 // Define a method
 def log(msg) {
 	// during development
-	logger.quiet msg
+	// logger.quiet msg
 	// when ready
-	// logger.info msg
+	logger.info msg
 }
 
 
