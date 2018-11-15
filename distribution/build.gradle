@@ -23,6 +23,7 @@ task markdownCopyContributor(type: Copy) {
 distZip.dependsOn markdownCopy, markdownCopyContributor
 distTar.dependsOn markdownCopy, markdownCopyContributor
 
+
 distributions {
 	main {
 		baseName 'concierge-incubation'
