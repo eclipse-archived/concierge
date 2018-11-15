@@ -20,10 +20,6 @@ task markdownCopyContributor(type: Copy) {
   filter(ConcatFilter, append: file('src/config/strapdown-post-dirlevel2.txt'))
 }
 
-distZip.dependsOn markdownCopy, markdownCopyContributor
-distTar.dependsOn markdownCopy, markdownCopyContributor
-
-
 distributions {
 	main {
 		baseName 'concierge-incubation'
@@ -50,4 +46,23 @@ distributions {
 			}
 		}
 	}
+}
+
+distZip.dependsOn markdownCopy, markdownCopyContributor
+distTar.dependsOn markdownCopy, markdownCopyContributor
+
+// website
+
+task copyWebsiteStatics(type: Copy) {
+	from "website"
+	into "build/website"
+}
+
+task copyWebsiteMarkdown(type: Copy) {
+	from "../docs"
+	into "build/website/docs"
+}
+
+task generateWebsite {
+    dependsOn copyWebsiteStatics, copyWebsiteMarkdown
 }

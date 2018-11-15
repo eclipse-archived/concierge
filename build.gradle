@@ -28,8 +28,8 @@ def log(msg) {
 // global variables
 project.ext {
 	log("Show Project Extensions:")
-	// read version from file. Remove empty lines and whitespaces
-	project.version = new File ("version.txt").text.replaceAll("[\\\r\\\n]+","").trim()
+	// read version from file in root project. Remove empty lines and whitespaces
+	project.version = rootProject.file("version.txt").text.replaceAll("[\\\r\\\n]+","").trim()
 	log("  project.version: '" + project.version + "'")
 	log("  rootProject: " + rootProject)
 	
@@ -63,6 +63,13 @@ configure(subprojects.findAll {! (it.name in ['distribution']) }) {
 // configure all java projects
 // ignore distribution and intermediate projects
 configure(subprojects.findAll {! (it.name in ['distribution', 'bundles', 'framework', 'tests']) }) {
+	
+	repositories {
+		mavenLocal()
+		mavenCentral()
+		jcenter()
+	}
+	
 	apply plugin: 'java'
 	apply plugin: 'maven-publish'
 	apply plugin: 'signing'
@@ -164,11 +171,6 @@ configure(subprojects.findAll {! (it.name in ['distribution', 'bundles', 'framew
 						
 	project.version = jar.manifest.getEffectiveManifest().getAttributes().get("Bundle-Version")
 	log("Build project: " + project.name + "-" + project.version)
-	
-	repositories {
-		mavenLocal()
-		mavenCentral()
-   	}
 
 	publishing {
 		publications {
