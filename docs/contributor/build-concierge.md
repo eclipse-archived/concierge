@@ -3,9 +3,9 @@
 Concierge will be build using [Gradle](http://gradle.org/). The gradle wrapper scripts will be used, to simplify installation. The wrapper scripts are checked in into repository as `./gradlew` and `./gradlew.bat`. The required files to start and download gradle are in folder `.gradle-wrapper`, do not touch. 
 
 ```gradle
-// task to create a gradle wrapper with used gradle version
-task wrapper(type: Wrapper) {
-    gradleVersion = '2.8'
+// use wrapper task since Gradle 4.8
+wrapper {
+    gradleVersion = '4.10.2'
     jarFile = '.gradle-wrapper/gradle-wrapper.jar'
 }
 ```

@@ -1,0 +1,226 @@
+/*!
+ * Bootstrap v3.2.0 (http://getbootstrap.com)
+ * Copyright 2011-2014 Twitter, Inc.
+ * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ */
+
+* {
+  -webkit-box-sizing: border-box;
+     -moz-box-sizing: border-box;
+          box-sizing: border-box;
+}
+*:before,
+*:after {
+  -webkit-box-sizing: border-box;
+     -moz-box-sizing: border-box;
+          box-sizing: border-box;
+}
+html {
+  font-size: 10px;
+
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
+body {
+  font-family: Lato, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.42857143;
+  color: #000000;
+  background-color: #d0dbd5;
+  font-size: 20px;
+  font-weight: 200;
+  text-align: justify;
+  word-spacing: 2px;
+}
+input,
+button,
+select,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+a {
+  color: #009615;
+  text-decoration: none;
+}
+a:hover,
+a:focus {
+  color: #009f4f;
+  text-decoration: underline;
+}
+a:focus {
+  outline: thin dotted;
+  outline: 5px auto -webkit-focus-ring-color;
+  outline-offset: -2px;
+}
+figure {
+  margin: 0;
+}
+img {
+  vertical-align: middle;
+}
+.img-responsive {
+  display: block;
+  width: 100% \9;
+  max-width: 100%;
+  height: auto;
+}
+hr {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  border: 0;
+  border-top: 1px solid #eee;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+.sr-only-focusable:active,
+.sr-only-focusable:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+}
+.navbar {
+  background-color: #121320;
+}
+.navbar-brand {
+  display: block;
+  height: 60px;
+  padding: 20px 20px 20px;
+  color: #FFFFFF;
+  font-weight: bold;
+  background: url('../images/icon.png') 0 7px no-repeat;
+}
+.container ul li {
+  margin-top: 10px;
+  margin-left: 1em;
+  color: #000000;
+}
+.navbar-nav > li > a {
+  color: #eff7f0;
+  text-shadow: 0 1px 0 #161726;
+  border-top: 2px #161726 solid;
+}
+.navbar .nav li.dropdown.open > .dropdown-toggle {
+  background-color: #121320;
+  border-color: #007439;
+}
+.navbar-nav .nav li.dropdown.open > .dropdown-toggle {
+  background-color: #121320;
+}
+.navbar-nav > li > .dropdown-menu {
+  padding: 5px 0;
+  margin: 2px 0;
+  margin-left: 10px;
+  background-color: #121320;
+  border: 1px solid rgba(0, 0, 0, .2);
+}
+.nav > li > a:hover,
+.nav > li > a:focus {
+  color: #eff7f0;
+  background-color: transparent;
+  border-top-color: #eff7f0;
+}
+.dropdown-menu li > a {
+  color: #eff7f0;
+}
+a.navbar-toggle span {
+  background-color: #eff7f0;
+}
+#intro {
+  padding-bottom: 70px;
+}
+#intro .col-md-6 {
+  padding-top: 40px;
+}
+#intro .col-md-4 {
+  padding-top: 10px;
+  margin-left: 40px;
+  border-left: 2px solid #e16036;
+  border-radius: 20px;
+}
+#intro img {
+  margin-bottom: 20px;
+}
+.lead {
+  padding-top: 10px;
+  font-size: 25px;
+  font-weight: 200;
+}
+.jumbotron {
+  padding-top: 100px;
+  color: #FFFFFF;
+  background-color: #007439;
+}
+.feature-box h2 {
+  line-height: 40px;
+  text-align: center;
+}
+.feature-box h2 i {
+  position: relative;
+  left: 50%;
+  display: block;
+  width: 100px;
+  height: 100px;
+  padding-top: 20px;
+  margin-bottom: -48px;
+  margin-left: -50px;
+  font-size: 65px;
+  background: #eff4f7;
+  border-radius: 63px;
+}
+.feature-box .lead {
+  margin-top: -10px;
+  text-align: center;
+}
+.feature-header {
+  font-size: 35px;
+  font-weight: bold;
+  color: #007439;
+  text-align: left;
+}
+.feature-body {
+  font-size: 25px;
+  color: #555555;
+}
+#footer {
+  padding-bottom: 30px;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.3em;
+  color: #eff4f7;
+  word-spacing: 1px;
+  background-color: #121320;
+  border-top: 1px solid #000;
+}
+.footer-links {
+  display: inline-block;
+  margin: 0;
+  list-style: none;
+}
+.footer-links li {
+  display: inline-block;
+}
+.footer-links a {
+  color: #eff4f7;
+}
+h1 {
+  color: #007439;
+}
+a.anchor{ 
+  display: block; 
+  position: relative; 
+  top: -65px; 
+  visibility: hidden;
+}
