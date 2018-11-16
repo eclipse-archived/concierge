@@ -1,6 +1,6 @@
 # How to publish website
 
-The Eclipse Concierge Website (http://eclipse.org/concierge) will be published from Git repository at `https://jhiller@git.eclipse.org/r/a/www.eclipse.org/concierge`.
+The [Eclipse Concierge Website](http://eclipse.org/concierge) will be published from Git repository at `https://git.eclipse.org/r/a/www.eclipse.org/concierge`.
 
 This repository is meanwhile only writable through Gerrit. Project committers are allowed to write directly to master, which will then be published to Eclipse Webserver within short time frame.
 

@@ -54,7 +54,7 @@ distTar.dependsOn markdownCopy, markdownCopyContributor
 // website
 
 task copyWebsiteStatics(type: Copy) {
-	from "website"
+	from "../website"
 	into "build/website"
 }
 

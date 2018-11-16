@@ -4,13 +4,12 @@
 # chmod u+x ./distribution/publish/publishWebsite.sh
 # ./distribution/publish/publishWebsite.sh
 
-# it will clone and update the repo outside of this repo
-# in folder ./concierge-website-tmp parallel to concierge workspace directory
+# it will clone and update the repo in ./concierge-website-tmp
 
-REPO_DIR=../concierge-website-tmp
+REPO_DIR=./website-update-tmp
 
 if [ "$#" == "0" ] ; then
-  echo "usage: publishWebsite {clean | prepare | commit | push}"
+  echo "Usage: publishWebsite {clean | prepare | commit | push}"
   echo "         clean: clean all generated files"
   echo "       prepare: clone repo, and update with current website from repo"
   echo "   manual step: check if all changes are OK"
