@@ -41,7 +41,6 @@ if [ "$1" == "prepare" ] ; then
   (cd distribution ; ../gradlew generateWebsite)
   GENERATED_DIR=`pwd`/distribution/build/website
 
-  pwd
   # cleanup tmp directory
   if [ -d $REPO_DIR/concierge ] ; then
     echo "Cleanup $REPO_DIR/concierge ..."
@@ -52,8 +51,30 @@ if [ "$1" == "prepare" ] ; then
   mkdir -p $REPO_DIR
   cd $REPO_DIR
 
+
+
   # checkout current repo
-  git clone git://git.eclipse.org/gitroot/www.eclipse.org/concierge
+  # get credentials, try ~/.gradle/gradle.properties
+  if [ "$GERRIT_USERNAME" == "" ]; then
+    if [ -f ~/.gradle/gradle.properties ] ; then
+      GERRIT_USERNAME=`cat ~/.gradle/gradle.properties | grep "conciergeGerritUsername" | sed -e 's|^conciergeGerritUsername=||g'`
+    fi
+  fi
+  if [ "$GERRIT_PASSWORD" == "" ]; then
+    if [ -f ~/.gradle/gradle.properties ] ; then
+      GERRIT_PASSWORD=`cat ~/.gradle/gradle.properties | grep "conciergeGerritPassword" | sed -e 's|^conciergeGerritPassword=||g'`
+    fi
+  fi
+  if [ "$GERRIT_USERNAME" == "" -o "$GERRIT_PASSWORD" == "" ]; then
+    echo "Error: you have to set GERRIT_USERNAME and GERRIT_PASSWORD values, or add"
+    echo "    conciergeGerritUsername=<your-username>"
+    echo "    conciergeGerritPassword=<your-http-password>"
+    echo "  to your ~/.gradle/gradle.properties"
+    echo "  Note: GERRIT_PASSWORD is the HTTP password which can bet generated at https://git.eclipse.org/r/#/settings/http-password"
+    exit 1
+  fi
+  
+  git clone https://$GERRIT_USERNAME:$GERRIT_PASSWORD@git.eclipse.org/r/a/www.eclipse.org/concierge
   cd concierge
 
   # remove existing files
