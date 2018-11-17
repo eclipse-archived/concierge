@@ -10,7 +10,20 @@ Parts of documentation is even shared (e.g. all Markdown files). So website can 
 
 ## How to publish
 
-There is a helper script to public the website:
+Note: you need committer rights to be able to push to Gerrit repo.
+
+You need to configure your credentials to be able to push to Gerrit.
+Most easy way is to configure in `~/.gradle/gradle.properties` your credentials:
+
+```
+// access to Concierge Gerrit repo
+conciergeGerritUsername=<your-username>
+conciergeGerritPassword=<your-http-password>
+```
+
+Note: Gerrit password is the HTTP password which can be generated at [https://git.eclipse.org/r/#/settings/http-password](https://git.eclipse.org/r/#/settings/http-password).
+
+There is a helper script to publish the website. Run it from root directory of Concierge project:
 
 ```
 # will clean all generated files
@@ -19,7 +32,7 @@ There is a helper script to public the website:
 # will clone current repo and update it with generated website
 ./distribution/publish/publishWebsite.sh prepare
 
-# now the changes can be checked manually
+# git status shows all changes which can be checked manually
 
 # will commit all changes to repo 
 ./distribution/publish/publishWebsite.sh commit
@@ -31,4 +44,5 @@ There is a helper script to public the website:
 ./distribution/publish/publishWebsite.sh clean
 ```
 
-Note: you need committer rights to be able to push to Gerrit repo.
+There is a CI process which does that by running a Jenkins job. See [https://ci.eclipse.org/concierge/view/CI_CD/job/Master_PublishWebsite/](https://ci.eclipse.org/concierge/view/CI_CD/job/Master_PublishWebsite/)
+

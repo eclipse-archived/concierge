@@ -9,6 +9,11 @@
 // Publish to Eclipse Repo:               ./gradlew publishMavenJavaPublicationToEclipseRepoRepository
 // Publish to Maven Central:              ./gradlew publishMavenJavaPublicationToMavenCentralRepository
 
+plugins {
+	// https://plugins.gradle.org/plugin/org.ajoberstar.grgit
+	id "org.ajoberstar.grgit" version "3.0.0-rc.3"
+}
+
 // Note: -x signArchives has to be excluded for the moment for non-release builds
 // TODO fix this
 

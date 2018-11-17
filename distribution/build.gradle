@@ -2,7 +2,7 @@ import org.apache.tools.ant.filters.*
 
 apply plugin: 'distribution'
 
-task markdownCopy(type: Copy) {
+task markdownCopyLevel1(type: Copy) {
   from '../docs'
   into 'build/gen-html'
   include('*.md')
@@ -11,10 +11,10 @@ task markdownCopy(type: Copy) {
   filter(ConcatFilter, append: file('src/config/strapdown-post-dirlevel1.txt'))
 }
 
-task markdownCopyContributor(type: Copy) {
+task markdownCopyLevel2(type: Copy) {
   from '../docs'
   into 'build/gen-html'
-  include('contributor/*.markdown')
+  include('*/*.md')
   rename { it - '.md' + '.html'}
   filter(ConcatFilter, prepend: file('src/config/strapdown-pre.txt'))
   filter(ConcatFilter, append: file('src/config/strapdown-post-dirlevel2.txt'))
@@ -48,10 +48,12 @@ distributions {
 	}
 }
 
-distZip.dependsOn markdownCopy, markdownCopyContributor
-distTar.dependsOn markdownCopy, markdownCopyContributor
+distZip.dependsOn markdownCopyLevel1, markdownCopyLevel2
+distTar.dependsOn markdownCopyLevel1, markdownCopyLevel2
 
 // website
+// copy html and .md files into a directory
+// will add a timestamp when files have been generated to check version in PROD
 
 task copyWebsiteStatics(type: Copy) {
 	from "../website"
@@ -65,4 +67,19 @@ task copyWebsiteMarkdown(type: Copy) {
 
 task generateWebsite {
     dependsOn copyWebsiteStatics, copyWebsiteMarkdown
+	doLast {
+		// append comment to selected files
+		def git = org.ajoberstar.grgit.Grgit.open(dir: "..")
+		def revision = git.head().id
+		def now = new Date()
+
+		def htmlComment = "\n<!-- Website generated at $now from commit $revision -->"
+		def tree = fileTree(dir: "build/website", include: "**/*.php")
+		tree.each { file -> file.append(htmlComment) }
+		
+		// https://stackoverflow.com/questions/4823468/comments-in-markdown
+		def mdComment = "\n[comment]: # (Website generated at $now from commit $revision)"
+		tree = fileTree(dir: "build/website/docs", include: "**/*.md")
+		tree.each { file -> file.append(mdComment) }
+	}
 }
