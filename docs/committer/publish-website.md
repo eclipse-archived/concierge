@@ -12,14 +12,15 @@ Parts of documentation is even shared (e.g. all Markdown files). So website can 
 
 Note: you need committer rights to be able to push to Gerrit repo.
 
-You need to configure your credentials and author information to be able to push to Gerrit.
+You need to configure your credentials and committer information to be able to push to Gerrit.
 Most easy way is to configure in `~/.gradle/gradle.properties` your credentials:
 
 ```
 // access to Concierge Gerrit repo
 conciergeGerritUsername=your-username
 conciergeGerritPassword=your-http-password
-conciergeGerritAuthor=Your name <your-email>
+conciergeGerritConfigUserName=Your name
+conciergeGerritConfigUserEmail=<your-email>
 ```
 
 Note: Gerrit password is the HTTP password which can be generated at [https://git.eclipse.org/r/#/settings/http-password](https://git.eclipse.org/r/#/settings/http-password).

@@ -65,16 +65,22 @@ if [ "$1" == "prepare" ] ; then
       GERRIT_PASSWORD=`cat ~/.gradle/gradle.properties | grep "conciergeGerritPassword" | sed -e 's|^conciergeGerritPassword=||g'`
     fi
   fi
-  if [ "$GERRIT_AUTHOR" == "" ]; then
+  if [ "$GERRIT_CONFIG_USER_NAME" == "" ] ; then
     if [ -f ~/.gradle/gradle.properties ] ; then
-      GERRIT_AUTHOR=`cat ~/.gradle/gradle.properties | grep "conciergeGerritAuthor" | sed -e 's|^conciergeGerritAuthor=||g'`
+      GERRIT_CONFIG_USER_NAME=`cat ~/.gradle/gradle.properties | grep "conciergeGerritConfigUserName" | sed -e 's|^conciergeGerritConfigUserName=||g'`
     fi
   fi
-  if [ "$GERRIT_USERNAME" == "" -o "$GERRIT_PASSWORD" == "" -o "$GERRIT_AUTHOR" == "" ]; then
-    echo "Error: you have to set GERRIT_USERNAME, GERRIT_PASSWORD and GERRIT_AUTHOR values, or add"
+  if [ "$GERRIT_CONFIG_USER_EMAIL" == "" ] ; then
+    if [ -f ~/.gradle/gradle.properties ] ; then
+      GERRIT_CONFIG_USER_EMAIL=`cat ~/.gradle/gradle.properties | grep "conciergeGerritConfigUserEmail" | sed -e 's|^conciergeGerritConfigUserEmail=||g'`
+    fi
+  fi
+  if [ "$GERRIT_USERNAME" == "" -o "$GERRIT_PASSWORD" == "" -o "$GERRIT_CONFIG_USER_NAME" == "" -o "$GERRIT_CONFIG_USER_EMAIL" == "" ] ; then
+    echo "Error: you have to set GERRIT_USERNAME, GERRIT_PASSWORD, GERRIT_CONFIG_USER_NAME and GERRIT_CONFIG_USER_EMAIL values, or add"
     echo "    conciergeGerritUsername=your-username"
     echo "    conciergeGerritPassword=your-http-password"
-    echo "    conciergeGerritAuthor=Your name <your-email>"
+    echo "    conciergeGerritConfigUserName=Your name"
+    echo "    conciergeGerritConfigUserEmail=<your-email>"
     echo "  to your ~/.gradle/gradle.properties"
     echo "  Note: GERRIT_PASSWORD is the HTTP password which can bet generated at https://git.eclipse.org/r/#/settings/http-password"
     exit 1
@@ -82,6 +88,8 @@ if [ "$1" == "prepare" ] ; then
   
   git clone https://$GERRIT_USERNAME:$GERRIT_PASSWORD@git.eclipse.org/r/a/www.eclipse.org/concierge
   cd concierge
+  git config --local user.name $GERRIT_CONFIG_USER_NAME
+  git config --local user.email $GERRIT_CONFIG_USER_EMAIL
 
   # remove existing files
   rm -rf *.php ./css ./docs ./images ./includes ./repository 
@@ -98,7 +106,7 @@ if [ "$1" == "commit" ] ; then
   now=`date '+%Y-%m-%d %H:%M:%S'`
   git add -A
   # we have to set the author for CI build as it is running with a non-committer user
-  git commit -m "Updated website from GitHub at $now" --author "$GERRIT_AUTHOR"
+  git commit -m "Updated website from GitHub at $now" --author "$GERRIT_CONFIG_USER_NAME $GERRIT_CONFIG_USER_EMAIL"
   git log -2
   exit 0
 fi
