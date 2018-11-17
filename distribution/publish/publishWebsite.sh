@@ -65,10 +65,16 @@ if [ "$1" == "prepare" ] ; then
       GERRIT_PASSWORD=`cat ~/.gradle/gradle.properties | grep "conciergeGerritPassword" | sed -e 's|^conciergeGerritPassword=||g'`
     fi
   fi
-  if [ "$GERRIT_USERNAME" == "" -o "$GERRIT_PASSWORD" == "" ]; then
-    echo "Error: you have to set GERRIT_USERNAME and GERRIT_PASSWORD values, or add"
-    echo "    conciergeGerritUsername=<your-username>"
-    echo "    conciergeGerritPassword=<your-http-password>"
+  if [ "$GERRIT_AUTHOR" == "" ]; then
+    if [ -f ~/.gradle/gradle.properties ] ; then
+      GERRIT_AUTHOR=`cat ~/.gradle/gradle.properties | grep "conciergeGerritAuthor" | sed -e 's|^conciergeGerritAuthor=||g'`
+    fi
+  fi
+  if [ "$GERRIT_USERNAME" == "" -o "$GERRIT_PASSWORD" == "" -o "$GERRIT_AUTHOR" == "" ]; then
+    echo "Error: you have to set GERRIT_USERNAME, GERRIT_PASSWORD and GERRIT_AUTHOR values, or add"
+    echo "    conciergeGerritUsername=your-username"
+    echo "    conciergeGerritPassword=your-http-password"
+    echo "    conciergeGerritAuthor=Your name <your-email>"
     echo "  to your ~/.gradle/gradle.properties"
     echo "  Note: GERRIT_PASSWORD is the HTTP password which can bet generated at https://git.eclipse.org/r/#/settings/http-password"
     exit 1
@@ -91,7 +97,8 @@ if [ "$1" == "commit" ] ; then
   cd $REPO_DIR/concierge
   now=`date '+%Y-%m-%d %H:%M:%S'`
   git add -A
-  git commit -m "Updated website from GitHub at $now"
+  # we have to set the author for CI build as it is running with a non-committer user
+  git commit -m "Updated website from GitHub at $now" --author "$GERRIT_AUTHOR"
   git log -2
   exit 0
 fi
