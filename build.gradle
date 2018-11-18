@@ -154,7 +154,11 @@ configure(subprojects.findAll {! (it.name in ['distribution', 'bundles', 'framew
 			from('META-INF/MANIFEST.MF') {
 				eachEntry { details ->
 					if (details.key == 'Bundle-Version') {
-                    	details.value = details.value.replace (".qualifier", rootProject.buildQualifier)
+						if (project.isReleaseVersion) {
+							details.value = details.value.replace (".qualifier", rootProject.buildQualifier)
+						} else {
+							details.value = details.value.replace (".qualifier", ".SNAPSHOT")
+						}
 						// log(details.key + "=" + details.value)
     	            }
         		}
@@ -364,8 +368,10 @@ def getBuildQualifier() {
 def getBuildVersion() {
     String ver = project.version
     String buildVersion
+	// at the moment build version is version.txt
 	if(ver.endsWith('.SNAPSHOT')) {
-		buildVersion = ver.replace (".SNAPSHOT", rootProject.buildQualifier)
+		// all is OK, do not change SNAPSHOT
+		buildVersion = ver
 	} else {
 		buildVersion = ver
 	}
