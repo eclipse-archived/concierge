@@ -54,14 +54,11 @@ allprojects {
 	buildQualifier = rootProject.buildQualifier
 	buildVersion = rootProject.buildVersion
 	version = rootProject.buildVersion
-}
-
-// configure distribution project
-configure(subprojects.findAll {! (it.name in ['distribution']) }) {
+	
 	// create all TARs as tar.gz compressed
 	tasks.withType(Tar){
-    	compression = Compression.GZIP
-    	extension = 'tar.gz'
+		compression = Compression.GZIP
+		extension = 'tar.gz'
 	}
 }
 
@@ -170,12 +167,10 @@ configure(subprojects.findAll {! (it.name in ['distribution', 'bundles', 'framew
 	// we maintain the bundle version manually (or using bndtools)
 	// enable for debugging
 	// log("configure: jar=" + jar)
-	jar.archiveName = jar.manifest.getEffectiveManifest().getAttributes().get("Bundle-SymbolicName") \
-						+ "-" + jar.manifest.getEffectiveManifest().getAttributes().get("Bundle-Version") \
-						+ ".jar"
-						
 	project.version = jar.manifest.getEffectiveManifest().getAttributes().get("Bundle-Version")
 	log("Build project: " + project.name + "-" + project.version)
+	jar.archiveName = jar.manifest.getEffectiveManifest().getAttributes().get("Bundle-SymbolicName") \
+						+ "-" + project.version + ".jar"
 
 	publishing {
 		publications {
