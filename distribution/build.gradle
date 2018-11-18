@@ -79,7 +79,8 @@ task generateWebsite {
 		
 		// https://stackoverflow.com/questions/4823468/comments-in-markdown
 		def mdComment = "\n[comment]: # (Website generated at $now from commit $revision)"
-		tree = fileTree(dir: "build/website/docs", include: "**/*.md")
+		// only main php files, not includes
+		tree = fileTree(dir: "build/website/docs", include: "*.md")
 		tree.each { file -> file.append(mdComment) }
 	}
 }
