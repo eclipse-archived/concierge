@@ -6,7 +6,7 @@ install:
 script:
   - ./gradlew -Dorg.eclipse.concierge.tests.waitAfterFrameworkShutdown=1000 clean build test assembleDist installDist -x signArchives
   - cd ./distribution
-  - ./gradlew generateWebsite
+  - ../gradlew generateWebsite
 
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
