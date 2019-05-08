@@ -48,6 +48,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -86,8 +87,10 @@ import org.osgi.framework.VersionRange;
 import org.osgi.framework.hooks.bundle.CollisionHook;
 import org.osgi.framework.hooks.weaving.WovenClass;
 import org.osgi.framework.namespace.BundleNamespace;
+import org.osgi.framework.namespace.ExecutionEnvironmentNamespace;
 import org.osgi.framework.namespace.HostNamespace;
 import org.osgi.framework.namespace.IdentityNamespace;
+import org.osgi.framework.namespace.NativeNamespace;
 import org.osgi.framework.namespace.PackageNamespace;
 import org.osgi.framework.startlevel.BundleStartLevel;
 import org.osgi.framework.wiring.BundleCapability;
@@ -231,13 +234,13 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 		framework.checkForCollision(CollisionHook.INSTALLING,
 				installingContext.getBundle(), currentRevision);
 
-		this.state = INSTALLED;
-
-		// if we are not during startup or shutdown, update the metadata
-		if (framework.state != Bundle.STARTING
+		install();
+		
+		// if we are not during startup (in case of restart) or shutdown, update the metadata
+		if ((framework.state != Bundle.STARTING || !framework.restart)
 				&& framework.state != Bundle.STOPPING) {
 			updateMetadata();
-		}
+		} 
 	}
 
 	// framework restart case
@@ -292,18 +295,19 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 		this.version = currentRevision.getVersion();
 		this.revisions.add(0, currentRevision);
 		this.startlevel = in.readInt();
-		this.state = Bundle.INSTALLED;
 		this.autostart = in.readShort();
 		this.lazyActivation = in.readBoolean();
 		this.lastModified = in.readLong();
 		in.close();
 		this.context = framework.createBundleContext(this);
 
-		// System.err.println("RESTORED BUNDLE " + toString() + " WITH SL " + this.startlevel + " and autostart " + this.autostart);
-		
 		if (framework.SECURITY_ENABLED) {
 			domain = new ProtectionDomain(null, null);
 		}
+		
+		install();
+		
+		// System.err.println("RESTORED BUNDLE " + toString() + " WITH SL " + this.startlevel + " and autostart " + this.autostart);
 	}
 
 	/**
@@ -407,14 +411,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 		}
 	}
 
-	// FIXME: can't this be called from constructor???
-	void install() throws BundleException {
-		// we are just installing the bundle, if it is
-		// possible, resolve it, if not, wait until the
-		// exports are really needed (i.e., they become critical)
-		// if (!currentRevision.isFragment()) {
-		// currentRevision.resolve(false);
-		// }
+	private void install() throws BundleException {
 
 		// register bundle with framework:
 		synchronized (framework) {
@@ -425,10 +422,37 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			framework.location_bundles.put(location, this);
 		}
 
+		this.state = Bundle.INSTALLED;
+		
 		// resolve if it is a framework extension
-		if (currentRevision.isFrameworkExtension()) {
-			currentRevision.resolve(false);
+		if (currentRevision.isExtensionBundle()) {
+			if(currentRevision.resolve(false)){
+				// call start for extension activator before notifying framework of resolve
+				if(currentRevision.extActivatorClassName != null){
+					try {
+						@SuppressWarnings("unchecked")
+						final Class<BundleActivator> activatorClass = (Class<BundleActivator>) framework.systemBundleClassLoader.loadClass(currentRevision.extActivatorClassName);
+						if (activatorClass == null) {
+							throw new ClassNotFoundException(currentRevision.extActivatorClassName);
+						}
+						currentRevision.extActivatorInstance = activatorClass.newInstance();
+						currentRevision.extActivatorInstance.start(framework.context);
+					} catch(Throwable err){
+						currentRevision.extActivatorInstance = null;
+						framework.notifyFrameworkListeners(FrameworkEvent.ERROR, BundleImpl.this,
+								new BundleException("Error calling extension bundle start(): " + this.toString(),
+										BundleException.ACTIVATOR_ERROR, err));
+					}
+				}
+			}
 		}
+		
+		// we are just installing the bundle, if it is
+		// possible, resolve it, if not, wait until the
+		// exports are really needed (i.e., they become critical)
+		// if (!currentRevision.isFragment()) {
+		// currentRevision.resolve(false);
+		// }
 	}
 
 	/**
@@ -830,6 +854,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				throw new IllegalStateException(
 						"Cannot update uninstalled bundle " + toString());
 			}
+			
+			final Revision updatedRevision = readAndProcessInputStream(stream);
 
 			boolean wasActive = false;
 			if (state == ACTIVE) {
@@ -851,8 +877,6 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					currentRevision.cleanup(false);
 				}
 			}
-
-			final Revision updatedRevision = readAndProcessInputStream(stream);
 
 			framework.checkForCollision(CollisionHook.UPDATING, this,
 					updatedRevision);
@@ -879,7 +903,7 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					// TODO: to log
 				}
 			}
-			if (framework.state != Bundle.STARTING
+			if ((framework.state != Bundle.STARTING || !framework.restart)
 					&& framework.state != Bundle.STOPPING) {
 				updateMetadata();
 			}
@@ -1018,22 +1042,25 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					"Bundle " + toString() + "has been unregistered.");
 		}
 
-		if (registeredServices == null) {
-			return null;
-		}
-
 		final ArrayList<ServiceReference<?>> result = new ArrayList<ServiceReference<?>>();
-		final ServiceReference<?>[] srefs = registeredServices
-				.toArray(new ServiceReference[registeredServices.size()]);
 
-		for (int i = 0; i < srefs.length; i++) {
-			synchronized (((ServiceReferenceImpl<?>) srefs[i]).useCounters) {
-				if (((ServiceReferenceImpl<?>) srefs[i]).useCounters
-						.get(this) != null) {
-					result.add(srefs[i]);
+		try {
+			ServiceReference[] srefs = context.getAllServiceReferences(null, null);
+			if(srefs == null)
+				return null;
+			
+			for (int i = 0; i < srefs.length; i++) {
+				synchronized (((ServiceReferenceImpl<?>) srefs[i]).useCounters) {
+					if (((ServiceReferenceImpl<?>) srefs[i]).useCounters
+							.get(this) != null) {
+						result.add(srefs[i]);
+					}
 				}
 			}
-		}
+		} catch(InvalidSyntaxException e){}
+		
+		if(result.size() == 0)
+			return null;
 
 		if (framework.SECURITY_ENABLED) {
 			// permissions for the interfaces have to be checked
@@ -1488,8 +1515,10 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 		BundleClassLoader classloader;
 
 		protected final String activatorClassName;
+		final String extActivatorClassName;
 		private String[] nativeCodeStrings;
 		protected BundleActivator activatorInstance;
+		BundleActivator extActivatorInstance;
 		protected String[] classpath;
 		protected Map<String, String> nativeLibraries;
 		protected List<Revision> fragments;
@@ -1615,9 +1644,15 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			// get the native libraries
 			nativeCodeStrings = readProperties(attrs,
 					Constants.BUNDLE_NATIVECODE, null);
-
+			
+			// create require capability from native libraries
+			if(nativeCodeStrings != null)
+				addNativeCodeRequirement(nativeCodeStrings);
+			
+			
 			// get the activator
 			activatorClassName = attrs.getValue(Constants.BUNDLE_ACTIVATOR);
+			extActivatorClassName = attrs.getValue(Constants.EXTENSION_BUNDLE_ACTIVATOR);
 
 			// get start_activation_policy, if any
 			final String activationPolicy = readProperty(attrs,
@@ -1710,6 +1745,25 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			} else {
 				framework.publishCapabilities(capabilities.getAllValues());
 			}
+			
+			if(isExtensionBundle()){
+				// according to spec 3.15.1
+				// extension bundle should have no Bundle-Activator
+				// or any requirements other than Fragment-Host and osgi.ee
+				if(activatorClassName != null){
+					throw new BundleException("Extension bundles cannot have a Bundle-Activator");
+				}
+				
+				for(Requirement r : requirements.getAllValues()){
+					String namespace = r.getNamespace();
+					if(!(ExecutionEnvironmentNamespace
+						  .EXECUTION_ENVIRONMENT_NAMESPACE.equals(namespace)
+						 || HostNamespace.HOST_NAMESPACE.equals(namespace))){
+						throw new BundleException("Extension bundles can only have "
+								+ "osgi.ee or osgi.wiring.host requirements, not: "+r);
+					}
+				}
+			}
 		}
 
 		protected void refresh() {
@@ -1751,6 +1805,9 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				final BundleCapabilityImpl cap = new BundleCapabilityImpl(this,
 						reqStrs[i]);
 				final String namespace = cap.getNamespace();
+				if(namespace.equals(NativeNamespace.NATIVE_NAMESPACE)){
+					throw new BundleException("Only the system bundle can provide a native capability", BundleException.MANIFEST_ERROR);
+				}
 				result.insert(namespace, cap);
 			}
 			return result;
@@ -1777,6 +1834,9 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 		boolean isExtensionBundle() {
 			final String fragmentHostName = getFragmentHost();
+			if(fragmentHostName == null)
+				return false;
+			
 			return fragmentHostName.equals(Constants.SYSTEM_BUNDLE_SYMBOLICNAME)
 					|| fragmentHostName
 							.equals(Concierge.FRAMEWORK_SYMBOLIC_NAME);
@@ -1883,12 +1943,9 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 					critical)) {
 				return false;
 			}
-
-			if (state == Bundle.INSTALLED) {
-				state = Bundle.RESOLVED;
-				framework.notifyBundleListeners(BundleEvent.RESOLVED,
-						BundleImpl.this);
-			}
+			
+			markResolved();
+			
 			return true;
 		}
 
@@ -1947,17 +2004,6 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 								+ currentRevision.getSymbolicName(),
 						BundleException.RESOLVE_ERROR, iae);
 			}
-		}
-
-		protected boolean isFrameworkExtension() {
-			final List<BundleRequirement> hostReqs = requirements
-					.get(HostNamespace.HOST_NAMESPACE);
-			if (hostReqs == null) {
-				return false;
-			}
-			return HostNamespace.EXTENSION_FRAMEWORK
-					.equals(hostReqs.get(0).getDirectives().get(
-							HostNamespace.REQUIREMENT_EXTENSION_DIRECTIVE));
 		}
 
 		/**
@@ -2103,6 +2149,147 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			return hasMatch || hasOptional;
 		}
 
+		
+		/**
+		 * Add native code strings as requirements
+		 * 
+		 * @param nativeCodeStrings
+		 */
+		// TODO merge parts with processNativeLibraries?
+		void addNativeCodeRequirement(final String[] nativeCodeStrings) throws BundleException {
+			final StringBuilder nativeRequirementBuilder = new StringBuilder();
+			nativeRequirementBuilder.append("osgi.native;filter:=\"");
+			
+			int length = nativeCodeStrings.length;
+			boolean optional = false;
+			if(nativeCodeStrings[length-1].equals("*")){
+				optional = true;
+				length = length - 1;
+			}
+
+			if(length > 1){
+				nativeRequirementBuilder.append("(|(");
+			} else {
+				nativeRequirementBuilder.append("(");
+			}
+			
+			for(int i=0;i<length;i++){
+				final StringTokenizer tokenizer = new StringTokenizer(
+						nativeCodeStrings[i], ";");
+				
+				final Map<String, List<String>> filters = new HashMap<String, List<String>>(0);
+				
+				while (tokenizer.hasMoreTokens()) {
+					final String token = tokenizer.nextToken();
+					final int a = token.indexOf("=");
+					if (a > -1) {
+						final String criterium = token.substring(0, a)
+								.trim().intern();
+						final String value = token.substring(a + 1).trim();
+						if (criterium == Constants.BUNDLE_NATIVECODE_OSNAME
+								|| criterium == Constants.BUNDLE_NATIVECODE_OSVERSION
+								|| criterium == Constants.BUNDLE_NATIVECODE_LANGUAGE
+								|| criterium == Constants.BUNDLE_NATIVECODE_PROCESSOR
+								|| criterium == Constants.SELECTION_FILTER_ATTRIBUTE) {
+							List<String> f = filters.get(criterium);
+							if(f == null){
+								f = new ArrayList<String>();
+								filters.put(criterium, f);
+							}
+							f.add(value);
+						}
+					} 
+				}
+				
+				if(filters.size() > 1)
+					nativeRequirementBuilder.append("&(");
+				
+				Iterator<Entry<String, List<String>>> it = filters.entrySet().iterator();
+				while(it.hasNext()){
+					Entry<String, List<String>> e = it.next();
+					List<String> values = e.getValue();
+					if(values.size() > 1 )
+						nativeRequirementBuilder.append("|(");
+
+					for(int k=0; k < values.size(); k++){
+						if(e.getKey() == Constants.SELECTION_FILTER_ATTRIBUTE){
+							String filter = values.get(k);
+							nativeRequirementBuilder.append(filter.substring(2, filter.length()-1));
+						} else if(e.getKey() == Constants.BUNDLE_NATIVECODE_OSVERSION){
+							VersionRange v = new VersionRange(Utils.unQuote(values.get(k)));
+							if(v.getRight() != null)
+								nativeRequirementBuilder.append("&(");
+								
+							if(v.getLeftType() == VersionRange.LEFT_OPEN){
+								nativeRequirementBuilder.append("!(")
+									.append("osgi.native.").append(Constants.BUNDLE_NATIVECODE_OSVERSION)
+									.append("<=")
+									.append(v.getLeft().toString())
+									.append("))");
+							} else {
+								nativeRequirementBuilder.append("osgi.native.")
+								.append(Constants.BUNDLE_NATIVECODE_OSVERSION)
+								.append(">=")
+								.append(v.getLeft().toString())
+								.append(")");
+							}
+							
+							if(v.getRight() != null){
+								nativeRequirementBuilder.append("(");
+								
+								if(v.getRightType() == VersionRange.RIGHT_OPEN){
+									nativeRequirementBuilder.append("osgi.native.")
+										.append(Constants.BUNDLE_NATIVECODE_OSVERSION)
+										.append("<=")
+										.append(v.getRight().toString())
+										.append(")");
+								} else {
+									nativeRequirementBuilder.append("!(")
+										.append("osgi.native.").append(Constants.BUNDLE_NATIVECODE_OSVERSION)
+										.append(">=")
+										.append(v.getRight().toString())
+										.append("))");
+								}
+								
+								nativeRequirementBuilder.append(")");
+							}
+							
+						} else {
+							nativeRequirementBuilder.append("osgi.native.").append(e.getKey())
+								.append("~=").append(Utils.unQuote(values.get(k))).append(")");
+						}
+						
+						if(k != values.size()-1)
+							nativeRequirementBuilder.append("(");
+						
+					}
+					if(e.getValue().size() > 1 )
+						nativeRequirementBuilder.append(")");
+
+					if(it.hasNext())
+						nativeRequirementBuilder.append("(");
+					
+				}
+				
+				if(filters.size() > 1)
+					nativeRequirementBuilder.append(")");
+				
+				if(i != length - 1)
+					nativeRequirementBuilder.append("(");
+			}
+			
+			if(nativeCodeStrings.length > 1)
+				nativeRequirementBuilder.append(")");
+			
+			nativeRequirementBuilder.append("\"");
+			
+			if(optional)
+				nativeRequirementBuilder.append(";resolution:=optional");
+			
+			BundleRequirementImpl req = new BundleRequirementImpl(this, nativeRequirementBuilder.toString());
+			requirements.insert(req.getNamespace(), req);
+		}
+		
 		/**
 		 * @param uninstall
 		 *            if false, the bundle is only prepared for an update or
@@ -2131,9 +2318,12 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 		}
 
 		void markResolved() {
-			state = Bundle.RESOLVED;
-			framework.notifyBundleListeners(BundleEvent.RESOLVED,
-					BundleImpl.this);
+			if (state == Bundle.INSTALLED) {
+				state = Bundle.RESOLVED;
+				
+				framework.notifyBundleListeners(BundleEvent.RESOLVED,
+						BundleImpl.this);
+			}
 		}
 
 		void setWiring(final ConciergeBundleWiring wiring) {
@@ -2259,8 +2449,10 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 			// native code
 			final String[] newNativeStrings;
+			final List<BundleRequirement> nativeRequirement;
 			if (fragment.nativeCodeStrings == null) {
 				newNativeStrings = nativeCodeStrings;
+				nativeRequirement = null;
 			} else {
 				final ArrayList<String> temp = new ArrayList<String>();
 				if (nativeCodeStrings != null) {
@@ -2268,11 +2460,28 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				}
 				temp.addAll(Arrays.asList(fragment.nativeCodeStrings));
 				newNativeStrings = temp.toArray(new String[temp.size()]);
+				nativeRequirement = fragment.requirements.get(NativeNamespace.NATIVE_NAMESPACE);
 			}
+			
+			if (newNativeStrings != null) {
+				nativeLibraries = new HashMap<String, String>(
+						newNativeStrings.length);
+				if(!processNativeLibraries(newNativeStrings)){
+					throw new BundleException("Could not load native library from fragment",
+							BundleException.NATIVECODE_ERROR);
+				}
+			}
+			nativeCodeStrings = newNativeStrings;
+
 
 			// commit the changes
 			final BundleImpl fragmentBundle = (BundleImpl) fragment.getBundle();
 
+			if(nativeRequirement != null){
+				requirements.insertAll(NativeNamespace.NATIVE_NAMESPACE,
+						nativeRequirement);
+			}
+			
 			if (newImports != null) {
 				requirements.insertAll(PackageNamespace.PACKAGE_NAMESPACE,
 						newImports);
@@ -2321,14 +2530,6 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			if (newClasspaths.size() > 0) {
 				classpath = newClasspaths
 						.toArray(new String[newClasspaths.size()]);
-			}
-
-			// add native code
-			nativeCodeStrings = newNativeStrings;
-			if (nativeCodeStrings != null) {
-				nativeLibraries = new HashMap<String, String>(
-						nativeCodeStrings.length);
-				processNativeLibraries(newNativeStrings);
 			}
 
 			return true;
@@ -3037,22 +3238,28 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 								framework.callWeavingHooks(wovenClass);
 								bytes = wovenClass.getBytes();
 
-								requirements.insertAll(
-										PackageNamespace.PACKAGE_NAMESPACE,
-										wovenClass.dynamicImportRequirements);
-								dynamicImports.addAll(
-										wovenClass.dynamicImportRequirements);
-
-								// define package
-								definePackage(packageOf(classname));
-								final Class<?> ownClazz = defineClass(classname,
-										bytes, 0, bytes.length, domain);
-
-								wovenClass.setDefinedClass(ownClazz);
-								wovenClass.setProtectionDomain(
-										ownClazz.getProtectionDomain());
-
-								return ownClazz;
+								try {
+									for(int k=0; k<wovenClass.dynamicImportRequirements.size(); k++){
+										BundleRequirement req = wovenClass.dynamicImportRequirements.get(k);
+										wiring.addRequirement(req);
+									}
+									
+									dynamicImports.addAll(
+											wovenClass.dynamicImportRequirements);
+									
+									final Class<?> ownClazz = defineClass(classname,
+											bytes, 0, bytes.length, domain);
+									
+									wovenClass.setDefinedClass(ownClazz);
+									wovenClass.setProtectionDomain(
+											ownClazz.getProtectionDomain());
+									framework.notifyWovenClassListeners(wovenClass);
+									
+									return ownClazz;
+								} catch(ClassFormatError err){
+									wovenClass.setDefineFailed();
+									framework.notifyWovenClassListeners(wovenClass);
+								}
 							}
 
 							// define package
@@ -3359,6 +3566,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 			protected List<BundleRequirement> dynamicImportRequirements;
 
 			private ProtectionDomain domain;
+			
+			private int state = WovenClass.TRANSFORMING;
 
 			WovenClassImpl(final String clazzName, final byte[] bytes,
 					final Revision revision, final ProtectionDomain domain) {
@@ -3439,8 +3648,8 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 				if (newBytes == null) {
 					throw new NullPointerException("newBytes");
 				}
-				if (weavingComplete) {
-					throw new IllegalStateException("Weaving is complete");
+				if (state == WovenClass.TRANSFORMED || weavingComplete) {
+					throw new IllegalStateException("Woven class bytes cannot be changed anymore!");
 				}
 
 				bytes = newBytes;
@@ -3472,18 +3681,35 @@ public class BundleImpl extends AbstractBundle implements BundleStartLevel {
 
 			void setDefinedClass(final Class<?> clazz) {
 				this.clazz = clazz;
+				this.state = WovenClass.DEFINED;
+				weavingComplete = true;
+			}
+			
+			void setDefineFailed(){
+				this.state = WovenClass.DEFINE_FAILED;
+				this.weavingComplete = true;
 			}
 
 			void setProtectionDomain(final ProtectionDomain protectionDomain) {
 				this.domain = protectionDomain;
 			}
 
-			void setComplete() {
-				weavingComplete = true;
+			void setTransformed() {
 				bytes = bytes.clone();
 				dynamicImports = Collections.unmodifiableList(dynamicImports);
+				state = WovenClass.TRANSFORMED;
+			}
+			
+			void setTransformingFailed(){
+				bytes = bytes.clone();
+				dynamicImports = Collections.unmodifiableList(dynamicImports);
+				state = WovenClass.TRANSFORMING_FAILED;
+				weavingComplete = true;
 			}
 
+			public int getState() {
+				return state;
+			}
 		}
 
 		void addHostedCapability(final HostedCapability hostedCap) {

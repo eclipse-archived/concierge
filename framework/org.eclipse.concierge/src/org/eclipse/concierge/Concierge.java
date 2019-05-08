@@ -19,6 +19,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -79,13 +80,18 @@ import org.osgi.framework.FrameworkEvent;
 import org.osgi.framework.FrameworkListener;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceEvent;
+import org.osgi.framework.ServiceFactory;
 import org.osgi.framework.ServiceListener;
+import org.osgi.framework.ServiceObjects;
 import org.osgi.framework.ServicePermission;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.framework.SynchronousBundleListener;
 import org.osgi.framework.UnfilteredServiceListener;
 import org.osgi.framework.Version;
+import org.osgi.framework.dto.BundleDTO;
+import org.osgi.framework.dto.FrameworkDTO;
+import org.osgi.framework.dto.ServiceReferenceDTO;
 import org.osgi.framework.hooks.bundle.CollisionHook;
 import org.osgi.framework.hooks.bundle.EventHook;
 import org.osgi.framework.hooks.resolver.ResolverHook;
@@ -96,6 +102,7 @@ import org.osgi.framework.hooks.service.ListenerHook;
 import org.osgi.framework.hooks.service.ListenerHook.ListenerInfo;
 import org.osgi.framework.hooks.weaving.WeavingException;
 import org.osgi.framework.hooks.weaving.WeavingHook;
+import org.osgi.framework.hooks.weaving.WovenClassListener;
 import org.osgi.framework.launch.Framework;
 import org.osgi.framework.namespace.AbstractWiringNamespace;
 import org.osgi.framework.namespace.BundleNamespace;
@@ -104,6 +111,7 @@ import org.osgi.framework.namespace.IdentityNamespace;
 import org.osgi.framework.namespace.PackageNamespace;
 import org.osgi.framework.startlevel.BundleStartLevel;
 import org.osgi.framework.startlevel.FrameworkStartLevel;
+import org.osgi.framework.startlevel.dto.FrameworkStartLevelDTO;
 import org.osgi.framework.wiring.BundleCapability;
 import org.osgi.framework.wiring.BundleRequirement;
 import org.osgi.framework.wiring.BundleRevision;
@@ -146,7 +154,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 	/**
 	 * Version displayed upon startup and returned by System Bundle
 	 */
-	private static final String FRAMEWORK_VERSION = "5.1.0";
+	private static final String FRAMEWORK_VERSION = "6.0.0.qualifier";
 
 	@SuppressWarnings("deprecation")
 	private static Class<?> SERVICE_EVENT_HOOK_CLASS = org.osgi.framework.hooks.service.EventHook.class;
@@ -425,6 +433,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 	// weaving hooks
 	private final List<ServiceReferenceImpl<WeavingHook>> weavingHooks = new ArrayList<ServiceReferenceImpl<WeavingHook>>(0);
 
+	// woven class listeners
+	private final List<ServiceReferenceImpl<WovenClassListener>> wovenClassListeners = new ArrayList<ServiceReferenceImpl<WovenClassListener>>(0);
+	
 	// "hooks registry"
 	protected final HashMap<String, List<?>> hooks = new HashMap<String, List<?>>();
 	// @formatter:on
@@ -685,7 +696,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 				minor = parsed;
 			}
 		}
-		
+
 		// check for J2ME VMs. If not set (like in CEE-J) fallback to JavaSE
 		if (System.getProperty("java.specification.name", "")
 				.equals("J2ME Foundation Specification")) {
@@ -847,7 +858,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 		}
 
 		defaultProperties.setProperty(Constants.FRAMEWORK_SYSTEMPACKAGES,
-				"org.osgi.framework;version=1.7,org.osgi.framework.hooks.bundle;version=1.1,org.osgi.framework.hooks.resolver;version=1.0,org.osgi.framework.hooks.service;version=1.1,org.osgi.framework.hooks.weaving;version=1.0,org.osgi.framework.launch;version=1.1,org.osgi.framework.namespace;version=1.0,org.osgi.framework.startlevel;version=1.0,org.osgi.framework.wiring;version=1.1,org.osgi.resource;version=1.0,org.osgi.service.log;version=1.3,org.osgi.service.packageadmin;version=1.2,org.osgi.service.startlevel;version=1.1,org.osgi.service.url;version=1.0,org.osgi.service.resolver;version=1.0,org.osgi.util.tracker;version=1.5.1,META-INF.services");
+				"org.osgi.framework;version=1.8,org.osgi.framework.dto;version=1.8,org.osgi.dto;version=1.0,org.osgi.framework.hooks.bundle;version=1.1,org.osgi.framework.hooks.resolver;version=1.0,org.osgi.framework.hooks.service;version=1.1,org.osgi.framework.hooks.weaving;version=1.1,org.osgi.framework.launch;version=1.2,org.osgi.framework.namespace;version=1.1,org.osgi.framework.startlevel;version=1.0,org.osgi.framework.startlevel.dto;version=1.0,org.osgi.framework.wiring;version=1.2,org.osgi.framework.wiring.dto;version=1.2,org.osgi.resource;version=1.0,org.osgi.resource.dto;version=1.0,org.osgi.service.log;version=1.3,org.osgi.service.packageadmin;version=1.2,org.osgi.service.startlevel;version=1.1,org.osgi.service.url;version=1.0,org.osgi.service.resolver;version=1.0.1,org.osgi.util.tracker;version=1.5.1,META-INF.services");
 
 		Object obj;
 		defaultProperties.put(Constants.FRAMEWORK_OS_NAME,
@@ -1100,13 +1111,25 @@ public final class Concierge extends AbstractBundle implements Framework,
 	}
 
 	// Framework
-
 	/**
 	 * 
 	 * @see org.osgi.framework.launch.Framework#init()
 	 * @category Framework
 	 */
 	public void init() throws BundleException {
+		init(new FrameworkListener[0]);
+	}
+	
+	/**
+	 * 
+	 * @see org.osgi.framework.launch.Framework#init(FrameworkListener[])
+	 * @category Framework
+	 */
+	public void init(FrameworkListener... listeners) throws BundleException {
+		for(int i=0;i<listeners.length;i++){
+			frameworkListeners.add(listeners[i]);
+		}
+		
 		if (state == Bundle.ACTIVE || state == Bundle.STARTING
 				|| state == Bundle.STOPPING) {
 			return;
@@ -1138,7 +1161,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 				restart = true;
 			}
 		}
-
+		
 		if (!storage.exists() && !storage.mkdirs()) {
 			throw new BundleException(
 					"Could not create storage directory " + storage);
@@ -1256,6 +1279,42 @@ public final class Concierge extends AbstractBundle implements Framework,
 				}
 			}
 		}
+		
+		// native capability
+		StringBuilder nativeCapBuilder = new StringBuilder();
+		nativeCapBuilder.append("osgi.native;")
+						.append("osgi.native.osname:List<String>=\"")
+						// TODO list all equivalent OS names
+						.append(osname).append("\";")
+						.append("osgi.native.osversion:Version=\"")
+						.append(osversion.toString()).append("\";")
+						.append("osgi.native.processor:List<String>=\"");
+						// TODO list all equivalent processors
+						if(processor.equals("x86-64")){
+							nativeCapBuilder.append("x86_64").append(",")
+							.append("amd64").append(",")
+							.append("em64t").append(",");
+						} else if(processor.equals("x86")){
+							nativeCapBuilder.append("pentium").append(",")
+							.append("i386").append(",")
+							.append("i486").append(",")
+							.append("i586").append(",")
+							.append("i686").append(",");
+						}
+		nativeCapBuilder.append(processor).append("\";")
+						.append("osgi.native.language=\"")
+						.append(language).append("\";");
+		// also add all launcher properties (OSGi spec 8.7)?
+		final Enumeration<?> en = properties.propertyNames();
+		while(en.hasMoreElements()){
+			String key = en.nextElement().toString();
+			if(key.startsWith("osgi.native"))
+				continue;
+			nativeCapBuilder.append(key).append("=\"").append(properties.getProperty(key).toString()).append("\";");
+		}
+		final BundleCapabilityImpl nativeCap = new BundleCapabilityImpl(this, 
+				nativeCapBuilder.toString());
+		systemBundleCapabilities.add(nativeCap);
 
 		// system bundle symbolic name
 		final BundleCapabilityImpl sysbundleCap = new BundleCapabilityImpl(this,
@@ -1275,6 +1334,17 @@ public final class Concierge extends AbstractBundle implements Framework,
 				"osgi.wiring.host; osgi.wiring.host=org.eclipse.concierge");
 		systemBundleCapabilities.add(sysbundleHostCap);
 
+		// osgi.identity capabilityies
+		final BundleCapabilityImpl identityCap1 = new BundleCapabilityImpl(
+				this,
+				"osgi.identity; osgi.identity=org.eclipse.concierge");
+		systemBundleCapabilities.add(identityCap1);
+		
+		final BundleCapabilityImpl identityCap2 = new BundleCapabilityImpl(
+				this,
+				"osgi.identity; osgi.identity=system.bundle");
+		systemBundleCapabilities.add(identityCap2);
+		
 		publishCapabilities(systemBundleCapabilities);
 
 		// add to framework wiring
@@ -1372,11 +1442,11 @@ public final class Concierge extends AbstractBundle implements Framework,
 	 * @see org.osgi.framework.launch.Framework#waitForStop(long)
 	 * @category Framework
 	 */
-	public synchronized FrameworkEvent waitForStop(final long timeout)
+	public FrameworkEvent waitForStop(final long timeout)
 			throws InterruptedException {
 		if (state == Bundle.STARTING || state == Bundle.STOPPING
 				|| state == Bundle.ACTIVE) {
-			synchronized (this) {
+			synchronized (Concierge.this) {
 				wait(timeout);
 			}
 			if (state != Bundle.RESOLVED && state != Bundle.INSTALLED) {
@@ -1415,11 +1485,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 			System.out.println("-------------------"
 					+ "--------------------------------------");
 			final long time = System.currentTimeMillis();
-
-			// resolve all extension bundles
-			for (final BundleImpl ext : extensionBundles) {
-				ext.state = Bundle.RESOLVED;
-			}
 
 			// start System bundle
 			start(context);
@@ -1520,9 +1585,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 								logger.log(LogService.LOG_DEBUG,
 										"RESTORED BUNDLE " + bundle.location);
 							}
-							bundles.add(bundle);
-							bundleID_bundles.put(new Long(bundle.bundleId),
-									bundle);
 						} catch (final Exception e) {
 							// too early for logger
 							e.printStackTrace();
@@ -1584,6 +1646,21 @@ public final class Concierge extends AbstractBundle implements Framework,
 	protected void stop0(final boolean update) {
 		state = Bundle.STOPPING;
 
+		// call extension bundles with successfully called start activators
+		for(BundleImpl b : extensionBundles){
+			if(b.currentRevision.extActivatorInstance != null){
+				try {
+					b.currentRevision.extActivatorInstance.stop(context);
+				} catch(Throwable err){
+					notifyFrameworkListeners(FrameworkEvent.ERROR, b,
+							new BundleException("Error calling extension bundle start(): " + b.toString(),
+									BundleException.ACTIVATOR_ERROR, err));
+				} finally {
+					b.currentRevision.extActivatorInstance = null;
+				}
+			}
+		}
+		
 		if (!update) {
 			System.out.println("----------------------------"
 					+ "-----------------------------");
@@ -1610,6 +1687,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 			bundles.clear();
 			bundleID_bundles.clear();
+			location_bundles.clear();
+			symbolicName_bundles.clear();
+			extensionBundles.clear();
 			serviceRegistry.clear();
 
 			// restore micro-services
@@ -1622,14 +1702,13 @@ public final class Concierge extends AbstractBundle implements Framework,
 					? FrameworkEvent.STOPPED_UPDATE : FrameworkEvent.STOPPED,
 					this, null);
 
-			// notify waiting threads
-			synchronized (Concierge.this) {
-				Concierge.this.notify();
-			}
 		} catch (final Exception e) {
 			stopEvent = new FrameworkEvent(FrameworkEvent.ERROR, Concierge.this,
 					new BundleException("Exception during framework start", e));
-			Concierge.this.notify();
+		} finally {
+			synchronized(Concierge.this){
+				Concierge.this.notifyAll();
+			}
 		}
 	}
 
@@ -1743,11 +1822,32 @@ public final class Concierge extends AbstractBundle implements Framework,
 			return (A) wirings.get(this);
 		}
 
-		if (type.isInstance(this)) {
-			return (A) this;
+		if(type == FrameworkStartLevelDTO.class){
+			FrameworkStartLevelDTO fsl = new FrameworkStartLevelDTO();
+			fsl.initialBundleStartLevel = initStartlevel;
+			fsl.startLevel = startlevel;
+			return (A) fsl;
 		}
-
-		return null;
+		
+		if(type == FrameworkDTO.class){
+			FrameworkDTO dto = new FrameworkDTO();
+			dto.bundles = new ArrayList<BundleDTO>();
+			for(Bundle b : bundles){
+				dto.bundles.add(b.adapt(BundleDTO.class));
+			}
+			dto.services = new ArrayList<ServiceReferenceDTO>();
+			for(ServiceReference ref : serviceRegistry.getAllValues()){
+				dto.services.add(getServiceReferenceDTO(ref));
+			}
+			dto.properties = new HashMap<String, Object>();
+			for(Object k : properties.keySet()){
+				String key = (String) k;
+				dto.properties.put(key, getDTOValue(properties.getProperty(key)));
+			}
+			return (A) dto;
+		}
+		
+		return super.adapt(type);
 	}
 
 	// Bundle
@@ -1906,7 +2006,12 @@ public final class Concierge extends AbstractBundle implements Framework,
 	public void setStartLevel(final int targetLevel,
 			final FrameworkListener... listeners) {
 		// TODO: check AdminPermission(this, STARTLEVEL);
-
+		
+		// cannot set the startlevel during init - required for extension bundle activators
+		if(state == STARTING){
+			throw new IllegalStateException("Cannot set the start level while starting");
+		}
+		
 		if (targetLevel <= 0) {
 			throw new IllegalArgumentException(
 					"Start level " + targetLevel + " is not a valid level");
@@ -2100,6 +2205,21 @@ public final class Concierge extends AbstractBundle implements Framework,
 	}
 
 	// FrameworkWiring
+	/**
+	 * @see org.osgi.framework.wiring.FrameworkWiring#findProviders(Requirement requirement)
+	 */
+	public Collection<BundleCapability> findProviders(Requirement requirement) {
+		final List<Capability> providers = resolver.findProviders(requirement);
+		final List<BundleCapability> result = new ArrayList<BundleCapability>(providers.size());
+		for(int i=0;i<providers.size();i++){
+			Capability cap = providers.get(i);
+			if(cap instanceof BundleCapability){
+				result.add((BundleCapability) cap);
+			}
+		}
+		return result;
+	}
+	
 	/**
 	 * @see org.osgi.framework.wiring.FrameworkWiring#refreshBundles(java.util.Collection,
 	 *      org.osgi.framework.FrameworkListener[])
@@ -2546,23 +2666,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 				@Override
 				public List<Capability> findProviders(
 						final Requirement requirement) {
-					final String filterStr = requirement.getDirectives()
-							.get(Namespace.REQUIREMENT_FILTER_DIRECTIVE);
-
-					final List<Capability> providers;
-					if (filterStr == null) {
-						providers = capabilityRegistry
-								.getAll(requirement.getNamespace());
-					} else {
-						try {
-							providers = RFC1960Filter.filterWithIndex(
-									requirement, filterStr, capabilityRegistry);
-						} catch (final InvalidSyntaxException ise) {
-							// TODO: debug output
-							ise.printStackTrace();
-							return Collections.emptyList();
-						}
-					}
+					List<Capability> providers = resolver.findProviders(requirement);
 
 					sortProviders(providers, requirement.getNamespace());
 
@@ -2922,6 +3026,28 @@ public final class Concierge extends AbstractBundle implements Framework,
 			}
 		}
 
+		protected List<Capability> findProviders(Requirement requirement){
+			final String filterStr = requirement.getDirectives()
+					.get(Namespace.REQUIREMENT_FILTER_DIRECTIVE);
+
+			final List<Capability> providers;
+			if (filterStr == null) {
+				providers = capabilityRegistry
+						.getAll(requirement.getNamespace());
+			} else {
+				try {
+					providers = RFC1960Filter.filterWithIndex(
+							requirement, filterStr, capabilityRegistry);
+				} catch (final InvalidSyntaxException ise) {
+					// TODO: debug output
+					ise.printStackTrace();
+					return Collections.emptyList();
+				}
+			}
+			
+			return providers;
+		}
+		
 		private boolean checkSingleton(final BundleRevision resource) {
 			try {
 				final List<Capability> identities = resource
@@ -3403,6 +3529,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 								public void connect() throws IOException {
 									inputStream = bundle.getURLResource(u, rev);
+									if(inputStream == null){
+										throw new FileNotFoundException("Could not find "+u.toString());
+									}
 									isConnected = true;
 								}
 
@@ -3623,6 +3752,10 @@ public final class Concierge extends AbstractBundle implements Framework,
 				isHook = true;
 				hookList.remove(sref);
 			}
+			
+			if(clazzes[i].equals(WovenClassListener.class.getName())){
+				wovenClassListeners.remove(sref);
+			}
 		}
 
 		final AbstractBundle bundle = (AbstractBundle) sref.getBundle();
@@ -3690,10 +3823,12 @@ public final class Concierge extends AbstractBundle implements Framework,
 			}
 
 			for (final BundleContext removed : contexts.getRemoved()) {
-				for (final BundleListener listener : bundleListenerMap
+				if(removed != this.context){ // system bundle contexts listeners always gets events
+					for (final BundleListener listener : bundleListenerMap
 						.get(removed)) {
-					syncListeners.remove(listener);
-					asyncListeners.remove(listener);
+						syncListeners.remove(listener);
+						asyncListeners.remove(listener);
+					}
 				}
 			}
 
@@ -3937,10 +4072,15 @@ public final class Concierge extends AbstractBundle implements Framework,
 			for (final Iterator<ServiceListenerEntry> iter = serviceListenersCopy
 					.iterator(); iter.hasNext();) {
 				final ServiceListenerEntry entry = iter.next();
-				final Collection<ListenerInfo> listeners = map
-						.get(entry.bundle.context);
-				if (listeners != null && listeners.contains(entry)) {
+				// system bundle listeners are always called
+				if(entry.bundle.context == this.context){
 					list.add(entry);
+				} else {
+					final Collection<ListenerInfo> listeners = map
+							.get(entry.bundle.context);
+					if (listeners != null && listeners.contains(entry)) {
+						list.add(entry);
+					}
 				}
 			}
 			entries = list.toArray(new ServiceListenerEntry[list.size()]);
@@ -3975,6 +4115,35 @@ public final class Concierge extends AbstractBundle implements Framework,
 			} else if (state == ServiceEvent.MODIFIED) {
 				if (entries[i].filter.matches(oldProperties)) {
 					entries[i].listener.serviceChanged(endmatchEvent);
+				}
+			}
+		}
+	}
+	
+	/**
+	 * notify WovenClassListeners
+	 */
+	void notifyWovenClassListeners(WovenClassImpl wovenClass){
+		if(wovenClassListeners.isEmpty())
+			return;
+		
+		final ArrayList<ServiceReferenceImpl<WovenClassListener>> listeners 
+				= new ArrayList<ServiceReferenceImpl<WovenClassListener>>(wovenClassListeners);
+		
+		for(int i=0;i<listeners.size();i++){
+			ServiceReferenceImpl<WovenClassListener> sref = listeners.get(i);
+			
+			WovenClassListener listener = sref.getService(this);
+			if(listener != null){
+				try {
+					listener.modified(wovenClass);
+				} catch(Exception e){
+					if (LOG_ENABLED && DEBUG_SERVICES) {
+						logger.log(LogService.LOG_ERROR,
+								"Error calling WovenClassListener", e);
+					}
+				} finally {
+					sref.ungetService(this);
 				}
 			}
 		}
@@ -4019,7 +4188,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 		final ServiceReference<?>[] refs = bundle.getServicesInUse();
 		if (refs != null) {
 			for (int i = 0; i < refs.length; i++) {
-				((ServiceReferenceImpl<?>) refs[i]).ungetService(bundle);
+				ServiceReferenceImpl<?> ref = ((ServiceReferenceImpl<?>) refs[i]); 
+				ref.ungetAllServices(bundle);
 			}
 		}
 	}
@@ -4078,8 +4248,6 @@ public final class Concierge extends AbstractBundle implements Framework,
 		final BundleImpl bundle = new BundleImpl(this, context, location,
 				nextBundleID++, in);
 
-		bundle.install();
-
 		// notify the listeners
 		notifyBundleListeners(BundleEvent.INSTALLED, bundle,
 				context.getBundle());
@@ -4106,6 +4274,11 @@ public final class Concierge extends AbstractBundle implements Framework,
 			sref.ungetService(Concierge.this);
 		}
 
+		if(context == this.context){
+			// if called from system bundle context, return original unfiltered bundles
+			return bundles.toArray(new Bundle[bundles.size()]);
+		}
+		
 		return list.toArray(new Bundle[list.size()]);
 	}
 
@@ -4567,9 +4740,11 @@ public final class Concierge extends AbstractBundle implements Framework,
 					ungetService(hookRef);
 				}
 
-				return c.size() == 0 ? null
+				if(this != Concierge.this.context) {
+					return c.size() == 0 ? null
 						: (ServiceReference[]) c
 								.toArray(new ServiceReference[c.size()]);
+				}
 			}
 
 			if (LOG_ENABLED && DEBUG_SERVICES) {
@@ -4743,6 +4918,10 @@ public final class Concierge extends AbstractBundle implements Framework,
 				isHook = checkHook(clazz, sref, true);
 
 				serviceRegistry.insert(clazz, sref);
+				
+				if(clazz.equals(WovenClassListener.class.getName())){
+					wovenClassListeners.add((ServiceReferenceImpl<WovenClassListener>) sref);
+				}
 			}
 
 			if (LOG_ENABLED && DEBUG_SERVICES) {
@@ -4814,7 +4993,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 				final Object service, final Dictionary<String, ?> properties) {
 			return registerService(new String[] { clazz }, service, properties);
 		}
-
+		
+		
 		/**
 		 * remove a bundle listener.
 		 * 
@@ -4915,6 +5095,14 @@ public final class Concierge extends AbstractBundle implements Framework,
 
 		// FIXME: should be the other way around...
 		@SuppressWarnings("unchecked")
+		public <S> ServiceRegistration<S> registerService(final Class<S> clazz,
+				final ServiceFactory<S> factory, final Dictionary<String, ?> properties) {
+			return (ServiceRegistration<S>) registerService(clazz.getName(), 
+					factory, properties);
+		}
+
+		// FIXME: should be the other way around...
+		@SuppressWarnings("unchecked")
 		public <S> ServiceReference<S> getServiceReference(
 				final Class<S> clazz) {
 			return (ServiceReference<S>) getServiceReference(
@@ -4934,6 +5122,13 @@ public final class Concierge extends AbstractBundle implements Framework,
 				return (Collection) Arrays.asList(refs);
 			}
 		}
+		
+		public <S> ServiceObjects<S> getServiceObjects(
+				final ServiceReference<S> reference) {
+			checkValid();
+
+			return ((ServiceReferenceImpl) reference).getServiceObjects(bundle);
+		}
 
 		/**
 		 * @see org.osgi.framework.BundleContext#getBundle(java.lang.String)
@@ -4942,6 +5137,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 		public Bundle getBundle(final String location) {
 			return location_bundles.get(location);
 		}
+
 	}
 
 	/**
@@ -5159,8 +5355,9 @@ public final class Concierge extends AbstractBundle implements Framework,
 				notifyFrameworkListeners(FrameworkEvent.ERROR, sref.bundle, t);
 
 				// mark as complete
-				wovenClass.setComplete();
-
+				wovenClass.setTransformingFailed();
+				notifyWovenClassListeners(wovenClass);
+				
 				final ClassFormatError err = new ClassFormatError(
 						"Error while invoking weaving hook");
 				err.initCause(t);
@@ -5169,7 +5366,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 				sref.ungetService(this);
 			}
 		}
-		wovenClass.setComplete();
+		wovenClass.setTransformed();
+		notifyWovenClassListeners(wovenClass);
 	}
 
 	/**

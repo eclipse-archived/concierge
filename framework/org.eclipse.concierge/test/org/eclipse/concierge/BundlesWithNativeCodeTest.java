@@ -105,7 +105,7 @@ public class BundlesWithNativeCodeTest extends AbstractConciergeTestCase {
 				.newBuilder();
 		builder.bundleSymbolicName("testBundleNativeCodeWithWildcard")
 				.bundleVersion("1.0.0").addManifestHeader("Bundle-NativeCode",
-						"lib/native/someNative.so; osname=MacOSX; processor=x86; *");
+						"lib/native/someNative.so; osname=MacOSX; processor=x86, *");
 		final Bundle bundleUnderTest = installBundle(builder);
 		enforceResolveBundle(bundleUnderTest);
 		final boolean resolved = isBundleResolved(bundleUnderTest);
