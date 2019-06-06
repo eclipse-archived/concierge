@@ -72,8 +72,9 @@ public class BundleGetDataFileTest extends AbstractConciergeTestCase {
 
 		File f1 = bundleUnderTest.getDataFile("");
 		Assert.assertNotNull(f1);
-		Assert.assertTrue(f1.getAbsolutePath().endsWith(
-				"storage/default/1/data"));
+		Assert.assertTrue(f1.getAbsolutePath()
+				.replace( System.getProperty( "file.separator"), "/")
+				.endsWith("storage/default/1/data"));
 		Assert.assertTrue(f1.exists());
 		Assert.assertTrue(f1.isDirectory());
 
@@ -89,8 +90,9 @@ public class BundleGetDataFileTest extends AbstractConciergeTestCase {
 
 		File f1 = bundleUnderTest.getBundleContext().getDataFile("");
 		Assert.assertNotNull(f1);
-		Assert.assertTrue(f1.getAbsolutePath().endsWith(
-				"storage/default/1/data"));
+		Assert.assertTrue(f1.getAbsolutePath()
+				.replace( System.getProperty( "file.separator"), "/")
+				.endsWith( "storage/default/1/data"));
 		Assert.assertTrue(f1.exists());
 		Assert.assertTrue(f1.isDirectory());
 
@@ -106,8 +108,9 @@ public class BundleGetDataFileTest extends AbstractConciergeTestCase {
 
 		File f1 = bundleUnderTest.getDataFile("file.txt");
 		Assert.assertNotNull(f1);
-		Assert.assertTrue(f1.getAbsolutePath().endsWith(
-				"storage/default/1/data/file.txt"));
+		Assert.assertTrue(f1.getAbsolutePath()
+				.replace( System.getProperty( "file.separator"), "/")
+				.endsWith( "storage/default/1/data/file.txt"));
 		Assert.assertTrue(f1.getParentFile().exists());
 		Assert.assertTrue(f1.getParentFile().isDirectory());
 		TestUtils.copyStringToFile("# some text", f1);
@@ -121,8 +124,9 @@ public class BundleGetDataFileTest extends AbstractConciergeTestCase {
 
 		File f1 = bundleUnderTest.getDataFile("a/b/file.txt");
 		Assert.assertNotNull(f1);
-		Assert.assertTrue(f1.getAbsolutePath().endsWith(
-				"storage/default/1/data/a/b/file.txt"));
+		Assert.assertTrue(f1.getAbsolutePath()
+				.replace( System.getProperty( "file.separator"), "/")
+				.endsWith( "storage/default/1/data/a/b/file.txt"));
 		Assert.assertTrue(f1.getParentFile().exists());
 		Assert.assertTrue(f1.getParentFile().isDirectory());
 		TestUtils.copyStringToFile("# some text", f1);
