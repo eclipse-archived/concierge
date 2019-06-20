@@ -180,7 +180,7 @@ public class BundlesWithNativeCodeTest extends AbstractConciergeTestCase {
 
 	private boolean isX86_64() {
 		final String osarch = System.getProperty("os.arch");
-		return "x86_64".equals(osarch);
+		return "x86_64".equals(osarch) || "amd64".equals(osarch);
 	}
 
 	private boolean isX86() {
