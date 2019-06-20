@@ -193,7 +193,9 @@ public class XargsFileLauncherPropertiesTest {
 	public void testGetPropertiesFromXargsNoEquals() throws IOException {
 		Map<String, String> props = processProperties("-Dprop_v");
 		Assert.assertEquals(0, props.size());
-		String expectedErrMsg = "[XargsFileLauncher] WRONG PROPERTY DEFINITION: "
+		String expectedErrMsg = "[XargsFileLauncher]"
+				+ Character.toString( (char)0xa0)
+				+ "WRONG PROPERTY DEFINITION: "
 				+ "EQUALS for -Dname=value IS MISSING, IGNORE '-Dprop_v'"
 				+ System.getProperty( "line.separator");
 		Assert.assertThat(getStreamErr(), is(equalTo(expectedErrMsg)));
@@ -205,7 +207,9 @@ public class XargsFileLauncherPropertiesTest {
 		Assert.assertEquals(0, props.size()); // no name
 		props = processProperties("-D+=v");
 		Assert.assertEquals(0, props.size());
-		String expectedErrMsg = "[XargsFileLauncher] WRONG PROPERTY DEFINITION: "
+		String expectedErrMsg = "[XargsFileLauncher]"
+				+ Character.toString( (char)0xa0) 
+				+ "WRONG PROPERTY DEFINITION: "
 				+ "NAME for -Dname+=value IS MISSING, IGNORE '-D+=v'"
 				+ System.getProperty( "line.separator");
 		Assert.assertThat(getStreamErr(), is(equalTo(expectedErrMsg)));
