@@ -1450,7 +1450,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 					+ "---------------------------------------");
 			System.out.println("  Concierge OSGi " + FRAMEWORK_VERSION + " on "
 					+ System.getProperty("os.name") + " "
-					+ System.getProperty("os.version") + " starting ... ("
+					+ System.getProperty("os.version") + System.getProperty("os.version") + " with java "
+					+ System.getProperty("java.version") + " starting ... ("
 					+ PROFILE + ") startlevel=" + BEGINNING_STARTLEVEL);
 			System.out.println("-------------------"
 					+ "--------------------------------------");
