@@ -1,5 +1,8 @@
 language: java
 dist: trusty
+branches:
+  only:
+    - r6
 jdk:
   - oraclejdk8
 install:
