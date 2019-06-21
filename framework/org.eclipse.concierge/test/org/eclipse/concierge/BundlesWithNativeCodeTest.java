@@ -42,6 +42,45 @@ public class BundlesWithNativeCodeTest extends AbstractConciergeTestCase {
 	}
 
 	@Test
+	public void testBundleNativeCodeMacOSX_X86() throws Exception {
+		final SyntheticBundleBuilder builder = SyntheticBundleBuilder
+				.newBuilder();
+		builder.bundleSymbolicName("testBundleNativeCodeMacOSX_X86")
+				.bundleVersion("1.0.0").addManifestHeader("Bundle-NativeCode",
+						"lib/native/someNative.so; osname=MacOSX; processor=x86");
+		final Bundle bundleUnderTest = installBundle(builder);
+		enforceResolveBundle(bundleUnderTest);
+		final boolean resolved = isBundleResolved(bundleUnderTest);
+		Assert.assertEquals(isMacOSX() && isX86(), resolved);
+	}
+
+	@Test
+	public void testBundleNativeCodeLinux_X86() throws Exception {
+		final SyntheticBundleBuilder builder = SyntheticBundleBuilder
+				.newBuilder();
+		builder.bundleSymbolicName("testBundleNativeCodeLinux_X86")
+				.bundleVersion("1.0.0").addManifestHeader("Bundle-NativeCode",
+						"lib/native/someNative.so; osname=Linux; processor=x86");
+		final Bundle bundleUnderTest = installBundle(builder);
+		enforceResolveBundle(bundleUnderTest);
+		final boolean resolved = isBundleResolved(bundleUnderTest);
+		Assert.assertEquals(!isWindows() && !isMacOSX() && isX86(), resolved);
+	}
+
+	@Test
+	public void testBundleNativeCodeWindows_X86() throws Exception {
+		final SyntheticBundleBuilder builder = SyntheticBundleBuilder
+				.newBuilder();
+		builder.bundleSymbolicName("testBundleNativeCodeWindows_X86")
+				.bundleVersion("1.0.0").addManifestHeader("Bundle-NativeCode",
+						"lib/native/someNative32.dll; osname=Windows; processor=x86");
+		final Bundle bundleUnderTest = installBundle(builder);
+		enforceResolveBundle(bundleUnderTest);
+		final boolean resolved = isBundleResolved(bundleUnderTest);
+		Assert.assertEquals(isWindows() && isX86(), resolved);
+	}
+
+	@Test
 	public void testBundleNativeCodeMacOSX_X86_64() throws Exception {
 		final SyntheticBundleBuilder builder = SyntheticBundleBuilder
 				.newBuilder();
@@ -52,6 +91,32 @@ public class BundlesWithNativeCodeTest extends AbstractConciergeTestCase {
 		enforceResolveBundle(bundleUnderTest);
 		final boolean resolved = isBundleResolved(bundleUnderTest);
 		Assert.assertEquals(isMacOSX() && isX86_64(), resolved);
+	}
+
+	@Test
+	public void testBundleNativeCodeLinux_X86_64() throws Exception {
+		final SyntheticBundleBuilder builder = SyntheticBundleBuilder
+				.newBuilder();
+		builder.bundleSymbolicName("testBundleNativeCodeLinux_X86_64")
+				.bundleVersion("1.0.0").addManifestHeader("Bundle-NativeCode",
+						"lib/native/someNative.so; osname=Linux; processor=x86_64");
+		final Bundle bundleUnderTest = installBundle(builder);
+		enforceResolveBundle(bundleUnderTest);
+		final boolean resolved = isBundleResolved(bundleUnderTest);
+		Assert.assertEquals(!isWindows() && !isMacOSX() && isX86_64(), resolved);
+	}
+
+	@Test
+	public void testBundleNativeCodeWindows_X86_64() throws Exception {
+		final SyntheticBundleBuilder builder = SyntheticBundleBuilder
+				.newBuilder();
+		builder.bundleSymbolicName("testBundleNativeCodeWindows_X86_64")
+				.bundleVersion("1.0.0").addManifestHeader("Bundle-NativeCode",
+						"lib/native/someNative64.dll; osname=Windows; processor=x86_64");
+		final Bundle bundleUnderTest = installBundle(builder);
+		enforceResolveBundle(bundleUnderTest);
+		final boolean resolved = isBundleResolved(bundleUnderTest);
+		Assert.assertEquals(isWindows() && isX86_64(), resolved);
 	}
 
 	@Test
@@ -71,29 +136,19 @@ public class BundlesWithNativeCodeTest extends AbstractConciergeTestCase {
 	}
 
 	@Test
-	public void testBundleNativeCodeMacOSX_X86() throws Exception {
-		final SyntheticBundleBuilder builder = SyntheticBundleBuilder
-				.newBuilder();
-		builder.bundleSymbolicName("testBundleNativeCodeMacOSX_X86")
-				.bundleVersion("1.0.0").addManifestHeader("Bundle-NativeCode",
-						"lib/native/someNative.so; osname=MacOSX; processor=x86");
-		final Bundle bundleUnderTest = installBundle(builder);
-		enforceResolveBundle(bundleUnderTest);
-		final boolean resolved = isBundleResolved(bundleUnderTest);
-		Assert.assertEquals(isMacOSX() && isX86(), resolved);
-	}
-
-	@Test
 	public void testBundleNatvieCodeOSDefaults() throws Exception {
 		String osname = System.getProperty("os.name");
+		// Windows fixed ... 
+		if( isWindows()) osname = "Windows";
 		String osarch = System.getProperty("os.arch");
 		final SyntheticBundleBuilder builder = SyntheticBundleBuilder
 				.newBuilder();
 
 		builder.bundleSymbolicName("testBundleNatvieCodeOSDefaults")
 				.bundleVersion("1.0.0").addManifestHeader("Bundle-NativeCode",
-						"lib/someNative.so; osname=" + osname + "; processor="
-								+ osarch + "");
+						(isWindows()?"lib/someNative.dll":"lib/someNative.so") 
+							+ "; osname=" + osname + "; processor=" + osarch 
+						+ "");
 		final Bundle bundleUnderTest = installBundle(builder);
 		bundleUnderTest.start();
 		assertBundleActive(bundleUnderTest);
@@ -105,7 +160,7 @@ public class BundlesWithNativeCodeTest extends AbstractConciergeTestCase {
 				.newBuilder();
 		builder.bundleSymbolicName("testBundleNativeCodeWithWildcard")
 				.bundleVersion("1.0.0").addManifestHeader("Bundle-NativeCode",
-						"lib/native/someNative.so; osname=MacOSX; processor=x86, *");
+						"lib/native/someNative.so; osname=Unknown; processor=x86, *");
 		final Bundle bundleUnderTest = installBundle(builder);
 		enforceResolveBundle(bundleUnderTest);
 		final boolean resolved = isBundleResolved(bundleUnderTest);
@@ -118,9 +173,14 @@ public class BundlesWithNativeCodeTest extends AbstractConciergeTestCase {
 		return "Mac OS X".equals(osname);
 	}
 
+	private boolean isWindows() {
+		final String osname = System.getProperty("os.name");
+		return osname != null && osname.startsWith( "Windows");
+	}
+
 	private boolean isX86_64() {
 		final String osarch = System.getProperty("os.arch");
-		return "x86_64".equals(osarch);
+		return "x86_64".equals(osarch) || "amd64".equals(osarch);
 	}
 
 	private boolean isX86() {

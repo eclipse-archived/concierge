@@ -1280,7 +1280,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 			String key = en.nextElement().toString();
 			if(key.startsWith("osgi.native"))
 				continue;
-			nativeCapBuilder.append(key).append("=\"").append(properties.getProperty(key).toString()).append("\";");
+                       	nativeCapBuilder.append(key).append("=\"").append(properties.getProperty(key).toString().replace( "\\", "\\\\").replace( "\"", "\\\"")).append("\";");
 		}
 		final BundleCapabilityImpl nativeCap = new BundleCapabilityImpl(this, 
 				nativeCapBuilder.toString());

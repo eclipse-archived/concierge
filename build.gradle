@@ -1,18 +1,18 @@
 // Build script for Concierge
 
 // sample usages:
-// Cleanup:                               ./gradlew clean
-// Build and run tests:                   ./gradlew test
-// Make complete fresh build:             ./gradlew clean build publish assembleDist installDist
+// Cleanup:							   ./gradlew clean
+// Build and run tests:				   ./gradlew test
+// Make complete fresh build:			 ./gradlew clean build publish assembleDist installDist
 // Build and publish to local Maven repo: ./gradlew clean build publishToMavenLocal
 
 buildscript {
 	repositories {
-    	maven { url 'http://oss.jfrog.org/artifactory/oss-snapshot-local' }
-    	jcenter()
+		maven { url 'http://oss.jfrog.org/artifactory/oss-snapshot-local' }
+		jcenter()
 	}
 	dependencies {
-    	classpath "org.akhikhl.wuff:wuff-plugin:0.0.13-SNAPSHOT"
+		classpath "org.akhikhl.wuff:wuff-plugin:0.0.13-SNAPSHOT"
 	}
 }
 
@@ -24,13 +24,14 @@ plugins {
 	// id: ''
 
 	// see: https://github.com/netzwerg/gradle-release-plugin
-    id 'ch.netzwerg.release' version '1.1.0'
+	id 'ch.netzwerg.release' version '1.1.0'
 }
 
 // only include in top level project
 // apply plugin: 'org.standardout.bnd-platform'
-apply plugin: 'org.akhikhl.wuff.eclipse-repository'
-apply plugin: 'ch.netzwerg.release'
+// tmarkwardt: disabled - download error on http://mirror.netcologne.de/eclipse//technology/epp/downloads/release/luna/SR2/eclipse-jee-luna-SR2-win32-x86_64.zip
+//apply plugin: 'org.akhikhl.wuff.eclipse-repository'
+//apply plugin: 'ch.netzwerg.release'
 
 
 // global variables
@@ -49,8 +50,8 @@ allprojects {
 
 	// create all TARs as tar.gz compressed
 	tasks.withType(Tar){
-    	compression = Compression.GZIP
-    	extension = 'tar.gz'
+		compression = Compression.GZIP
+		extension = 'tar.gz'
 	}
 }
 
@@ -61,9 +62,9 @@ configure(subprojects.findAll {! (it.name in ['distribution', 'bundles', 'framew
 	apply plugin: 'maven-publish'
 
 	clean {
-    	delete "bin"
-    	delete "storage"
-    	delete "target"
+		delete "bin"
+		delete "storage"
+		delete "target"
 	}
 
 	sourceCompatibility = 1.5
@@ -71,19 +72,19 @@ configure(subprojects.findAll {! (it.name in ['distribution', 'bundles', 'framew
 	
 	// TODO jhi align directory structure to Maven based one
 	sourceSets {
-    	main {
-        	java {
-            	srcDir 'src'
-        	}
-	        resources {
-    	        srcDirs = [ ".", "../../distribution/src/config" ]
+		main {
+			java {
+				srcDir 'src'
+ 			}
+			resources {
+				srcDirs = [ ".", "../../distribution/src/config" ]
 				include "META-INF/services/**", "META-INF/micro-services", "about.html", "about_files/**"
-        	}
-	    }
-    	test {
-        	java {
-            	srcDir 'test'
-	        }
+			}
+		}
+		test {
+			java {
+				srcDir 'test'
+			}
 		}
 	}
 
@@ -102,24 +103,24 @@ configure(subprojects.findAll {! (it.name in ['distribution', 'bundles', 'framew
 	}
 
 	dependencies {
-	    testCompile group: 'junit', name: 'junit', version: '4.+'
+		testCompile group: 'junit', name: 'junit', version: '4.+'
 	}
 
 	task sourceJar(type: Jar) {
- 	   from sourceSets.main.allJava
+		from sourceSets.main.allJava
 	}
 
 	jar {
-    	manifest {
+		manifest {
 			from('META-INF/MANIFEST.MF') {
 				eachEntry { details ->
 					if (details.key == 'Bundle-Version') {
-                    	details.value = details.value.replace ("qualifier", rootProject.buildQualifier)
-                    	// for debugging
+						details.value = details.value.replace ("qualifier", rootProject.buildQualifier)
+						// for debugging
 						// println details.key + "=" + details.value
-    	            }
-        		}
-        	}
+					}
+				}
+			}
 		}
 	}
 
@@ -138,68 +139,68 @@ configure(subprojects.findAll {! (it.name in ['distribution', 'bundles', 'framew
 
 	publishing {
 		repositories {
-	        maven {
-	        // TODO remove completely
-	        	// see https://bugs.eclipse.org/bugs/show_bug.cgi?id=467163
-	        	// https://repo.eclipse.org/content/repositories/concierge-snapshots/
-	        	// https://repo.eclipse.org/content/repositories/concierge-releases/
-	        	// println ("project.version=" + project.version)
-	        	if(project.version.contains('SNAPSHOT')) {
-	        	    url "../../distribution/build/repo/maven/snapshots"
- 		        } else {
-	        	    url "../../distribution/build/repo/maven/releases"
-          		}
-	        	// println ("url=" + url)
-        	}
-    	}
+			maven {
+			// TODO remove completely
+				// see https://bugs.eclipse.org/bugs/show_bug.cgi?id=467163
+				// https://repo.eclipse.org/content/repositories/concierge-snapshots/
+				// https://repo.eclipse.org/content/repositories/concierge-releases/
+				// println ("project.version=" + project.version)
+				if(project.version.contains('SNAPSHOT')) {
+				url "../../distribution/build/repo/maven/snapshots"
+ 				} else {
+				url "../../distribution/build/repo/maven/releases"
+		  		}
+				// println ("url=" + url)
+			}
+		}
 	}
 }
 
 
 project(':framework:org.eclipse.concierge.extension.permission') {
-    dependencies {
-        compile project(':framework:org.eclipse.concierge')
-    }
+	dependencies {
+		compile project(':framework:org.eclipse.concierge')
+	}
 }
 project(':framework:org.eclipse.concierge.profile.javase7') {
-    dependencies {
-        compile project(':framework:org.eclipse.concierge')
-    }
+	dependencies {
+		compile project(':framework:org.eclipse.concierge')
+	}
 }
 project(':bundles:org.eclipse.concierge.service.permission') {
-    dependencies {
-        compile project(':framework:org.eclipse.concierge')
-    }
+	dependencies {
+		compile project(':framework:org.eclipse.concierge')
+	}
 }
 project(':bundles:org.eclipse.concierge.service.packageadmin') {
-    dependencies {
-        compile project(':framework:org.eclipse.concierge')
-    }
+	dependencies {
+		compile project(':framework:org.eclipse.concierge')
+	}
 }
 project(':bundles:org.eclipse.concierge.service.eventadmin') {
-    dependencies {
-        compile project(':framework:org.eclipse.concierge')
-    }
+	dependencies {
+		compile project(':framework:org.eclipse.concierge')
+	}
 }
 project(':bundles:org.eclipse.concierge.service.startlevel') {
-    dependencies {
-        compile project(':framework:org.eclipse.concierge')
-    }
+	dependencies {
+		compile project(':framework:org.eclipse.concierge')
+	}
 }
 project(':bundles:org.eclipse.concierge.service.xmlparser') {
-    dependencies {
-        compile project(':framework:org.eclipse.concierge')
-    }
+	dependencies {
+		compile project(':framework:org.eclipse.concierge')
+	}
 }
 project(':bundles:org.eclipse.concierge.shell') {
-    dependencies {
-        compile project(':framework:org.eclipse.concierge')
-    }
+	dependencies {
+		compile project(':framework:org.eclipse.concierge')
+	}
 }
 project(':tests:org.eclipse.concierge.tests.integration') {
-    dependencies {
-        compile project(':framework:org.eclipse.concierge')
-    }
+	dependencies {
+		compile project(':framework:org.eclipse.concierge')
+	}
 }
 
 // release management
@@ -214,8 +215,8 @@ release {
 
 // task to create a gradle wrapper with used gradle version
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.8'
-    jarFile = '.gradle-wrapper/gradle-wrapper.jar'
+	gradleVersion = '2.8'
+	jarFile = '.gradle-wrapper/gradle-wrapper.jar'
 }
 
 // helper methods
@@ -224,19 +225,19 @@ task wrapper(type: Wrapper) {
 // for release versions (RCn, Mn) this is the qualifier
 // otherwise use the build time for the final build
 def getBuildQualifier() {
-    String ver = project.version
-    String q
-    String now = buildTime()
+	String ver = project.version
+	String q
+	String now = buildTime()
 	if(ver.endsWith('.SNAPSHOT')) {
-	    q = ver.substring(ver.indexOf("SNAPSHOT"),ver.length()) + "-" + now
+		q = ver.substring(ver.indexOf("SNAPSHOT"),ver.length()) + "-" + now
 	} else if(ver.substring(0, ver.length()-1).endsWith('.RC')) {
-	    // for RC versions: use RCn as qualifier for bundle versions
-	    q = ver.substring(ver.indexOf("RC"),ver.length()) + "-" + now
+		// for RC versions: use RCn as qualifier for bundle versions
+		q = ver.substring(ver.indexOf("RC"),ver.length()) + "-" + now
 	} else if(ver.substring(0, ver.length()-1).endsWith('.M')) {
-	    // for Milestone versions: use Mn as qualifier for bundle versions
-	    q = ver.substring(ver.indexOf("M"),ver.length()) + "-" + now
+		// for Milestone versions: use Mn as qualifier for bundle versions
+		q = ver.substring(ver.indexOf("M"),ver.length()) + "-" + now
 	} else {
-	    // final build
+		// final build
 		q = now
 	}
 	// for debugging
@@ -249,8 +250,8 @@ def getBuildQualifier() {
 // must be called as function as not initialized in all phases
 // in case of SNAPSHOT the qualifier yet contains the SNAPSHOT prefix 
 def getBuildVersion() {
-    String ver = project.version
-    String buildVersion
+	String ver = project.version
+	String buildVersion
 	if(ver.endsWith('.SNAPSHOT')) {
 		buildVersion = ver.replace (".SNAPSHOT", "." + rootProject.buildQualifier)
 	} else {
