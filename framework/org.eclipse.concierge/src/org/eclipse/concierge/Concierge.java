@@ -679,7 +679,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 		
 		final String specVersion = System
 				.getProperty("java.specification.version");
-		if (specVersion.indexOf('.') == -1) {
+		int posSpecVersionMinor = -1;
+		if ( (posSpecVersionMinor= specVersion.indexOf('.')) == -1) {
 			try {
 				parsed = Integer.parseInt(specVersion);
 			} catch (final NumberFormatException nfe) {
@@ -689,7 +690,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 			}
 		} else {
 			try {
-				parsed = Integer.parseInt(specVersion.substring(2));
+				parsed = Integer.parseInt(specVersion.substring( posSpecVersionMinor +1));
 			} catch (final NumberFormatException nfe) {
 				nfe.printStackTrace();
 			} finally {
@@ -1310,7 +1311,10 @@ public final class Concierge extends AbstractBundle implements Framework,
 			String key = en.nextElement().toString();
 			if(key.startsWith("osgi.native"))
 				continue;
-			nativeCapBuilder.append(key).append("=\"").append(properties.getProperty(key).toString()).append("\";");
+			nativeCapBuilder.append(key).append("=\"")
+				.append(properties.getProperty(key).toString()
+					.replace( "\\", "\\\\")
+				.replace( "\"", "\\\"")).append("\";");
 		}
 		final BundleCapabilityImpl nativeCap = new BundleCapabilityImpl(this, 
 				nativeCapBuilder.toString());
@@ -1480,7 +1484,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 					+ "---------------------------------------");
 			System.out.println("  Concierge OSGi " + FRAMEWORK_VERSION + " on "
 					+ System.getProperty("os.name") + " "
-					+ System.getProperty("os.version") + " starting ... ("
+					+ System.getProperty("os.version") + " with java "
+					+ System.getProperty("java.version") + " starting ... ("
 					+ PROFILE + ") startlevel=" + BEGINNING_STARTLEVEL);
 			System.out.println("-------------------"
 					+ "--------------------------------------");
