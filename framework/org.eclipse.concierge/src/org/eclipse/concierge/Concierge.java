@@ -679,7 +679,8 @@ public final class Concierge extends AbstractBundle implements Framework,
 		
 		final String specVersion = System
 				.getProperty("java.specification.version");
-		if (specVersion.indexOf('.') == -1) {
+		int posSpecVersionMinor = -1;
+		if ( (posSpecVersionMinor= specVersion.indexOf('.')) == -1) {
 			try {
 				parsed = Integer.parseInt(specVersion);
 			} catch (final NumberFormatException nfe) {
@@ -689,7 +690,7 @@ public final class Concierge extends AbstractBundle implements Framework,
 			}
 		} else {
 			try {
-				parsed = Integer.parseInt(specVersion.substring(2));
+				parsed = Integer.parseInt(specVersion.substring( posSpecVersionMinor +1));
 			} catch (final NumberFormatException nfe) {
 				nfe.printStackTrace();
 			} finally {

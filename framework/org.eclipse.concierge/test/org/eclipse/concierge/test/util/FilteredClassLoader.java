@@ -98,7 +98,7 @@ public class FilteredClassLoader extends ClassLoader {
 	private Class<?> loadAndDefineClass(String classNameWithDots)
 			throws ClassNotFoundException {
 		String classNameAsFileName = classNameWithDots.replace('.',
-				File.separatorChar) + ".class";
+				'/') + ".class";
 		try {
 			byte[] classByteCodeBuffer = loadClassByteCode(classNameAsFileName);
 			// define and resolve the class
