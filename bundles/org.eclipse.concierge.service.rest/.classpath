@@ -5,7 +5,7 @@
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="lib" path="libs/org.restlet.ext.json.jar"/>
 	<classpathentry kind="lib" path="libs/org.restlet.ext.xml.jar"/>
-	<classpathentry kind="lib" path="/Users/rjan/git/concierge/bundles/org.eclipse.concierge.service.rest/libs/org.restlet_2.0.5.v201605172130.jar"/>
-	<classpathentry kind="lib" path="/Users/rjan/git/concierge/bundles/org.eclipse.concierge.service.rest/libs/org.json_1.0.0.v201011060100.jar"/>
+	<classpathentry kind="lib" path="libs/org.restlet_2.0.5.v201605172130.jar"/>
+	<classpathentry kind="lib" path="libs/org.json_1.0.0.v201011060100.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
