@@ -6,15 +6,15 @@ import de.undercouch.gradle.tasks.download.Download
 
 task fetchFromOrbit {
     if (! file("libs/org.restlet_2.0.5.v201605172130.jar").exists()) {
-		download {
-        	src 'http://download.eclipse.org/tools/orbit/downloads/drops/R20170303204511/repository/plugins/org.restlet_2.0.5.v201605172130.jar'              
-         	dest 'libs'
-    	}
+        download {
+            src 'http://download.eclipse.org/tools/orbit/downloads/drops/R20170303204511/repository/plugins/org.restlet_2.0.5.v201605172130.jar'              
+            dest 'libs'
+        }
     }
     if (! file("libs/org.json_1.0.0.v201011060100.jar").exists()) {
-		download {
-        	src 'http://download.eclipse.org/tools/orbit/downloads/drops/R20170303204511/repository/plugins/org.json_1.0.0.v201011060100.jar'              
-         	dest 'libs'
+        download {
+            src 'http://download.eclipse.org/tools/orbit/downloads/drops/R20170303204511/repository/plugins/org.json_1.0.0.v201011060100.jar'              
+            dest 'libs'
     	}
     }    
 }
@@ -38,29 +38,29 @@ sourceSets.main.resources { srcDirs += ['libs']; include "*.jar" }
 
 jar {
     manifest {
-		from('META-INF/MANIFEST.MF') {
-			eachEntry { details ->
-				if (details.key == 'Bundle-Version') {
-                   	details.value = details.value.replace ("qualifier", rootProject.buildQualifier)
-   	            }
-   	            if (details.key == 'Bundle-ClassPath') {
-   	            	details.value = details.value.replace ('libs/', '')
-   	            }
-       		}
+        from('META-INF/MANIFEST.MF') {
+            eachEntry { details ->
+                if (details.key == 'Bundle-Version') {
+                    details.value = details.value.replace (".qualifier", rootProject.buildQualifier)
+                }
+                if (details.key == 'Bundle-ClassPath') {
+                    details.value = details.value.replace ('libs/', '')
+                }
+            }
        	}
-	}
+    }
 }
 
 publishing {
     publications {
-   	    mavenJava(MavenPublication) {
-	   	    groupId 'org.eclipse.concierge'
+        mavenJava(MavenPublication) {
+            groupId 'org.eclipse.concierge'
             artifactId 'org.eclipse.concierge.service.rest'
             version version
-			pom {
-				name = 'Eclipse Concierge'
-				description = 'REST Service'
-			}
+            pom {
+                name = 'Eclipse Concierge'
+                description = 'REST Service'
+            }
        	}
-   	}
+    }
 }
