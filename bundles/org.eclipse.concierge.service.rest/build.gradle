@@ -37,18 +37,18 @@ dependencies {
 sourceSets.main.resources { srcDirs += ['libs']; include "*.jar" }
 
 jar {
-    manifest {
-		from('META-INF/MANIFEST.MF') {
-			eachEntry { details ->
-				if (details.key == 'Bundle-Version') {
-                   	details.value = details.value.replace ("qualifier", rootProject.buildQualifier)
-   	            }
-   	            if (details.key == 'Bundle-ClassPath') {
-   	            	details.value = details.value.replace ('libs/', '')
-   	            }
-       		}
-       	}
-	}
+  manifest {
+    from('META-INF/MANIFEST.MF') {
+      eachEntry { details ->
+        if (details.key == 'Bundle-Version') {
+          details.value = details.value.replace (".qualifier", rootProject.buildQualifier)
+        }
+        if (details.key == 'Bundle-ClassPath') {
+          details.value = details.value.replace ('libs/', '')
+        }
+      }
+    }
+  }
 }
 
 publishing {
