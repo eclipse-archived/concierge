@@ -46,7 +46,7 @@
 			<!-- Collect the nav links, forms, and other content for toggling -->
     			<div class="collapse navbar-collapse">
     			<ul class="nav navbar-nav">
-			        <li><a href="https://projects.eclipse.org/projects/rt.concierge/downloads" target="_blank">Downloads</a></li>
+			        <li><a href="https://projects.eclipse.org/projects/iot.concierge/downloads" target="_blank">Downloads</a></li>
 			        <li class="dropdown">
 			            <a href="documentation.php" class="dropdown-toggle" data-toggle="dropdown">Documentation <b class="caret"></b></a>
 			            <ul class="dropdown-menu">
